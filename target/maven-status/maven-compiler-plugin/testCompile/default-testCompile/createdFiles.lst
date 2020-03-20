@@ -1,0 +1,6 @@
+com\fa\funnel\rest\controller\FunnelControllerTest.class
+com\fa\funnel\rest\query\ResponseBuilderTest.class
+com\fa\funnel\rest\util\UtilitiesTest.class
+com\fa\funnel\rest\model\EventPairTest.class
+com\fa\funnel\rest\model\SequenceTest.class
+com\fa\healthcheck\rest\controller\HealthCheckControllerTest.class
