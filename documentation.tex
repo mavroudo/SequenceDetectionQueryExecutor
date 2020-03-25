@@ -1,0 +1,87 @@
+\documentclass{article}
+\title{Documentation}
+\author{Mavroudo}
+\begin{document}
+
+\maketitle
+
+
+\section{Model}
+Describing all the classes that are represented in the model package
+\begin{itemize}
+	\item \textbf{AugmentedDetail:} Represents an detail that is augmented by the event name to which it corresponds. Constructor (eventName,key,value). Compare, Equals, toString, hashCode. 
+	\item \textbf{Completion:} Represents a Completion returned through the quick\_stats endpoint. Constructor (step,completions,averageDuration,lastCompletedAt). \textit{The step index of the completed funnel (e.g. in a funnel A->B->C a completion with step index 1 corresponds to a completion of the A->B sub-funnel)}. Getters,Setter,toString.
+	\item\textbf{Detail:} A Step Detail as provided by the JSON input. Is a Builder has 3 fields: key, operator, value. toString returns a json file.
+	\item \textbf{DetailedCompletion:} Represents a single Detailed Completion returned through the export\_completions endpoint. Constructor (step, completed\_at, duration, session\_id, app\_id, device\_id, user\_id).
+	The duration of the funnel, completed\_at = the timestamp of the last event in the completion.
+	\item \textbf{Event} Represents a funnel Event. 3 different constructors. Fields: \textit{name} ( Funnel event name (prefixed by AppID and LogtypeID, i.e. appID\_logtypeID\_eventName)) and \textit{details} (TreeSet$<AugmentedDetail>$). Compare, matches, toString, equals, hashcode, getPrefixedAppID.
+	\item \textbf{EventPair:} 2 events as string\_name. Equals, hashcode, equals, toString.
+	\item \textbf{EventPairFrequency:} Represents an EventPairFrequency returned by probing the "count" index tables. Constructor (EventPair, sum\_duration(sum of all durations of this event pair), comp\_count(sum of all completions of this event pair)). Compare (which is not consistent with equals).
+	\item \textbf{Funnel:} A Funnel body as provided by the JSON input (i.e. not wrapped by a funnel tag. Contains a Builder. fields: \textit{steps List $<Step>$} and \textit{maxDuration}. A toString that returns a json of this object.
+	\item \textbf{FunnelWrapper:} A Funnel Wrapper as provided by the JSON input (i.e. the funnel tag that wraps a funnel body).
+	Contains Builder. has only one field: Funnel.
+	\item \textbf{LifeTime:} Represents the lifetime of a DetailedCompletion. Constructor ( start\_date, end\_date, duration, appID).
+	\item \textbf{Name:} A Step Name as provided by the JSON input. Builder, fields: \textit{logName}, \textit{applicationID}, \textit{logType}.
+	\item \textbf{Proposition: } Represents a Proposition corresponding to a continuation provided by the  explore/* endpoint. 3 Constructors. Fields: \textit{applicationID}, \textit{logType}, \textit{logName}, \textit{completions}
+	, \textit{averageDuration}, \textit{lastCompleted}. toString, compareTo.
+	\item \textbf{QueryPair: } A pair of events (along with their details) corresponding to a query pair (e.g. a 3-sized funnel has 3 query pairs). Fields: \textit{first\_ev}, \textit{second\_ev}. hashCode, equals, toString.
+	\item \textbf{QueryStatsResponse: }  Represents the output of an quick\_stats endpoint query. Fields: \textit{completions $List<Completion>$}. equals, toString, hashCode.
+	\item \textbf{Sequence: }Events are stored in an ArrayList in the order they appear in the funnel. Fields: \textit{seq $List<Event>$}. Methods:
+	\begin{itemize}
+		\item\textit{appendToSequence(Event)} \item\textit{prependToSequence(Event)}:add it to the first position 
+		\item\textit{removeLastEvent} \item\textit{insert(event,position)} 
+		\item\textit{getList} 
+		\item\textit{getFirstEvent} 
+		\item\textit{getLastEvent}
+		\item\textit{getQueryTuples()}: return a $List<QueryPair>$ (a list of all query pairs for the funnel. For example, a funnel A-B-C has the following query pairs: (A,B), (B,C), (A,C)),
+		\item\textit{getEvent(position)}
+		\item\textit{getSize()}
+		\item\textit{fitsTimestamps($List<TimestampedEvent>$, maxDuration)}, Check if this sequence exists in a (superset) sequence of events. Furthermore, the sequence must exist within a time limit. Return an array of two values [timestamp of the first event occurrence, timestamp of the last event occurrence] in the list of timestamped events. 
+		If this sequence is not contained in the greater list, [-1,-1] is returned
+		\item\textit{getUniqueEvents}. Return a Set<Event>
+		\item\textit{getSecondLastEventDelimited(String delim)}. Get the second to last event of the sequence concatenated with a delimiter (Currently not used).
+	\end{itemize} 
+	\item\textbf{Status: }Represents the output of an {@code status} endpoint query. Fields: \textit{$List<String>$user, $List<String>$device}
+	\item\textbf{Step: } A Step as provided by the JSON input. Fields: \textit{names $List<Name>$, details $List<Detail>$}, which are matched from the json query. Created with Builder. 
+	\item \textbf{TimestampedEvent: }An event annotated with a ink java.util.Date timestamp. Fields: \textit{timestamp}, \textit{event}. compare, hashCode, equals, toSting.
+\end{itemize}
+
+\section{Query}
+All the classes that are contained in the query package.
+\begin{itemize}
+	\item\textbf{SequenceQueryHandler: }Class designed to handle the low-level needs of a query evaluation. Each time a query fetches data from the index (not count) tables the incoming rows are handled by this class first.
+	Each row is handled by extracting info about the entity (device or user) ID that achieved the completion and then handling the completion itself in one of two different ways (i.e. as an event pair or as a detail triplet).\\
+	\textbf{Fields}:\begin{itemize}
+		\item protected Cluster
+		\item protected Session
+		\item protected KeyspaceMetadata
+		\item protected final string Delimiter
+		\item $ConcurrentHashMap < String, List<TimestampedEvent> $ allEventsPerSession.
+	\end{itemize}
+	\textbf{Methods}: \begin{itemize}
+		\item public  \textbf{stripAppIdAndLogtype}
+		\item public \textbf{getYearMonths}. return all months between 2 provided dates + periods per/ 10 days.
+		\item protected \textbf{handleSessionRow}(Sequence, first, second, startDate, endDate,$List<String>$ candSessioons, putInMap). Running through the information per Session and handle each row differently, depending on the data that contains.
+		\item private \textbf{handleEventPairs} (dateFormat, sessionID, string[] times, first, second, startDate, endDate). times contains all the different times for this pair of events in this session id. If session id is contained in the allEventsPerSession, then TimestampedEvents will be added, if the timestamps are between limits.
+		\item private \textbf{handleDetailPairs}, same as before only now contains a event\_key\_value.
+	\end{itemize}
+	\textbf{Classes}:\begin{itemize}
+		\item \textbf{CandSessionsCallback} implements FutureCallback$<ResultSet>$. oveerides onSuccess and onFailure based on if the query in cassandra was successfull or not.
+	\end{itemize}
+
+	\item \textbf{SequenceQueryEvaluator} extends \textbf{SequenceQueryHandler: }The class responsible for accurately evaluating a query. Each query is evaluated on a per month basis and then all monthly results are
+	aggregated in a single candidate list. All the initial candidates are then tested and any false positives are discarded.
+	\textbf{Fields}: No new field, same as the superclass.
+	\textbf{Methods}:\\
+	\begin{itemize}
+		\item public Set$<String>$ \textbf{evaluateQuery}(startDate, endDate, Sequence, Map$<Integer, List<AugmentedDetail>>$, isUsersQuery). One table per month in Cassandra (dvc\_idx\_year\_month for not userQuery else usr instead of dvc). If table exists then we take the candidates from this month by using \textbf{evaluateQueryOnMonth}.
+		\item private Set$<String>$ \textbf{evaluateQueryOnMonth}(tableName, $List<QueryPair>$, Sequence, startDate, endDate, Map$<Integer, List<AugmentedDetail>>$, isUsersQuery). queryPairs was calculated based on the sequence in the previous. Query to Cassandra the first query pair, in the given table, the 2 fields and the third is null. Then continues for the other pairs in a multi threading, suing the \textbf{CandSessionsCallBack} from the superclass. Closes all the threads and returns the month candidates.
+		\item public \textbf{findTruePositivesAndLifetime(Sequence, candidates, maxDuration)}. For each candidate we check for two requirements: 1) The events of that candidate occur in the correct order,
+		2) They occur within the timeframe of the "maxDuration" variable. For every candidate, gets the candidates from the allEventsPerSession. Then using \textbf{fitsTimestamps} from Sequence, to find if a pair is contained in a superset. Returns a Map of $<String,LifeTime>$, where string is the candidate pair and lifetime is representation of a DetatiledCompletion.
+		\item getDeviceIds(startDate, endDate, userIDS), querying Cassandra for every month, every userId and returns the device id.
+		\item getUserIds(startDate, endDate, deviceIDS), querying Cassandra for every month, every deviceID and returns the user id.
+	\end{itemize}
+	\item \textbf{SequenceQueryExplorer} extends \textbf{SequenceQueryEvaluator:}
+\end{itemize}
+
+\end{document}
