@@ -67,8 +67,8 @@ public class SequenceQueryExplorer extends SequenceQueryEvaluator
         for (int j = 0; j < freqs.size(); j++)
         {
             String event = freqs.get(j).getEventPair().getSecond();
-            if (!targetAppID.isEmpty())
-                if (!event.startsWith(targetAppID))
+            if (!targetAppID.isEmpty()) //target app is not empty => check a specific target
+                if (!event.startsWith(targetAppID)) // and second event does not start with this specific appID, this is an elimination
                     continue;
                 
             Sequence tempquery = new Sequence(query);
@@ -219,7 +219,7 @@ public class SequenceQueryExplorer extends SequenceQueryEvaluator
     }
     
     private List<EventPairFrequency> getDetailFrequencyCounts(List<String> year_months, String queryEvent, String queryKey, boolean isUsersQuery) 
-    {
+     {
         HashMap<String, Double> allDurationSums = new HashMap<String, Double>();
         HashMap<String, Double> allCompCounts = new HashMap<String, Double>();
 

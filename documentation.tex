@@ -1,0 +1,164 @@
+\documentclass{article}
+\title{Documentation}
+\author{Mavroudo}
+\begin{document}
+
+\maketitle
+
+
+\section{Model}
+Describing all the classes that are represented in the model package
+\begin{itemize}
+	\item \textbf{AugmentedDetail:} Represents an detail that is augmented by the event name to which it corresponds. Constructor (eventName,key,value). Compare, Equals, toString, hashCode. 
+	\item \textbf{Completion:} Represents a Completion returned through the quick\_stats endpoint. Constructor (step,completions,averageDuration,lastCompletedAt). \textit{The step index of the completed funnel (e.g. in a funnel A->B->C a completion with step index 1 corresponds to a completion of the A->B sub-funnel)}. Getters,Setter,toString.
+	\item\textbf{Detail:} A Step Detail as provided by the JSON input. Is a Builder has 3 fields: key, operator, value. toString returns a json file.
+	\item \textbf{DetailedCompletion:} Represents a single Detailed Completion returned through the export\_completions endpoint. Constructor (step, completed\_at, duration, session\_id, app\_id, device\_id, user\_id).
+	The duration of the funnel, completed\_at = the timestamp of the last event in the completion.
+	\item \textbf{Event} Represents a funnel Event. 3 different constructors. Fields: \textit{name} ( Funnel event name (prefixed by AppID and LogtypeID, i.e. appID\_logtypeID\_eventName)) and \textit{details} (TreeSet$<AugmentedDetail>$). Compare, matches, toString, equals, hashcode, getPrefixedAppID.
+	\item \textbf{EventPair:} 2 events as string\_name. Equals, hashcode, equals, toString.
+	\item \textbf{EventPairFrequency:} Represents an EventPairFrequency returned by probing the "count" index tables. Constructor (EventPair, sum\_duration(sum of all durations of this event pair), comp\_count(sum of all completions of this event pair)). Compare (which is not consistent with equals).
+	\item \textbf{Funnel:} A Funnel body as provided by the JSON input (i.e. not wrapped by a funnel tag. Contains a Builder. fields: \textit{steps List $<Step>$} and \textit{maxDuration}. A toString that returns a json of this object.
+	\item \textbf{FunnelWrapper:} A Funnel Wrapper as provided by the JSON input (i.e. the funnel tag that wraps a funnel body).
+	Contains Builder. has only one field: Funnel.
+	\item \textbf{LifeTime:} Represents the lifetime of a DetailedCompletion. Constructor ( start\_date, end\_date, duration, appID).
+	\item \textbf{Name:} A Step Name as provided by the JSON input. Builder, fields: \textit{logName}, \textit{applicationID}, \textit{logType}.
+	\item \textbf{Proposition: } Represents a Proposition corresponding to a continuation provided by the  explore/* endpoint. 3 Constructors. Fields: \textit{applicationID}, \textit{logType}, \textit{logName}, \textit{completions}
+	, \textit{averageDuration}, \textit{lastCompleted}. toString, compareTo.
+	\item \textbf{QueryPair: } A pair of events (along with their details) corresponding to a query pair (e.g. a 3-sized funnel has 3 query pairs). Fields: \textit{first\_ev}, \textit{second\_ev}. hashCode, equals, toString.
+	\item \textbf{QuickStatsResponse: }  Represents the output of an quick\_stats endpoint query. Fields: \textit{completions $List<Completion>$}. equals, toString, hashCode.
+	\item \textbf{Sequence: }Events are stored in an ArrayList in the order they appear in the funnel. Fields: \textit{seq $List<Event>$}. Methods:
+	\begin{itemize}
+		\item\textit{appendToSequence(Event)} \item\textit{prependToSequence(Event)}:add it to the first position 
+		\item\textit{removeLastEvent} \item\textit{insert(event,position)} 
+		\item\textit{getList} 
+		\item\textit{getFirstEvent} 
+		\item\textit{getLastEvent}
+		\item\textit{getQueryTuples()}: return a $List<QueryPair>$ (a list of all query pairs for the funnel. For example, a funnel A-B-C has the following query pairs: (A,B), (B,C), (A,C)),
+		\item\textit{getEvent(position)}
+		\item\textit{getSize()}
+		\item\textit{fitsTimestamps($List<TimestampedEvent>$, maxDuration)}, Check if this sequence exists in a (superset) sequence of events. Furthermore, the sequence must exist within a time limit. Return an array of two values [timestamp of the first event occurrence, timestamp of the last event occurrence] in the list of timestamped events. 
+		If this sequence is not contained in the greater list, [-1,-1] is returned
+		\item\textit{getUniqueEvents}. Return a Set<Event>
+		\item\textit{getSecondLastEventDelimited(String delim)}. Get the second to last event of the sequence concatenated with a delimiter (Currently not used).
+	\end{itemize} 
+	\item\textbf{Status: }Represents the output of an {@code status} endpoint query. Fields: \textit{$List<String>$user, $List<String>$device}
+	\item\textbf{Step: } A Step as provided by the JSON input. Fields: \textit{names $List<Name>$, details $List<Detail>$}, which are matched from the json query. Created with Builder. 
+	\item \textbf{TimestampedEvent: }An event annotated with a ink java.util.Date timestamp. Fields: \textit{timestamp}, \textit{event}. compare, hashCode, equals, toSting.
+\end{itemize}
+
+\section{Query}
+All the classes that are contained in the query package.
+\begin{itemize}
+	\item\textbf{SequenceQueryHandler: }Class designed to handle the low-level needs of a query evaluation. Each time a query fetches data from the index (not count) tables the incoming rows are handled by this class first.
+	Each row is handled by extracting info about the entity (device or user) ID that achieved the completion and then handling the completion itself in one of two different ways (i.e. as an event pair or as a detail triplet).\\
+	\textbf{Fields}:\begin{itemize}
+		\item protected Cluster
+		\item protected Session
+		\item protected KeyspaceMetadata
+		\item protected final string Delimiter
+		\item $ConcurrentHashMap < String, List<TimestampedEvent> $ allEventsPerSession.
+	\end{itemize}
+	\textbf{Methods}: \begin{itemize}
+		\item public  \textbf{stripAppIdAndLogtype}
+		\item public \textbf{getYearMonths}. return all months between 2 provided dates + periods per/ 10 days.
+		\item protected \textbf{handleSessionRow}(Sequence, first, second, startDate, endDate,$List<String>$ candSessioons, putInMap). Running through the information per Session and handle each row differently, depending on the data that contains.
+		\item private \textbf{handleEventPairs} (dateFormat, sessionID, string[] times, first, second, startDate, endDate). times contains all the different times for this pair of events in this session id. If session id is contained in the allEventsPerSession, then TimestampedEvents will be added, if the timestamps are between limits.
+		\item private \textbf{handleDetailPairs}, same as before only now contains a event\_key\_value.
+	\end{itemize}
+	\textbf{Classes}:\begin{itemize}
+		\item \textbf{CandSessionsCallback} implements FutureCallback$<ResultSet>$. oveerides onSuccess and onFailure based on if the query in cassandra was successfull or not.
+	\end{itemize}
+
+	\item \textbf{SequenceQueryEvaluator} extends \textbf{SequenceQueryHandler: }The class responsible for accurately evaluating a query. Each query is evaluated on a per month basis and then all monthly results are
+	aggregated in a single candidate list. All the initial candidates are then tested and any false positives are discarded.
+	\textbf{Fields}: No new field, same as the superclass.
+	\textbf{Methods}:\\
+	\begin{itemize}
+		\item public Set$<String>$ \textbf{evaluateQuery}(startDate, endDate, Sequence, Map$<Integer, List<AugmentedDetail>>$, isUsersQuery). One table per month in Cassandra (dvc\_idx\_year\_month for not userQuery else usr instead of dvc). If table exists then we take the candidates from this month by using \textbf{evaluateQueryOnMonth}.
+		\item private Set$<String>$ \textbf{evaluateQueryOnMonth}(tableName, $List<QueryPair>$, Sequence, startDate, endDate, Map$<Integer, List<AugmentedDetail>>$, isUsersQuery). queryPairs was calculated based on the sequence in the previous. Query to Cassandra the first query pair, in the given table, the 2 fields and the third is null. Then continues for the other pairs in a multi threading, suing the \textbf{CandSessionsCallBack} from the superclass. Closes all the threads and returns the month candidates.
+		\item public \textbf{findTruePositivesAndLifetime(Sequence, candidates, maxDuration)}. For each candidate we check for two requirements: 1) The events of that candidate occur in the correct order,
+		2) They occur within the timeframe of the "maxDuration" variable. For every candidate, gets the candidates from the allEventsPerSession. Then using \textbf{fitsTimestamps} from Sequence, to find if a pair is contained in a superset. Returns a Map of $<String,LifeTime>$, where string is the candidate pair and lifetime is representation of a DetatiledCompletion.
+		\item getDeviceIds(startDate, endDate, userIDS), querying Cassandra for every month, every userId and returns the device id.
+		\item getUserIds(startDate, endDate, deviceIDS), querying Cassandra for every month, every deviceID and returns the user id.
+	\end{itemize}
+	\item \textbf{SequenceQueryExplorer} extends \textbf{SequenceQueryEvaluator:}
+	\textbf{Fields}: No new field, same as the superclass.\\
+	\textbf{Methods:}
+	\begin{itemize}
+		\item  public \textbf{exploreQueryAccurateStep}(startDate, endDate, Sequence, Map$<Integer, List<AugmentedDetail>>$, position, maxDuration, isUsersQuery). Returns a Map$<String, Map<String, Long>>$, which is a set of true positives (along with their completion duration) for each possible continuation. Position defines the index on the query sequence where continuations are to be explored.
+		\begin{itemize}
+			\item $0<position<query.size$: Intermediate explore, calls the \textbf{getAllPossibleIntermediateEvents} method
+			\item $position=query.size$: Forward explore, calls \textbf{getEventFrequencyCounts} method.
+			\item $position=0$: Prefix explore, calls \textbf{getAllPossiblePrecedingEvents} method.
+		\end{itemize}
+		All these methods return a $List<EventPairFrequency>$. For every EventPairFrequency we perform the followings:\\
+		 After dismissing all the app ids that we don't care, creates a temporal sequence from the given one and:
+		\begin{itemize}
+			\item $0<position<query.size$: insert the second event in the given position
+			\item $position=query.size$: add event at the end of the sequence
+			\item $position=0$: add event at the beginning of the sequence
+		\end{itemize}
+		Then this query is passed to the \textbf{evaluateQuery} method, which belongs to the superclass. finds true positives with \textbf{findTruePositives} method from the superclass and append $second\_event, truePositives>$ in the final results.
+		\item public \textbf{exploreQueryFastStep}(startDate, endDatem Sequence, Map$<Integer, List<AugmentedDetail>>$, position, targetAppID, lastCompletions, isUsersQuery). Performs a fast evaluation of each possible continuation. Used in the /export/fast and  /export/hybrid endpoints. Starts by creating a $List<Proposition>$ which will be the final results. Depending on the position performs the follows:\\
+		\begin{itemize}
+			\item $0<position<query.size$: Intermediate explore. lastEvent is the event in position (position-1). calls method \textbf{getEventFrequencyCounts} passing as event this lastEvent. Then for every EventPairFrequency in the returned values, dismisses the events that has not the given targetID. Creates a Proposition object and adds it the final results if it is interesting. The rest procedure is the same \textbf{comment:} might need to change that
+			\item $position>=query.size$: Forward explore. lastEvent is the last event of the Sequence.
+			\item \textit{the rest}: Prefix explore. Calls the \textbf{getReverseEventFrequencyCounts} method passing as event the first event of the Sequence. The rest procedure is the same \textbf{comment:} might need to change that
+		\end{itemize}
+	
+	\textbf{Below are the private methods that return $List<EventPairFrequency>$}
+	\item private \textbf{getEventFrequencyCounts}(year\_months, queryEvent, isUsersQuery). Creates 2 hashMaps to hold allDurationSums and allCompSums. For every month perform a query in \textit{Cassandra} in the user\_count\_+year\_month for users or dvc in case it is not a usersQuery. This \textit{table} contains $<event\_name, sum\_duration, comp\_count>$ data. Then all the data has been collected, create EventPairFrequency by add as eventPair (queryEvent, eventFound), allDurationSums (Corresponding to this event), allCompCounts corresponding to this event. Sorts reverse and return the list of EventPairFrequency.
+	\item private \textbf{getDetailFrequencyCounts}(year\_months, queryEvent, queryKey, isUsersQuery). We will not discuss this further cause it is not used in our Example.
+	\item private \textbf{getAllPossiblePrecedingEvents}(year\_month, secondEvent, isUsersQuery). All eventPairFrequency will have as first event "n/a". as second the a possible precedingEvents and the 2 counters will be set to 0.0. They query \textit{Cassandra} usr\_idx\_+year\_month or device, by the second field and return all the first events from this query.
+	\item private \textbf{getAllPossibleInternediateEvents}(year\_months, eventFirst, isUsersQuery). It is the opposite of the method above. Query \textit{Cassandra} in the index table, the first field and return all the second events. Again the EventPairFrequency will have "n/a" as first event, eventFound as second and 0.0 in both counters.
+	\item private \textbf{getReverseEventFrequencyCounts}(year\_months, queryEvent, isUsersQuery). Same as \textbf{getEventFrequencyCounts}, but it is just querying a different table in \textit{Cassandra}, the reverse\_usr\_count\_+year\_month.
+	\textbf{And 2 public functions}
+	\item public \textbf{getCountForQueryPair}(startDate, endDate, QueryPair, isUsersQuery). Calls \textbf{getEventFrequencyCounts} for the first event and then counts only the events that have as second event the second event of the pair. Return the counter.
+	\item public \textbf{getEventForEventKeyValueTriplet}(startDate, endDatem event, key, value, isUsersQuery). Uses \textbf{getDetailFrequencyCounts} that will be not discussed in this example.
+\end{itemize}
+\item \textbf{ResponseBuilder}Class responsible for generating a response to any POST query made through the application.
+More specifically, the class returns the following objects depending on the POST query:\\
+\begin{itemize}
+	\item com.fa.funnel.rest.model.QuickStatsResponse for the 'quick\_stats' endpoint
+	\item com.fa.funnel.rest.model.ExploreResponse for the 'explore/{mode}' endpoint
+	\item java.lang.String for the 'export\_completions' endpoint
+\end{itemize}
+\textbf{Fields:} cluster, session, KeyspaceMetadata, cassandra\_keyspace\_name, entityMapping, steps, startDate, endDate, maxDuration, fileHeader, IS\_USERS\_Query
+\textbf{Methods:}\\
+\begin{itemize}
+	\item A basic \textbf{Constructor}, based onthe fields above. Passing a \textbf{Funnel object}, which contains the necessary information.\\
+	\\
+	\textbf{Below are the functions that build a Response to a query}
+	\item public \textbf{buildQuickStatsResponse()}. Returns a QuickStatsResponse, in which is passed the returned $List<Completion>$ from \textbf{getCompletions} method.
+	\item public \textbf{buildExploreRespons}(strPosition, targetAppID). Builds a  com.fa.funnel.rest.model.ExploreResponse object according to the provided funnel and start/end dates. Furthermore, the parameter strPosition	corresponds to the search location inside the funnel. If it is equal to 0, we are searching for preceding events, if it is less than the funnel's step count we are searching for intermediate events and if it is equal to the funnel step count we are searching for following events. This evaluation corresponds to the 'accurate' explore method. First the \textbf{getFollowUps} method is called with the given position and then the result, which is a $List<Proposition>$ is passed in a ExploreResponse object, which finally returned.
+	\item public \textbf{buildExploreResponseFast}(strPosition, targetAppID). Returns a  com.fa.funnel.rest.model.ExploreResponse object according to the provided funnel and start/end dates. Furthermore, the parameter strPosition corresponds to the search location inside the funnel. If it is equal to 0, we are searching for preceding events, if it is less than the funnel's step count we are searching for intermediate events and if it is equal to the funnel step count we are searching for following events. This evaluation corresponds to the 'fast' explore method. First calculates the lastCompletions with \textbf{getCompletionCountOfFullFunnel} and then this int is passed in the \textbf{getFollowUpsFast} method. The returned $List<Proposition>$ is added to the ExploreResponse and returned.
+	\item public \textbf{buildExploreResponseHybrid}(strPosition, targetAppID, strTopK). Returns a link com.fa.funnel.rest.model.ExploreResponse object according to the provided funnel and start/end dates. Furthermore, the parameter strPosition corresponds to the search location inside the funnel. If it is equal to 0, we are searching for preceding events, if it is less than the funnel's step count we are searching for intermediate events and if it is equal to the funnel step count we are searching for following events. This evaluation corresponds to the 'hybrid' explore method where the initial results are evaluated using the 'fast' approach and then strTopK results are evaluated using the 'accurate' approach. First calculates the lastCompletions with \textbf{getCompletionCountOfFullFunnel} method, the resulted int  is passed in the \textbf{getFollowUpsHybrid} method and then the results is passed to a ExploreResponse object, which finally returned.
+	\item public \textbf{buildCSVFile}(path). Builds a CSV file according to the JSON information specified for the 'export\_completions' endpoint. Uses \textbf{getFullRetroactiveCompletions} to get a $List<DetailedCompletion>$, the file is saved in path (parameter) and return its name.\\ \\
+	\textbf{private methods:}\\
+	\item \textbf{copyOriginalStepList}($List<Step>$). A a function that deep copies a list of steps into another.
+	\item \textbf{generateAllSubqueries}($List<List<Step>>$) Creates all the smaller subqueries for this sequence.
+	\item \textbf{getCompletionCountOfFullFunnel}($List<Step>$, startDate, endDate, maxDuration). First simplyfies the sequence of steps, in a way that there are no OR operations, so creates a list of lists of events. Then creates a \textbf{SequenceQueryExplorer} object. Takes one, by one the steps and create a Sequence. Then get all the tuples from \textbf{getQueryTuples()} method of the sequence. The last one will return a $List<QueryPair>$ object. For every QueryPair, we call \textbf{getCountForQueryPair} method of SequenceQueryExplorer object, keep the smaller number and add it. At the end return the sum of the smaller numbers.
+	\item \textbf{getCompletions}($List<Step>$, startDate, endDate, maxDuration). Simplifies and finds all sub-queries with \textbf{simplifySequences and generateAllSubsequeries} methods. For every subquery, creates a \textbf{SequenceQueryEvaluator}, from wich first calls \textbf{evaluateQuery} to find the candidates and then \textbf{findTruePositives} to find the true positives. Then add the true positives in a List and returns them.
+	\item \textbf{getFollowUps}($List<Step>$, startDatem endDate, position, targetAppID, maxDuration). Simplifies the steps, append one by one all the events at the end of the sequence. Creates an object \textbf{SequenceQueryExplorer} from which calls \textbf{exploreQueryAccurateStep} method, which returns a Map of $<String, Map<String, Long>>$. After calculations, a list of Propositions is returned.
+	\item \textbf{getFollowUpsFast}(List$<Step>$, startDate, endDate, position, taretAppID, lastCompletions). Creates an object \textbf{SequenceQueryExplorer} from which calls \textbf{exploreQueryFastStep}. Creates and returns a list of Propositions sorted.
+	\item \textbf{getFollowUpsHybrid}(List$<Step>$, startDate, endDate, position, taretAppID, maxDuration, lastCompletions, topK). Creates an object \textbf{SequenceQueryExplorer} from which calls \textbf{exploreQueryFastStep}. Then for the topK performs \textbf{evaluateQuery} and on the results \textbf{findTruePositives}. Add and return a lost of Proposition.
+	The rest are not for now!!
+\end{itemize}
+\end{itemize}
+\section{Controller}
+This is the place where the requests are being held. For every resource we add the path and what the results are representing.
+\begin{itemize}	
+	\item \textbf{HealthCheckController}, \textit{/health} to get a heartbeat.
+	\item \textbf{FunnelController}, \textit{/funnel}.
+	\begin{itemize}
+		\item \textbf{quickStats}, \textit{/quick\_stats}. Gets the Request body as a \textbf{Funnel Wrapper}. From \textbf{ResponseBuilder} runs \textbf{buildQuickStatsResponse}. Returns a List of, step index which is taking 2 by 2, number of total completions in this time, averageDuration of every completion type and when is the last completed. %write algorithm here
+		\item \textbf{explore}. \textit{/explore/mode}. Gets from request, from, till, position, app\_id, top and FunnelWrapper object. After valid test for every possible mode returns the appropriate builder.\\
+		\begin{itemize}
+			\item \textbf{accurate:} $\rightarrow$ \textbf{buildExploreResponse}. The position, is the index in the funnel, for we which we search for possible continuations. Finds all possible preceedings, or the next event and keeps only the true positives. Returns the proposition base on their count.
+			\item \textbf{fast:} $\rightarrow$ \textbf{buildExploreResponseFast}. Finds the preceedings and compare their count based on the completions of the full funnel. It does not perform the evaluation of the query.
+			\item \textbf{hybrid:} $\rightarrow$ \textbf{buildExploreResponseHybrid}. Uses fast explore to find the top propositions and for the topK (that is given as an input ), performs evaluateQuery and only keeps the true positives.
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
+
+\end{document}
