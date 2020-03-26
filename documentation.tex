@@ -138,9 +138,27 @@ More specifically, the class returns the following objects depending on the POST
 	\item \textbf{copyOriginalStepList}($List<Step>$). A a function that deep copies a list of steps into another.
 	\item \textbf{generateAllSubqueries}($List<List<Step>>$) Creates all the smaller subqueries for this sequence.
 	\item \textbf{getCompletionCountOfFullFunnel}($List<Step>$, startDate, endDate, maxDuration). First simplyfies the sequence of steps, in a way that there are no OR operations, so creates a list of lists of events. Then creates a \textbf{SequenceQueryExplorer} object. Takes one, by one the steps and create a Sequence. Then get all the tuples from \textbf{getQueryTuples()} method of the sequence. The last one will return a $List<QueryPair>$ object. For every QueryPair, we call \textbf{getCountForQueryPair} method of SequenceQueryExplorer object, keep the smaller number and add it. At the end return the sum of the smaller numbers.
-	\item \textbf{getCompletions}($List<Step>$, startDate, endDate, maxDuration). Simplyfies and finds all subqueries with \textbf{simplifySequences and generateAllSubsequeries} methods. For every subquery, creates a \textbf{SequenceQueryEvaluator}, from wich first calls \textbf{evaluateQuery} to find the candidates and then \textbf{findTruePositives} to find the true positives. Then add the true positives in a List and returns them.
+	\item \textbf{getCompletions}($List<Step>$, startDate, endDate, maxDuration). Simplifies and finds all sub-queries with \textbf{simplifySequences and generateAllSubsequeries} methods. For every subquery, creates a \textbf{SequenceQueryEvaluator}, from wich first calls \textbf{evaluateQuery} to find the candidates and then \textbf{findTruePositives} to find the true positives. Then add the true positives in a List and returns them.
+	\item \textbf{getFollowUps}($List<Step>$, startDatem endDate, position, targetAppID, maxDuration). Simplifies the steps, append one by one all the events at the end of the sequence. Creates an object \textbf{SequenceQueryExplorer} from which calls \textbf{exploreQueryAccurateStep} method, which returns a Map of $<String, Map<String, Long>>$. After calculations, a list of Propositions is returned.
+	\item \textbf{getFollowUpsFast}(List$<Step>$, startDate, endDate, position, taretAppID, lastCompletions). Creates an object \textbf{SequenceQueryExplorer} from which calls \textbf{exploreQueryFastStep}. Creates and returns a list of Propositions sorted.
+	\item \textbf{getFollowUpsHybrid}(List$<Step>$, startDate, endDate, position, taretAppID, maxDuration, lastCompletions, topK). Creates an object \textbf{SequenceQueryExplorer} from which calls \textbf{exploreQueryFastStep}. Then for the topK performs \textbf{evaluateQuery} and on the results \textbf{findTruePositives}. Add and return a lost of Proposition.
+	The rest are not for now!!
 \end{itemize}
 \end{itemize}
-
+\section{Controller}
+This is the place where the requests are being held. For every resource we add the path and what the results are representing.
+\begin{itemize}	
+	\item \textbf{HealthCheckController}, \textit{/health} to get a heartbeat.
+	\item \textbf{FunnelController}, \textit{/funnel}.
+	\begin{itemize}
+		\item \textbf{quickStats}, \textit{/quick\_stats}. Gets the Request body as a \textbf{Funnel Wrapper}. From \textbf{ResponseBuilder} runs \textbf{buildQuickStatsResponse}. Returns a List of, step index which is taking 2 by 2, number of total completions in this time, averageDuration of every completion type and when is the last completed. %write algorithm here
+		\item \textbf{explore}. \textit{/explore/mode}. Gets from request, from, till, position, app\_id, top and FunnelWrapper object. After valid test for every possible mode returns the appropriate builder.\\
+		\begin{itemize}
+			\item \textbf{accurate:} $\rightarrow$ \textbf{buildExploreResponse}. The position, is the index in the funnel, for we which we search for possible continuations. Finds all possible preceedings, or the next event and keeps only the true positives. Returns the proposition base on their count.
+			\item \textbf{fast:} $\rightarrow$ \textbf{buildExploreResponseFast}. Finds the preceedings and compare their count based on the completions of the full funnel. It does not perform the evaluation of the query.
+			\item \textbf{hybrid:} $\rightarrow$ \textbf{buildExploreResponseHybrid}. Uses fast explore to find the top propositions and for the topK (that is given as an input ), performs evaluateQuery and only keeps the true positives.
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
 
 \end{document}
