@@ -56,7 +56,7 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler
         allEventsPerSession = new ConcurrentHashMap<String, List<TimestampedEvent>>();
         for (String year_month : year_months) 
         {
-            String tableName = (!isUsersQuery ? "dvc_idx_" + year_month : "usr_idx_" + year_month);
+            String tableName = (!isUsersQuery ? "dvc_idx_" + year_month : "usr_idx_" + year_month); //creates table name
             if (ks.getTable(tableName) == null) // If the keyspace doesn't contain the corresponding table, move on to the next month
                 continue;
 
