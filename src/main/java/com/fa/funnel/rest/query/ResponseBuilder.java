@@ -424,7 +424,7 @@ public class ResponseBuilder
                 continue;
 
 //            Set<String> candidates = sqev.evaluateQuery(start_date, end_date, query, queryDetails, IS_USERS_QUERY);
-            Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, queryDetails,tableName);//TODO: change this to create it
+            Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, queryDetails,tableName);
 
             Map<String, Long> truePositives = sqev.findTruePositives(query, candidates, maxDuration);
 
