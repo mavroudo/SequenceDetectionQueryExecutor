@@ -11,6 +11,7 @@ public class Funnel
 {
     private List<Step> steps;
     private long maxDuration;
+    private String logName;
 
     public void setSteps(List<Step> steps)
     {
@@ -23,6 +24,14 @@ public class Funnel
     }
 
     public List<Step> getSteps() { return this.steps; }
+
+    public String getLogName() {
+        return logName;
+    }
+
+    public void setLogName(String logName) {
+        this.logName = logName;
+    }
 
     public long getMaxDuration() { return this.maxDuration; }
 
@@ -43,6 +52,9 @@ public class Funnel
         json.append("],");
         json.append("max_duration: ");
         json.append(maxDuration);
+        json.append(",");
+        json.append("log_name: ");
+        json.append(logName);
         json.append("}");
         return json.toString();
     }

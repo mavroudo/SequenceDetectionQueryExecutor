@@ -42,6 +42,7 @@ public class ResponseBuilder
 
     private static Map<String, List<String>> entityMapping;
     private static List<Step> steps;
+    private static String tableLogName;
     private Date start_date;
     private Date end_date;
     private final long maxDuration;
@@ -72,6 +73,7 @@ public class ResponseBuilder
         entityMapping = Collections.synchronizedMap(new HashMap<String, List<String>>());
         
         steps = funnel.getSteps();
+        tableLogName=funnel.getLogName().toLowerCase().replace(".",",").split(",")[0].replace(" ","_")+"_idx";
         
         IS_USERS_QUERY = isUsersQuery(steps, null);
 
@@ -96,7 +98,7 @@ public class ResponseBuilder
     public QuickStatsResponse buildQuickStatsResponse() 
     {
         long tStart = System.currentTimeMillis();
-        List<Completion> completions = getCompletions(steps, start_date, end_date, maxDuration);
+        List<Completion> completions = getCompletions(steps, start_date, end_date, maxDuration,tableLogName);
         long tEnd = System.currentTimeMillis();
         System.out.println("Time Completions (Quick Stats): " + (tEnd - tStart) / 1000.0 + " seconds.");
 
@@ -296,7 +298,50 @@ public class ResponseBuilder
                 allQueries.put(subquery, subdetails);
             }
         }
-        
+
+        return allQueries;
+    }
+
+    private Map<Sequence, Map<Integer, List<AugmentedDetail>>> generateAllSubqueriesWithoutAppName(List<List<Step>> listOfSteps)
+    {
+        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = new HashMap<Sequence, Map<Integer, List<AugmentedDetail>>>();
+
+        for (List<Step> list : listOfSteps)
+        {
+            List<Sequence> allQueriesForList = new ArrayList<Sequence>(); // This holds all the possible subqueries
+            List<Map<Integer, List<AugmentedDetail>>> allDetailsForList = new ArrayList<Map<Integer, List<AugmentedDetail>>>(); // This holds all the details for all sub-queries
+
+            for (int i = 0; i < list.size(); i++)
+            {
+                Sequence subquery;
+                Map<Integer, List<AugmentedDetail>> subdetails;
+                if (i == 0)
+                {
+                    subquery = new Sequence();
+                    subdetails = new HashMap<Integer, List<AugmentedDetail>>();
+                }
+                else
+                {
+                    subquery = new Sequence(allQueriesForList.get(i - 1));
+                    subdetails = allDetailsForList.get(i - 1).entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> new ArrayList<AugmentedDetail>(e.getValue())));
+                }
+
+                Step step = list.get(i);
+
+                String eventName = step.getMatchName().get(0).getLogName();
+
+                List<AugmentedDetail> details = transformToAugmentedDetails(eventName, step.getMatchDetails());
+
+                subquery.appendToSequence(new Event(eventName, new TreeSet<AugmentedDetail>(details)));
+
+                if (details.size() > 0)
+                    subdetails.put(i, details);
+                allQueriesForList.add(subquery);
+                allDetailsForList.add(subdetails);
+                allQueries.put(subquery, subdetails);
+            }
+        }
+
         return allQueries;
     }
     
@@ -359,11 +404,12 @@ public class ResponseBuilder
         return totalCount;
     }
 
-    private List<Completion> getCompletions(List<Step> steps, Date start_date, Date end_date, long maxDuration)
+    private List<Completion> getCompletions(List<Step> steps, Date start_date, Date end_date, long maxDuration,String tableName)
     {
         List<List<Step>> listOfSteps = simplifySequences(steps);
         
-        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueries(listOfSteps);
+//        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueries(listOfSteps);
+        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
 
         Map<Integer, Map<String, Long>> allTruePositives = new TreeMap<Integer, Map<String, Long>>();
         
@@ -377,7 +423,9 @@ public class ResponseBuilder
             if (query.getSize() == 1)
                 continue;
 
-            Set<String> candidates = sqev.evaluateQuery(start_date, end_date, query, queryDetails, IS_USERS_QUERY);
+//            Set<String> candidates = sqev.evaluateQuery(start_date, end_date, query, queryDetails, IS_USERS_QUERY);
+            Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, queryDetails,tableName);//TODO: change this to create it
+
             Map<String, Long> truePositives = sqev.findTruePositives(query, candidates, maxDuration);
 
             int step = query.getSize()-1;
