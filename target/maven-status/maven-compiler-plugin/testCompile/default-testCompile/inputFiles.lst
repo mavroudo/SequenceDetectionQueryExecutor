@@ -1,6 +1,6 @@
-C:\Users\Andrew\Dropbox\NetBeansProjects\fa-delab-dev-funnel-pairs\src\test\java\com\fa\funnel\rest\controller\FunnelControllerTest.java
-C:\Users\Andrew\Dropbox\NetBeansProjects\fa-delab-dev-funnel-pairs\src\test\java\com\fa\healthcheck\rest\controller\HealthCheckControllerTest.java
-C:\Users\Andrew\Dropbox\NetBeansProjects\fa-delab-dev-funnel-pairs\src\test\java\com\fa\funnel\rest\util\UtilitiesTest.java
-C:\Users\Andrew\Dropbox\NetBeansProjects\fa-delab-dev-funnel-pairs\src\test\java\com\fa\funnel\rest\model\EventPairTest.java
-C:\Users\Andrew\Dropbox\NetBeansProjects\fa-delab-dev-funnel-pairs\src\test\java\com\fa\funnel\rest\model\SequenceTest.java
-C:\Users\Andrew\Dropbox\NetBeansProjects\fa-delab-dev-funnel-pairs\src\test\java\com\fa\funnel\rest\query\ResponseBuilderTest.java
+/home/mavroudo/Desktop/FollowUpsClient/src/test/java/com/fa/funnel/rest/controller/FunnelControllerTest.java
+/home/mavroudo/Desktop/FollowUpsClient/src/test/java/com/fa/funnel/rest/util/UtilitiesTest.java
+/home/mavroudo/Desktop/FollowUpsClient/src/test/java/com/fa/healthcheck/rest/controller/HealthCheckControllerTest.java
+/home/mavroudo/Desktop/FollowUpsClient/src/test/java/com/fa/funnel/rest/model/SequenceTest.java
+/home/mavroudo/Desktop/FollowUpsClient/src/test/java/com/fa/funnel/rest/query/ResponseBuilderTest.java
+/home/mavroudo/Desktop/FollowUpsClient/src/test/java/com/fa/funnel/rest/model/EventPairTest.java

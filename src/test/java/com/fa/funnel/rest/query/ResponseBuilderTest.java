@@ -9,9 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
-
+@Ignore
 public class ResponseBuilderTest
 {
     static List<List<Step>> results;

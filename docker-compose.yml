@@ -4,14 +4,14 @@ services:
     build: .
     stdin_open: true
     environment:
-        cassandra.keyspace: followapps
+        cassandra.keyspace: sequenceetection
         cassandra.max_requests_per_local_connection: 32768
         cassandra.max_requests_per_remote_connection: 22000
         cassandra.connections_per_host: 1000
         cassandra.max_queue_size: 1024
         cassandra.connection_timeout: 30000
         cassandra.read_timeout: 30000
-        cassandra.contactpoints: "34.240.42.21"
+        cassandra.contactpoints: "rabbit.csd.auth.gr"
         cassandra.port: "9042"
         cassandra.user: "cassandra"
         cassandra.password: "cassandra"
