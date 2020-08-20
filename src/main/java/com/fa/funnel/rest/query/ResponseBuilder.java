@@ -90,6 +90,19 @@ public class ResponseBuilder
         }
         maxDuration = funnel.getMaxDuration();
     }
+
+    public DetectionResponse buildDetectionResponse()
+    {
+        long tStart = System.currentTimeMillis();
+        List<DetectedSequence> ids = getDetections(steps, start_date, end_date, maxDuration,tableLogName);
+        long tEnd = System.currentTimeMillis();
+        System.out.println("Time Completions (Detection): " + (tEnd - tStart) / 1000.0 + " seconds.");
+
+        DetectionResponse result = new DetectionResponse();
+        result.setIds(ids);
+
+        return result;
+    }
     
     /**
      * Builds a {@link com.fa.funnel.rest.model.QuickStatsResponse} object according to the provided funnel and start/end dates.
@@ -403,6 +416,42 @@ public class ResponseBuilder
 
         return totalCount;
     }
+
+    private List<DetectedSequence> getDetections(List<Step> steps, Date start_date, Date end_date, long maxDuration,String tableName)
+    {
+        List<List<Step>> listOfSteps = simplifySequences(steps);
+
+//        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueries(listOfSteps);
+        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
+
+        Map<Integer, Map<String, Lifetime>> allTruePositives = new TreeMap<Integer, Map<String, Lifetime>>();
+
+        List<DetectedSequence> detectedSequences=new ArrayList<>();
+
+        for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet())
+        {
+            SequenceQueryEvaluator sqev = new SequenceQueryEvaluator(cluster, session, ks, cassandra_keyspace_name);
+
+            Sequence query = entry.getKey();
+            Map<Integer, List<AugmentedDetail>> queryDetails = entry.getValue();
+
+            if (query.getSize() == 1)
+                continue;
+
+            Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, queryDetails,tableName);
+            Map<String, Lifetime> truePositives = sqev.findTruePositivesAndLifetime(query, candidates, maxDuration);
+            detectedSequences.add(new DetectedSequence(truePositives,query.toString()));
+            int step = query.getSize()-1;
+            if (!allTruePositives.containsKey(step))
+                allTruePositives.put(step, new HashMap<String, Lifetime>());
+            allTruePositives.get(step).putAll(truePositives);
+
+        }
+
+        return detectedSequences;
+    }
+
+
 
     private List<Completion> getCompletions(List<Step> steps, Date start_date, Date end_date, long maxDuration,String tableName)
     {
