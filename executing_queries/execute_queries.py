@@ -8,8 +8,11 @@ Created on Mon Aug 17 19:32:51 2020
 import requests
 import sys
 import time
+from datetime import datetime
 
 url ="http://localhost:8080/api/funnel/quick_stats"
+
+url2 ="http://localhost:8080/api/funnel/detect"
 
 def create_query(steps,log_name,max_duration=0):
     #create steps
@@ -32,9 +35,25 @@ def execute_query(steps,log_name):
     resp=requests.post(url=url,json=create_query(steps,log_name))
     return resp.ok
     
-
-steps=["W_Validate application","A_Cancelled","W_Validate application"]
-log_name="BPI Challenge 2017.xes"
+def read_sequence(log_file):
+    if log_file.split(".")[1]=="withTimestamp":
+        data=[]
+        with open(logfile,"r") as f:
+            for l in f:
+                d=[]
+                t=[]
+                for ev in l.replace("\n","").split(","):
+                    d+=[ev.split("/delab/")[0]]
+                    
+                    t+=[datetime.strptime(ev.split("/delab/")[1], "%Y-%m-%d %H:%M:%S")]
+                data.append([x for _, x in sorted(zip(t,d), key=lambda pair: pair[0])])
+        return [(i,",".join(d)) for i,d in enumerate(data)]
+#[log[3640][i]["concept:name"] for i in range(len(log[3640]))]
+#steps=["W_Assess potential fraud","O_Refused","O_Created","O_Returned","A_Incomplete"]
+#steps=["O_Created","A_Incomplete","O_Returned"]
+steps=["J8CSBA7P","DQOCI5OS","NRVLNTUG"]
+logfile="logTest.withTimestamp"
+#log_name="BPI Challenge 2017.xes"
 
 if __name__ == "__main__":  
     arguments=sys.argv
