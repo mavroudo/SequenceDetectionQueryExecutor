@@ -1,12 +1,16 @@
 package com.fa.funnel.rest.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Represents a Proposition corresponding to a continuation provided by the {@code explore/*} endpoint
  * @author Andreas Kosmatopoulos
  */
 public class Proposition implements Comparable<Proposition>
 {
+    @JsonIgnore
     private int applicationID;
+    @JsonIgnore
     private int logType;
     private String logName;
     private int completions;
