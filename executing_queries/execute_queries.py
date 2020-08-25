@@ -14,6 +14,7 @@ url ="http://localhost:8080/api/funnel/quick_stats"
 
 url2 ="http://localhost:8080/api/funnel/detect"
 
+url2 ="http://localhost:8080/api/funnel/explore/accurate"
 def create_query(steps,log_name,max_duration=0):
     #create steps
     #add max duration optional
@@ -51,8 +52,8 @@ def read_sequence(log_file):
 #[log[3640][i]["concept:name"] for i in range(len(log[3640]))]
 #steps=["W_Assess potential fraud","O_Refused","O_Created","O_Returned","A_Incomplete"]
 #steps=["O_Created","A_Incomplete","O_Returned"]
-steps=["J8CSBA7P","DQOCI5OS","NRVLNTUG"]
-logfile="logTest.withTimestamp"
+steps=["V1TEB7JW","6VSH0CAX","V1TEB7JW"]
+logfile="ten.withTimestamp"
 #log_name="BPI Challenge 2017.xes"
 
 if __name__ == "__main__":  
