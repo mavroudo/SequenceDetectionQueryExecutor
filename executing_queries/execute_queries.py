@@ -14,7 +14,7 @@ url ="http://localhost:8080/api/funnel/quick_stats"
 
 url2 ="http://localhost:8080/api/funnel/detect"
 
-url2 ="http://localhost:8080/api/funnel/explore/accurate"
+url3 ="http://localhost:8080/api/funnel/explore/accurate"
 def create_query(steps,log_name,max_duration=0):
     #create steps
     #add max duration optional
