@@ -21,8 +21,8 @@ com/fa/funnel/rest/query/SequenceQueryEvaluator$2.class
 com/fa/funnel/rest/model/QuickStatsResponse.class
 com/fa/funnel/rest/model/FunnelWrapper$Builder.class
 com/fa/funnel/rest/model/Proposition.class
-com/fa/funnel/rest/model/Status.class
 com/fa/funnel/rest/Application.class
+com/fa/funnel/rest/model/Status.class
 com/fa/funnel/rest/query/SequenceQueryHandler$CandSessionsCallback.class
 com/fa/funnel/rest/query/SequenceQueryExplorer.class
 com/fa/funnel/rest/model/Step.class

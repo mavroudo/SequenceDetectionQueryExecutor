@@ -1,13 +1,14 @@
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/Detail.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/spring/exception/BadRequestException.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/AugmentedDetail.java
-/home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/QueryPair.java
-/home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/EventPairFrequency.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/ExceptionResolverConfiguration.java
+/home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/EventPairFrequency.java
+/home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/QueryPair.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/CassandraConfiguration.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/DetectionResponse.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/Lifetime.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/controller/HealthCheckController.java
+/home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/query/SequenceExplorer.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/DetailedCompletion.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/query/SequenceQueryExplorer.java
 /home/mavroudo/Desktop/FollowUpsClient/src/main/java/com/fa/funnel/rest/model/Sequence.java
