@@ -202,7 +202,7 @@ public class ResponseBuilder {
 
         long tStart = System.currentTimeMillis();
         int lastCompletions = getCompletionCountOfFullFunnel(steps, start_date, end_date, maxDuration);
-        List<Proposition> followUps = getFollowUpsHybrid(steps, start_date, end_date, position, targetAppID, maxDuration, lastCompletions, topK);
+        List<Proposition> followUps = getFollowUpsHybrid(steps, start_date, end_date,tableLogName, position, targetAppID, maxDuration, lastCompletions, topK);
         long tEnd = System.currentTimeMillis();
         System.out.println("Time Followups Hybrid: " + (tEnd - tStart) / 1000.0 + " seconds.");
 
@@ -610,7 +610,7 @@ public class ResponseBuilder {
         return results;
     }
 
-    private List<Proposition> getFollowUpsHybrid(List<Step> steps, Date start_date, Date end_date, int position, String targetAppID, long maxDuration, int lastCompletions, int topK) {
+    private List<Proposition> getFollowUpsHybrid(List<Step> steps, Date start_date, Date end_date,String table_name, int position, String targetAppID, long maxDuration, int lastCompletions, int topK) {
         List<List<Step>> listOfSteps = simplifySequences(steps);
 
         List<Sequence> allQueries = new ArrayList<Sequence>();
@@ -623,7 +623,7 @@ public class ResponseBuilder {
             for (int i = 0; i < simpSteps.size(); i++) {
                 Step step = simpSteps.get(i);
 
-                String eventName = step.getMatchName().get(0).getApplicationID() + "_" + step.getMatchName().get(0).getLogType() + "_" + step.getMatchName().get(0).getLogName();
+                String eventName =step.getMatchName().get(0).getLogName();
 
                 List<AugmentedDetail> stepdetails = transformToAugmentedDetails(eventName, step.getMatchDetails());
 
@@ -657,7 +657,7 @@ public class ResponseBuilder {
 
                     query.appendToSequence(new Event(event));
 
-                    Set<String> candidates = sqev.evaluateQuery(start_date, end_date, query, details, IS_USERS_QUERY);
+                    Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, details, table_name);
                     Map<String, Long> truePositives = sqev.findTruePositives(query, candidates, maxDuration);
 
                     Long oldMaxDate = allTruePositives.get("maxDate");
