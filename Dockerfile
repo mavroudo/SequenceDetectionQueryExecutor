@@ -14,4 +14,4 @@ RUN mvn dependency:resolve
 ADD src /code/src
 RUN mvn package
 
-CMD ["java", "-jar", "target/fa-delab-dev-funnel-pairs-0.1.jar"]
+CMD ["java", "-jar", "target/sd-delab-dev-funnel-pairs-0.1.jar"]

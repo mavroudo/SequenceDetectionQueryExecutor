@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.fa.funnel.rest</groupId>
-    <artifactId>fa-delab-dev-funnel-pairs</artifactId>
+    <groupId>com.sequence.detection.rest</groupId>
+    <artifactId>sd-delab-dev-funnel-pairs</artifactId>
     <version>0.1</version>
 
     <parent>
@@ -115,5 +115,5 @@
             <url>https://repo.spring.io/libs-release</url>
         </pluginRepository>
     </pluginRepositories>
-    <name>fa-delab-dev-funnel-pairs</name>
+    <name>sd-delab-dev-funnel-pairs</name>
 </project>

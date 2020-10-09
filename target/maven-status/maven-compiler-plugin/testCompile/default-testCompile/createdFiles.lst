@@ -1,6 +1,4 @@
-com/fa/healthcheck/rest/controller/HealthCheckControllerTest.class
-com/fa/funnel/rest/util/UtilitiesTest.class
-com/fa/funnel/rest/model/EventPairTest.class
-com/fa/funnel/rest/controller/FunnelControllerTest.class
-com/fa/funnel/rest/model/SequenceTest.class
-com/fa/funnel/rest/query/ResponseBuilderTest.class
+com/sequence/detection/rest/model/EventPairTest.class
+com/sequence/detection/rest/util/UtilitiesTest.class
+com/sequence/detection/rest/model/SequenceTest.class
+com/sequence/detection/rest/controller/HealthCheckControllerTest.class
