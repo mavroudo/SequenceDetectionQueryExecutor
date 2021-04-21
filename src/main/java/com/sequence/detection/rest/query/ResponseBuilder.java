@@ -31,17 +31,17 @@ import com.sequence.detection.rest.CassandraConfiguration;
  * @author Andreas Kosmatopoulos, Datalab, A.U.TH.
  */
 public class ResponseBuilder {
-    private final Cluster cluster;
-    private final Session session;
-    private KeyspaceMetadata ks;
-    private final String cassandra_keyspace_name;
+    protected final Cluster cluster;
+    protected final Session session;
+    protected KeyspaceMetadata ks;
+    protected final String cassandra_keyspace_name;
 
-    private static List<Step> steps;
-    private static String tableLogName;
-    private static String table_name;
-    private Date start_date;
-    private Date end_date;
-    private final long maxDuration;
+    protected static List<Step> steps;
+    protected static String tableLogName;
+    protected static String table_name;
+    protected Date start_date;
+    protected Date end_date;
+    protected final long maxDuration;
     /**
      * Constructs a ResponseBuilder object. Whenever a new query comes through the application a new ResponseBuilder object is created tailored to the specific query (i.e. specific funnel and start/end dates).
      * The constructor parses the funnel steps and handles the funnel start and end dates.
@@ -218,7 +218,7 @@ public class ResponseBuilder {
 
     }
 
-    private Map<Sequence, Map<Integer, List<AugmentedDetail>>> generateAllSubqueriesWithoutAppName(List<List<Step>> listOfSteps) {
+    protected Map<Sequence, Map<Integer, List<AugmentedDetail>>> generateAllSubqueriesWithoutAppName(List<List<Step>> listOfSteps) {
         Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = new HashMap<>();
 
         for (List<Step> list : listOfSteps) {

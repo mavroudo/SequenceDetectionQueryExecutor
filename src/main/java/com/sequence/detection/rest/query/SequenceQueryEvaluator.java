@@ -57,7 +57,7 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
     }
 
 
-    private Set<String> executeQuery(String tableName, List<QueryPair> query_tuples, Sequence query, Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails) {
+    protected Set<String> executeQuery(String tableName, List<QueryPair> query_tuples, Sequence query, Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails) {
         final ExecutorService epThread = Executors.newSingleThreadExecutor();
         final ExecutorService detThread = Executors.newSingleThreadExecutor();
 
