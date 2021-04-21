@@ -65,7 +65,7 @@ public class SetContainmentResponseBuilder extends ResponseBuilder {
             Map<QueryPair,List<Long>> inverted_lists = sqev.getIdsForEveryPair(start_date, end_date, query, queryDetails, tableName);
             List<Long> candidates = LCJoin.crossCuttingBasedIntersection( new ArrayList<List<Long>>(inverted_lists.values()) );
 
-            sqev.verifyPattern(candidates,query,this.tableSequence);
+            sqev.verifyPattern(candidates,query,this.tableSequence,start_date,end_date,"skitillnextmatch");
 
             System.out.println("hello");
 
