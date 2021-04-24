@@ -97,7 +97,7 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
         for(Long candidate: candidates){
             ResultSet rs = session.execute("SELECT " + "events" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE sequence_id = ? ", String.valueOf(candidate));
             Row row = rs.one();
-            List<String> activities = row.getList("sequences", String.class); //TODO: this is not correct, change it to tables name
+            List<String> activities = row.getList("events", String.class);
             List<String> events = this.getEvents(activities,start_date,end_date);
             if(VerifyPattern.verifyPattern(query,events,strategy)){
                 containQuery.add(candidate);
@@ -135,7 +135,7 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
             }
         }
         if (end ==0){
-            end=timestamps.size()-1;
+            end=timestamps.size();
         }
         return events.subList(start,end);
     }

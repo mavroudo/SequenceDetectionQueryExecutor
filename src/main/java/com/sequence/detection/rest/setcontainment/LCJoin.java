@@ -14,6 +14,9 @@ public class LCJoin {
         List<Long> containElement ;
         List<Long> greatestElement ;
         List<Long> results = new ArrayList<>();
+        if(invertedLists.isEmpty()){
+            return results;
+        }
         while (!endOfList) {
             containElement = new ArrayList<>();
             greatestElement = new ArrayList<>();

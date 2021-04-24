@@ -2,7 +2,7 @@ package com.sequence.detection.rest.controller;
 
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.query.ResponseBuilder;
-import com.sequence.detection.rest.setcontainment.SetContainmentResponseBuilder;
+import com.sequence.detection.rest.setcontainment.DetectionResponseNoTime;
 import com.sequence.detection.rest.spring.exception.BadRequestException;
 import com.sequence.detection.rest.util.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.*;
+import com.sequence.detection.rest.setcontainment.SetContainmentResponseBuilder;
 
 /**
  * The FunnelController class receives (through the JSON API) a user-provided funnel along with its method of execution.
@@ -67,6 +68,7 @@ public class FunnelController {
     public ResponseEntity<MappingJacksonValue>
     setContainment(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
                    @RequestParam(value = "till", required = false, defaultValue = "") String till,
+                   @RequestParam(value = "strategy", required = false, defaultValue = "skiptillnextmatch") String strategy,
                    @RequestBody FunnelWrapper funnelWrapper){
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
@@ -88,10 +90,10 @@ public class FunnelController {
                 cassandraOperations.getSession(),
                 cassandraOperations.getSession().getCluster().getMetadata().getKeyspace(environment.getProperty("cassandra_keyspace")),
                 environment.getProperty("cassandra_keyspace"),
-                funnel, from, till
+                funnel, from, till, strategy
         );
 
-        DetectionResponse response = responseBuilder.buildDetectionResponse();
+        DetectionResponseNoTime response = responseBuilder.buildDetectionResponseNoTime();
 
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
 
