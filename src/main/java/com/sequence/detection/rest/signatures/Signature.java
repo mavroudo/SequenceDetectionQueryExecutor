@@ -1,91 +1,92 @@
-package com.sequence.detection.rest.setcontainment;
+package com.sequence.detection.rest.signatures;
 
 import com.datastax.driver.core.*;
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.sequence.detection.rest.model.AugmentedDetail;
+import com.sequence.detection.rest.model.Event;
+import com.sequence.detection.rest.model.EventPair;
 import com.sequence.detection.rest.model.QueryPair;
 import com.sequence.detection.rest.model.Sequence;
-import com.sequence.detection.rest.query.SequenceQueryEvaluator;
 import com.sequence.detection.rest.query.SequenceQueryHandler;
 import com.sequence.detection.rest.util.VerifyPattern;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
+public class Signature extends SequenceQueryHandler {
 
-    /**
-     * Constructor
-     *
-     * @param cluster                 The cluster instance
-     * @param session                 The session instance
-     * @param ks                      The keyspace metadata instance
-     * @param cassandra_keyspace_name The keyspace name
-     */
-    public SetContainmentSequenceQueryEvaluator(Cluster cluster, Session session, KeyspaceMetadata ks, String cassandra_keyspace_name) {
+    private List<EventPair> pairs;
+    private List<String> events;
+    private String cassandra_keyspace_name;
+    private String tableName_idx;
+    private String tableName_seq;
+    private Session session;
+
+
+    public Signature(Cluster cluster, Session session, KeyspaceMetadata ks, String cassandra_keyspace_name, String tableName_meta, String tableName_idx, String tableName_seq) {
         super(cluster, session, ks, cassandra_keyspace_name);
+        this.cassandra_keyspace_name = cassandra_keyspace_name;
+        this.tableName_idx = tableName_idx;
+        this.tableName_seq=tableName_seq;
+        this.session = session;
+        //query the metadata
+        ResultSet rs = session.execute("select * from " + cassandra_keyspace_name + "." + tableName_meta);
+        List<Row> rows = rs.all();
+        this.pairs = new ArrayList<>();
+        this.events = new ArrayList<>();
+        for (Row row : rows) {
+            if (row.getString(0).equals("pairs")) {
+                for (String pair : row.getList(1, String.class)) {
+                    pairs.add(new EventPair(pair.split(",")[0], pair.split(",")[1]));
+                }
+            } else if (row.getString(0).equals("events")) {
+                events = row.getList(1, String.class);
+            }
+        }
+
 
     }
 
-    public Map<QueryPair, List<Long>> getIdsForEveryPair(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> allDetails, String tableName) {
-        HashMap<QueryPair, List<Long>> allCandidates = new HashMap<>();
-        List<QueryPair> query_tuples = query.getQueryTuplesConcequtive();
-        if (query_tuples.isEmpty())
-            return allCandidates;
-        ConcurrentHashMap<QueryPair, List<String>> allIdsPerPair = new ConcurrentHashMap<>();
-        if (ks.getTable(tableName) == null)
-            return allCandidates;
-
-        Map<QueryPair, List<Long>> candidates = executeQuery(tableName, query_tuples, query, start_date, end_date, allDetails);
-        allCandidates.putAll(candidates);
-        return allCandidates;
+    private HashSet<Integer> findPositionsWith1(Sequence s) {
+        HashSet<Integer> has = new HashSet<>();
+        for (Event event : s.getList()) {
+            has.add(events.indexOf(event.getName()));
+        }
+        for (QueryPair qp : s.getQueryTuples()) {
+            has.add(pairs.indexOf(new EventPair(qp.getFirst().getName(), qp.getSecond().getName())) + events.size());
+        }
+        return has;
     }
 
-    protected Map<QueryPair, List<Long>> executeQuery(String tableName, List<QueryPair> query_tuples, Sequence query, Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails) {
-        final ExecutorService epThread = Executors.newSingleThreadExecutor();
-        final ExecutorService detThread = Executors.newSingleThreadExecutor();
+    private String createQuery(Set<Integer> p) {
+        StringBuilder s = new StringBuilder();
+        Iterator iter = p.iterator();
+        List<String> conditions = new ArrayList<>();
+        s.append("Select sequence_ids from ").append(this.cassandra_keyspace_name).append(".").append(this.tableName_idx).append(" where");
 
-        final CountDownLatch doneSignal; // The countdown will reach zero once all threads have finished their task
-        doneSignal = new CountDownLatch(Math.max(query_tuples.size() + allDetails.size() - 1, 0));
-
-        ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event1_name = ? AND event2_name = ? ", query_tuples.get(0).getFirst().getName(), query_tuples.get(0).getSecond().getName());
-        Row row = rs.one();
-
-        HashMap<QueryPair, List<Long>> firstResults = new HashMap<>();
-        if (row != null) {
-            List<String> first = row.getList("sequences", String.class);
-            firstResults.put(query_tuples.get(0), first.stream().map(Long::parseLong).collect(Collectors.toList()));
+        while (iter.hasNext()){
+            conditions.add(" signature["+iter.next().toString()+"]="+ "'1' ");
         }
-        Map<QueryPair, List<Long>> candidates = new ConcurrentHashMap<>(firstResults);
+        s.append(String.join("and",conditions)).append("ALLOW FILTERING ;");
+        return s.toString();
+    }
 
-        for (QueryPair ep : query_tuples) // Query (async) for all (but the first) event triples of the query
-        {
-            if (query_tuples.get(0) == ep)
-                continue;
-
-            ResultSetFuture resultSetFuture = session.executeAsync("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event1_name = ? AND event2_name = ?", ep.getFirst().getName(), ep.getSecond().getName());
-            Futures.addCallback(resultSetFuture, new IdsCallback(candidates, query, ep, start_date, end_date, doneSignal, "sequences"), epThread);
+    public List<Long> executeQuery(Sequence s, Date start_date, Date end_date, String strategy){
+        List<Long> candidates = new ArrayList<>();
+        String query = createQuery(findPositionsWith1(s));
+        System.out.println(query);
+        ResultSet rs = this.session.execute(query);
+        for (Row r : rs.all()){
+            for (String c :r.getList(0,String.class)){
+                candidates.add(Long.valueOf(c));
+            }
         }
 
-        try {
-            doneSignal.await(); // Wait until all async queries have finished
-        } catch (InterruptedException ex) {
-            Logger.getLogger(SequenceQueryEvaluator.class.getName()).log(Level.SEVERE, null, ex);
-        }
 
-        epThread.shutdown();
-        detThread.shutdown();
+        return this.verifyPattern(candidates,s,this.tableName_seq,start_date,end_date,strategy);
 
-        return candidates;
     }
 
     public List<Long> verifyPattern(List<Long> candidates, Sequence query, String tableName, Date start_date, Date end_date,String strategy) {
@@ -122,7 +123,6 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
             events.add(eventName);
             timestamps.add(date);
         }
-
 
         int start = 0;
         int end =0;
@@ -184,5 +184,6 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
             doneSignal.countDown();
         }
     }
+
 
 }

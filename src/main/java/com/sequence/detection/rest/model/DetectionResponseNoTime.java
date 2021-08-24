@@ -1,8 +1,6 @@
-package com.sequence.detection.rest.setcontainment;
+package com.sequence.detection.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sequence.detection.rest.model.DetectedSequence;
-import com.sequence.detection.rest.model.DetectionResponse;
 
 import java.util.List;
 import java.util.Objects;

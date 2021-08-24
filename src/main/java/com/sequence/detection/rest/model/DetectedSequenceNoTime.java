@@ -1,4 +1,4 @@
-package com.sequence.detection.rest.setcontainment;
+package com.sequence.detection.rest.model;
 import java.util.List;
 
 public class DetectedSequenceNoTime {

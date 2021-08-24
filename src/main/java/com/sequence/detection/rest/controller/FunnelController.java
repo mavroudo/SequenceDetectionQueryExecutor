@@ -2,7 +2,8 @@ package com.sequence.detection.rest.controller;
 
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.query.ResponseBuilder;
-import com.sequence.detection.rest.setcontainment.DetectionResponseNoTime;
+import com.sequence.detection.rest.model.DetectionResponseNoTime;
+import com.sequence.detection.rest.signatures.SignaturesResponseBuilder;
 import com.sequence.detection.rest.spring.exception.BadRequestException;
 import com.sequence.detection.rest.util.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,12 +65,13 @@ public class FunnelController {
         return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
 
     }
+
     @RequestMapping(value = "/setcontainment", method = RequestMethod.POST)
     public ResponseEntity<MappingJacksonValue>
     setContainment(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
                    @RequestParam(value = "till", required = false, defaultValue = "") String till,
                    @RequestParam(value = "strategy", required = false, defaultValue = "skiptillnextmatch") String strategy,
-                   @RequestBody FunnelWrapper funnelWrapper){
+                   @RequestBody FunnelWrapper funnelWrapper) {
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
 
@@ -104,9 +106,9 @@ public class FunnelController {
     @RequestMapping(value = "/signatures", method = RequestMethod.POST)
     public ResponseEntity<MappingJacksonValue>
     signatures(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
-                   @RequestParam(value = "till", required = false, defaultValue = "") String till,
-                   @RequestParam(value = "strategy", required = false, defaultValue = "skiptillnextmatch") String strategy,
-                   @RequestBody FunnelWrapper funnelWrapper) {
+               @RequestParam(value = "till", required = false, defaultValue = "") String till,
+               @RequestParam(value = "strategy", required = false, defaultValue = "skiptillnextmatch") String strategy,
+               @RequestBody FunnelWrapper funnelWrapper) {
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
 
@@ -123,10 +125,15 @@ public class FunnelController {
         System.out.println("Till date: " + till);
         System.out.println(funnel);
 
-
-
-
-        return new ResponseEntity<>(HttpStatus.OK);
+        SignaturesResponseBuilder responseBuilder = new SignaturesResponseBuilder(cassandraOperations.getSession().getCluster(),
+                cassandraOperations.getSession(),
+                cassandraOperations.getSession().getCluster().getMetadata().getKeyspace(environment.getProperty("cassandra_keyspace")),
+                environment.getProperty("cassandra_keyspace"),
+                funnel, from, till, strategy
+        );
+        DetectionResponseNoTime response = responseBuilder.buildDetectionResponseNoTime();
+        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
     }
 
 
@@ -248,7 +255,6 @@ public class FunnelController {
         return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
 
     }
-
 
 
 //    /**

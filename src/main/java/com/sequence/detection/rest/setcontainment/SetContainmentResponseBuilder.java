@@ -6,7 +6,6 @@ import com.datastax.driver.core.Session;
 import com.sequence.detection.rest.CassandraConfiguration;
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.query.ResponseBuilder;
-import com.sequence.detection.rest.query.SequenceQueryEvaluator;
 
 import java.util.*;
 

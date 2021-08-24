@@ -1,4 +1,4 @@
-package com.sequence.detection.rest.setcontainment;
+package com.sequence.detection.rest.util;
 
 import com.sequence.detection.rest.model.Sequence;
 
