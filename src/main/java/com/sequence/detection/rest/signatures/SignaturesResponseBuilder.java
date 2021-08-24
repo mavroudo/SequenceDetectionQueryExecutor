@@ -8,6 +8,8 @@ import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.query.ResponseBuilder;
 import com.sequence.detection.rest.model.DetectedSequenceNoTime;
 import com.sequence.detection.rest.model.DetectionResponseNoTime;
+import com.sequence.detection.rest.setcontainment.LCJoin;
+import com.sequence.detection.rest.setcontainment.SetContainmentSequenceQueryEvaluator;
 
 import java.util.*;
 
@@ -58,22 +60,15 @@ public class SignaturesResponseBuilder extends ResponseBuilder {
     private List<DetectedSequenceNoTime> getDetections(List<Step> steps, Date start_date, Date end_date, long maxDuration, String tableName, String strategy) {
         List<DetectedSequenceNoTime> detectedSequences = new ArrayList<>();
         List<List<Step>> listOfSteps = simplifySequences(steps);
-        List<Sequence> sequences = new ArrayList<>();
-        for (List<Step> s : listOfSteps) {
-            Sequence sequence = new Sequence();
-            for (Step step : s) {
-                String eventName = step.getMatchName().get(0).getActivityName();
-                List<AugmentedDetail> details = transformToAugmentedDetails(eventName, step.getMatchDetails());
-                sequence.appendToSequence(new Event(eventName, new TreeSet<AugmentedDetail>(details)));
-            }
-            sequences.add(sequence);
-        }
+        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
 
-        for (Sequence sequence : sequences) {
-            List<Long> ids = this.signature.executeQuery(sequence, start_date, end_date, strategy);
-            detectedSequences.add(new DetectedSequenceNoTime(ids,sequence.toString()));
+        for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet()) {
+            Sequence query = entry.getKey();
+            if (query.getSize() == 1)
+                continue;
+            List<Long> ids  = this.signature.executeQuery(query, start_date, end_date, strategy);
+            detectedSequences.add(new DetectedSequenceNoTime(ids,query.toString()));
         }
-
         return detectedSequences;
 
     }

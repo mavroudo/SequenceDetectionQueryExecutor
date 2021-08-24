@@ -1,19 +1,13 @@
 package com.sequence.detection.rest.signatures;
 
 import com.datastax.driver.core.*;
-import com.google.common.util.concurrent.FutureCallback;
-import com.sequence.detection.rest.model.Event;
-import com.sequence.detection.rest.model.EventPair;
-import com.sequence.detection.rest.model.QueryPair;
-import com.sequence.detection.rest.model.Sequence;
+import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.query.SequenceQueryHandler;
 import com.sequence.detection.rest.util.VerifyPattern;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
 
 public class Signature extends SequenceQueryHandler {
 
@@ -76,7 +70,6 @@ public class Signature extends SequenceQueryHandler {
     public List<Long> executeQuery(Sequence s, Date start_date, Date end_date, String strategy){
         List<Long> candidates = new ArrayList<>();
         String query = createQuery(findPositionsWith1(s));
-        System.out.println(query);
         ResultSet rs = this.session.execute(query);
         for (Row r : rs.all()){
             for (String c :r.getList(0,String.class)){
@@ -138,52 +131,4 @@ public class Signature extends SequenceQueryHandler {
         }
         return events.subList(start,end);
     }
-
-
-    protected static class IdsCallback implements FutureCallback<ResultSet> {
-        Map<QueryPair, List<Long>> candidates;
-        Sequence query;
-        String first;
-        String second;
-        Date start_date;
-        Date end_date;
-        QueryPair ep;
-        CountDownLatch doneSignal;
-        String ids_field_name;
-
-        public IdsCallback(Map<QueryPair, List<Long>> candidates, Sequence query, QueryPair ep, Date start_date, Date end_date, CountDownLatch doneSignal, String ids_field_name) {
-            this.candidates = candidates;
-            this.query = query;
-            this.first = ep.getFirst().getName();
-            this.second = ep.getSecond().getName();
-            this.ep = ep;
-            this.start_date = start_date;
-            this.end_date = end_date;
-            this.doneSignal = doneSignal;
-            this.ids_field_name = ids_field_name;
-        }
-
-        @Override
-        public void onSuccess(ResultSet resultSet) {
-            Row row = resultSet.one();
-            List<String> ids;
-            if (row != null) {
-                ids = row.getList(ids_field_name, String.class);
-            } else
-                ids = new ArrayList<String>();
-
-            candidates.put(ep, ids.stream().map(Long::parseLong).collect(Collectors.toList()));
-            doneSignal.countDown();
-
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            System.out.println("Cassandra query failed! - " + first + "/" + second + "/" + ep);
-            System.out.println(throwable.getMessage());
-            doneSignal.countDown();
-        }
-    }
-
-
 }
