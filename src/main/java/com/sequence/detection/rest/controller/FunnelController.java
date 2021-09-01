@@ -95,9 +95,9 @@ public class FunnelController {
                 funnel, from, till, strategy
         );
 
-        DetectionResponseNoTime response = responseBuilder.buildDetectionResponseNoTime();
+//        DetectionResponseNoTime response = responseBuilder.buildDetectionResponseNoTime();
 
-        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(responseBuilder.buildDetectionResponseNoTime());
 
         return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
     }
