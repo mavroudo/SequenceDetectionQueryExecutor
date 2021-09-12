@@ -55,6 +55,10 @@ public class SetContainmentResponseBuilder extends ResponseBuilder {
 
         for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet()) {
             Sequence query = entry.getKey();
+
+            if(query.getList().size()!=steps.size()){ //just return the whole query, without all the subqueries
+                continue;
+            }
             List<QueryPair> queryTuples = query.getQueryTuplesConcequtive();
             Map<Integer, List<AugmentedDetail>> queryDetails = entry.getValue();
 

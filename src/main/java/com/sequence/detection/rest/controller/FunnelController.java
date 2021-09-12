@@ -66,6 +66,40 @@ public class FunnelController {
 
     }
 
+
+    @RequestMapping(value = "/signatures", method = RequestMethod.POST)
+    public ResponseEntity<MappingJacksonValue>
+    signatures(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
+               @RequestParam(value = "till", required = false, defaultValue = "") String till,
+               @RequestParam(value = "strategy", required = false, defaultValue = "skiptillnextmatch") String strategy,
+               @RequestBody FunnelWrapper funnelWrapper) {
+        if (!Utilities.isValidDate(from))
+            throw new BadRequestException("Wrong parameter: from (start) date!");
+
+        if (till.isEmpty()) {
+            till = Utilities.getToday();
+        } else {
+            if (!Utilities.isValidDate(till))
+                throw new BadRequestException("Wrong parameter: until (end) date!");
+        }
+
+        Funnel funnel = funnelWrapper.getFunnel();
+        funnel.setMaxDuration(funnel.getMaxDuration() * 1000);
+        System.out.println("From date: " + from);
+        System.out.println("Till date: " + till);
+        System.out.println(funnel);
+
+        SignaturesResponseBuilder responseBuilder = new SignaturesResponseBuilder(cassandraOperations.getSession().getCluster(),
+                cassandraOperations.getSession(),
+                cassandraOperations.getSession().getCluster().getMetadata().getKeyspace(environment.getProperty("cassandra_keyspace")),
+                environment.getProperty("cassandra_keyspace"),
+                funnel, from, till, strategy
+        );
+        DetectionResponseNoTime response = responseBuilder.buildDetectionResponseNoTime();
+        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
+    }
+
     @RequestMapping(value = "/setcontainment", method = RequestMethod.POST)
     public ResponseEntity<MappingJacksonValue>
     setContainment(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
@@ -101,41 +135,6 @@ public class FunnelController {
 
         return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
     }
-
-
-    @RequestMapping(value = "/signatures", method = RequestMethod.POST)
-    public ResponseEntity<MappingJacksonValue>
-    signatures(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
-               @RequestParam(value = "till", required = false, defaultValue = "") String till,
-               @RequestParam(value = "strategy", required = false, defaultValue = "skiptillnextmatch") String strategy,
-               @RequestBody FunnelWrapper funnelWrapper) {
-        if (!Utilities.isValidDate(from))
-            throw new BadRequestException("Wrong parameter: from (start) date!");
-
-        if (till.isEmpty()) {
-            till = Utilities.getToday();
-        } else {
-            if (!Utilities.isValidDate(till))
-                throw new BadRequestException("Wrong parameter: until (end) date!");
-        }
-
-        Funnel funnel = funnelWrapper.getFunnel();
-        funnel.setMaxDuration(funnel.getMaxDuration() * 1000);
-        System.out.println("From date: " + from);
-        System.out.println("Till date: " + till);
-        System.out.println(funnel);
-
-        SignaturesResponseBuilder responseBuilder = new SignaturesResponseBuilder(cassandraOperations.getSession().getCluster(),
-                cassandraOperations.getSession(),
-                cassandraOperations.getSession().getCluster().getMetadata().getKeyspace(environment.getProperty("cassandra_keyspace")),
-                environment.getProperty("cassandra_keyspace"),
-                funnel, from, till, strategy
-        );
-        DetectionResponseNoTime response = responseBuilder.buildDetectionResponseNoTime();
-        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
-        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
-    }
-
 
     /**
      * Returns a JSON output corresponding to the {@code /quick_stats} endpoint

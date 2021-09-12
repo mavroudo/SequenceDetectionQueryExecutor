@@ -64,6 +64,10 @@ public class SignaturesResponseBuilder extends ResponseBuilder {
 
         for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet()) {
             Sequence query = entry.getKey();
+
+            if(query.getList().size()!=steps.size()){ //just return the whole query, without all the subqueries
+                continue;
+            }
             if (query.getSize() == 1)
                 continue;
             List<Long> ids  = this.signature.executeQuery(query, start_date, end_date, strategy);
