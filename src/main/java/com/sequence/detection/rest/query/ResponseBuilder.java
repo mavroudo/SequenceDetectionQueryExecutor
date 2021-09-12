@@ -302,18 +302,20 @@ public class ResponseBuilder {
         List<List<Step>> listOfSteps = simplifySequences(steps);
         Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
         Map<Integer, Map<String, Lifetime>> allTruePositives = new TreeMap<Integer, Map<String, Lifetime>>();
-
         List<DetectedSequence> detectedSequences = new ArrayList<>();
 
         for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet()) {
             SequenceQueryEvaluator sqev = new SequenceQueryEvaluator(cluster, session, ks, cassandra_keyspace_name);
 
             Sequence query = entry.getKey();
+            if(query.getList().size()!=steps.size()){ //just return the whole query, without all the subqueries
+                continue;
+            }
+
             Map<Integer, List<AugmentedDetail>> queryDetails = entry.getValue();
 
             if (query.getSize() == 1)
                 continue;
-
             Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, queryDetails, tableName);
             Map<String, Lifetime> truePositives = sqev.findTruePositivesAndLifetime(query, candidates, maxDuration);
             detectedSequences.add(new DetectedSequence(truePositives, query.toString()));

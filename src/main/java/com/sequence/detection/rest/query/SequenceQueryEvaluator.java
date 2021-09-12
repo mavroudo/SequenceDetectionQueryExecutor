@@ -43,14 +43,24 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
      */
     public Set<String> evaluateQueryLogFile(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> allDetails, String tableName) {
         List<String> allCandidates = new ArrayList<String>();
-        List<QueryPair> query_tuples = query.getQueryTuples();
+//        List<QueryPair> query_tuples = query.getQueryTuples();
+        String tableCount =String.join("_",Arrays.copyOfRange(tableName.split("_"),0,3))+"_count";
+        List<QueryPair> query_tuples = query.getQueryTuplesConcequtive();
+        //TODO: add a query to counter to sort the pairs by the
+        HashMap<QueryPair,Integer> counts = this.getCounts(query_tuples,tableCount);
+        List<QueryPair> orderedPairs = this.reorderQueryPairs(counts);
+        //there is at least one pair that doesn't appear in the whole dataset, so the whole sequence cannot be found
+        if(counts.size() <query_tuples.size()){
+            return new HashSet<>(allCandidates);
+        }
         if (query_tuples.isEmpty())
             return new HashSet<>(allCandidates); // Which is empty
         allEventsPerSession = new ConcurrentHashMap<>();
         if (ks.getTable(tableName) == null)
             return new HashSet<>(allCandidates); // Which is empty
 
-        Set<String> candidates = executeQuery(tableName, query_tuples, query, start_date, end_date, allDetails);
+
+        Set<String> candidates = executeQuery(tableName, orderedPairs, query, start_date, end_date, allDetails);
 
         allCandidates.addAll(candidates);
         return new HashSet<>(allCandidates);
@@ -64,6 +74,7 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
         final CountDownLatch doneSignal; // The countdown will reach zero once all threads have finished their task
         doneSignal = new CountDownLatch(Math.max(query_tuples.size() + allDetails.size() - 1, 0));
 
+        long tStart = System.currentTimeMillis();
         ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event1_name = ? AND event2_name = ? ", query_tuples.get(0).getFirst().getName(), query_tuples.get(0).getSecond().getName());
 
         Row row = rs.one();
@@ -75,6 +86,10 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
         } else
             candSessions = new ArrayList<>();
         Set<String> candidates = Collections.synchronizedSet(new HashSet<String>(candSessions));
+
+        long tEnd = System.currentTimeMillis();
+        System.out.println("It took "+(tEnd-tStart)/1000.0+" seconds for one pair");
+
         for (QueryPair ep : query_tuples) // Query (async) for all (but the first) event triples of the query
         {
             if (query_tuples.get(0) == ep)
@@ -154,5 +169,37 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
                 maxDate = timestamps[1];
         }
         return truePositives;
+    }
+
+
+    /**
+     * For each pair calculate the times it appears in the whole dataset. This is useful to optimize the response time
+     * @param query_tuples the pair of events in the query
+     * @return a hashmap with key the query pair and value the number of appearances
+     */
+    private HashMap<QueryPair,Integer> getCounts (List<QueryPair> query_tuples, String tableCount){
+        HashMap<QueryPair,Integer> counts = new HashMap<>();
+        for (QueryPair queryPair: query_tuples){
+            ResultSet rs = session.execute("SELECT "+"sequences_per_field"+" FROM "+cassandra_keyspace_name+"."+tableCount+ " WHERE event1_name = ? ",queryPair.getFirst().getName());
+            List<String> events = rs.one().getList("sequences_per_field",String.class);
+            for(String event : events){
+                if(event.split(DELAB_DELIMITER)[0].equals(queryPair.getSecond().getName())){
+                    counts.put(queryPair,Integer.valueOf(event.split(DELAB_DELIMITER)[2]));
+                    break;
+                }
+            }
+        }
+        return counts;
+    }
+
+    private List<QueryPair> reorderQueryPairs(HashMap<QueryPair,Integer> counts){
+        List<Map.Entry<QueryPair,Integer>> list = new LinkedList<>(counts.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        List<QueryPair> output = new ArrayList<>();
+        for(Map.Entry<QueryPair,Integer> pair : list){
+            output.add(pair.getKey());
+        }
+        return output;
+
     }
 }
