@@ -4,6 +4,7 @@ import com.datastax.driver.core.*;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.sequence.detection.rest.model.AugmentedDetail;
+import com.sequence.detection.rest.model.Event;
 import com.sequence.detection.rest.model.QueryPair;
 import com.sequence.detection.rest.model.Sequence;
 import com.sequence.detection.rest.query.SequenceQueryEvaluator;
@@ -36,44 +37,40 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
 
     }
 
-    public Map<QueryPair, List<Long>> getIdsForEveryPair(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> allDetails, String tableName) {
-        HashMap<QueryPair, List<Long>> allCandidates = new HashMap<>();
-        List<QueryPair> query_tuples = query.getQueryTuplesConcequtive();
-        if (query_tuples.isEmpty())
+    public Map<Event, List<Long>> getIdsForEveryPair(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> allDetails, String tableName) {
+        ArrayList<Event> queryEvents = query.getList();
+        HashMap<Event,List<Long>> allCandidates = new HashMap<>();
+        if (queryEvents.isEmpty())
             return allCandidates;
-        ConcurrentHashMap<QueryPair, List<String>> allIdsPerPair = new ConcurrentHashMap<>();
-        if (ks.getTable(tableName) == null)
-            return allCandidates;
-
-        Map<QueryPair, List<Long>> candidates = executeQuery(tableName, query_tuples, query, start_date, end_date, allDetails);
-        allCandidates.putAll(candidates);
+        Map<Event, List<Long>> candidates2 = executeQuery(tableName, queryEvents, query, start_date, end_date, allDetails);
+        allCandidates.putAll(candidates2);
         return allCandidates;
     }
 
-    protected Map<QueryPair, List<Long>> executeQuery(String tableName, List<QueryPair> query_tuples, Sequence query, Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails) {
+    protected Map<Event, List<Long>> executeQuery(String tableName, List<Event> events, Sequence query, Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails) {
         final ExecutorService epThread = Executors.newSingleThreadExecutor();
         final ExecutorService detThread = Executors.newSingleThreadExecutor();
 
         final CountDownLatch doneSignal; // The countdown will reach zero once all threads have finished their task
-        doneSignal = new CountDownLatch(Math.max(query_tuples.size() + allDetails.size() - 1, 0));
+        doneSignal = new CountDownLatch(Math.max(events.size() + allDetails.size() - 1, 0));
 
-        ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event1_name = ? AND event2_name = ? ", query_tuples.get(0).getFirst().getName(), query_tuples.get(0).getSecond().getName());
+        ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event_name = ?", events.get(0).getName());
         Row row = rs.one();
 
-        HashMap<QueryPair, List<Long>> firstResults = new HashMap<>();
+        HashMap<Event, List<Long>> firstResults = new HashMap<>();
         if (row != null) {
             List<String> first = row.getList("sequences", String.class);
-            firstResults.put(query_tuples.get(0), first.stream().map(Long::parseLong).collect(Collectors.toList()));
+            firstResults.put(events.get(0), first.stream().map(Long::parseLong).collect(Collectors.toList()));
         }
-        Map<QueryPair, List<Long>> candidates = new ConcurrentHashMap<>(firstResults);
+        Map<Event, List<Long>> candidates = new ConcurrentHashMap<>(firstResults);
 
-        for (QueryPair ep : query_tuples) // Query (async) for all (but the first) event triples of the query
+        for (Event e : events) // Query (async) for all (but the first) event triples of the query
         {
-            if (query_tuples.get(0) == ep)
+            if (events.get(0) == e)
                 continue;
 
-            ResultSetFuture resultSetFuture = session.executeAsync("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event1_name = ? AND event2_name = ?", ep.getFirst().getName(), ep.getSecond().getName());
-            Futures.addCallback(resultSetFuture, new IdsCallback(candidates, query, ep, start_date, end_date, doneSignal, "sequences"), epThread);
+            ResultSetFuture resultSetFuture = session.executeAsync("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event_name = ?", e.getName());
+            Futures.addCallback(resultSetFuture, new IdsCallback(candidates, query, e, start_date, end_date, doneSignal, "sequences"), epThread);
         }
 
         try {
@@ -139,24 +136,21 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
         return events.subList(start,end);
     }
 
-
     protected static class IdsCallback implements FutureCallback<ResultSet> {
-        Map<QueryPair, List<Long>> candidates;
+        Map<Event, List<Long>> candidates;
         Sequence query;
-        String first;
-        String second;
+        String name;
         Date start_date;
         Date end_date;
-        QueryPair ep;
+        Event e;
         CountDownLatch doneSignal;
         String ids_field_name;
 
-        public IdsCallback(Map<QueryPair, List<Long>> candidates, Sequence query, QueryPair ep, Date start_date, Date end_date, CountDownLatch doneSignal, String ids_field_name) {
+        public IdsCallback(Map<Event, List<Long>> candidates, Sequence query, Event e, Date start_date, Date end_date, CountDownLatch doneSignal, String ids_field_name) {
             this.candidates = candidates;
             this.query = query;
-            this.first = ep.getFirst().getName();
-            this.second = ep.getSecond().getName();
-            this.ep = ep;
+            this.name= e.getName();
+            this.e = e;
             this.start_date = start_date;
             this.end_date = end_date;
             this.doneSignal = doneSignal;
@@ -172,14 +166,14 @@ public class SetContainmentSequenceQueryEvaluator extends SequenceQueryHandler {
             } else
                 ids = new ArrayList<String>();
 
-            candidates.put(ep, ids.stream().map(Long::parseLong).collect(Collectors.toList()));
+            candidates.put(e, ids.stream().map(Long::parseLong).collect(Collectors.toList()));
             doneSignal.countDown();
 
         }
 
         @Override
         public void onFailure(Throwable throwable) {
-            System.out.println("Cassandra query failed! - " + first + "/" + second + "/" + ep);
+            System.out.println("Cassandra query failed! - " + name + "/" + e);
             System.out.println(throwable.getMessage());
             doneSignal.countDown();
         }

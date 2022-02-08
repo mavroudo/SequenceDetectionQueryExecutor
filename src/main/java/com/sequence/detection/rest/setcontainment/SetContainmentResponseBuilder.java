@@ -35,8 +35,7 @@ public class SetContainmentResponseBuilder extends ResponseBuilder {
     public DetectionResponseNoTime buildDetectionResponseNoTime(){
         long tStart = System.currentTimeMillis();
 
-        long tEnd = System.currentTimeMillis();
-        System.out.println("Time Completions (Detection - with Set Containment): " + (tEnd - tStart) / 1000.0 + " seconds.");
+
 
 
         List<DetectedSequenceNoTime> ids = getDetections(steps, start_date, end_date, maxDuration, tableLogName, strategy);
@@ -44,6 +43,9 @@ public class SetContainmentResponseBuilder extends ResponseBuilder {
 
         DetectionResponseNoTime result = new DetectionResponseNoTime();
         result.setIds(ids);
+
+        long tEnd = System.currentTimeMillis();
+        System.out.println("Time Completions (Detection - with Set Containment): " + (tEnd - tStart) / 1000.0 + " seconds.");
 
         return result;
     }
@@ -66,8 +68,8 @@ public class SetContainmentResponseBuilder extends ResponseBuilder {
                 continue;
             SetContainmentSequenceQueryEvaluator sqev = new SetContainmentSequenceQueryEvaluator(cluster, session, ks, cassandra_keyspace_name);
 
-            Map<QueryPair,List<Long>> inverted_lists = sqev.getIdsForEveryPair(start_date, end_date, query, queryDetails, tableName);
-            List<Long> candidates = LCJoin.crossCuttingBasedIntersection( new ArrayList<List<Long>>(inverted_lists.values()) );
+            Map<Event,List<Long>> inverted_lists = sqev.getIdsForEveryPair(start_date, end_date, query, queryDetails, tableName);
+            List<Long> candidates = LCJoin.crossCuttingBasedIntersection(new ArrayList<>(inverted_lists.values()) );
 
             List<Long> ids = sqev.verifyPattern(candidates,query,this.tableSequence,start_date,end_date,strategy);
             detectedSequences.add(new DetectedSequenceNoTime(ids,query.toString()));
