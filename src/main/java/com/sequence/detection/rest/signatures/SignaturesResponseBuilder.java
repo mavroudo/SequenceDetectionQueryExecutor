@@ -44,11 +44,13 @@ public class SignaturesResponseBuilder extends ResponseBuilder {
     public DetectionResponseNoTime buildDetectionResponseNoTime() {
         long tStart = System.currentTimeMillis();
 
-        long tEnd = System.currentTimeMillis();
-        System.out.println("Time Completions (Detection - with Signatures): " + (tEnd - tStart) / 1000.0 + " seconds.");
+
 
 
         List<DetectedSequenceNoTime> ids = getDetections(steps, start_date, end_date, maxDuration, tableLogName, strategy);
+
+        long tEnd = System.currentTimeMillis();
+        System.out.println("Time Completions (Detection - with Signatures): " + (tEnd - tStart) / 1000.0 + " seconds.");
 
 
         DetectionResponseNoTime result = new DetectionResponseNoTime();

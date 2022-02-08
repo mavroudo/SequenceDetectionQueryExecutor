@@ -67,7 +67,7 @@ public class FunnelController {
     }
 
 
-    @RequestMapping(value = "/signatures", method = RequestMethod.POST)
+    @RequestMapping(value = "/signature", method = RequestMethod.POST)
     public ResponseEntity<MappingJacksonValue>
     signatures(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
                @RequestParam(value = "till", required = false, defaultValue = "") String till,
