@@ -1,6 +1,7 @@
 package com.sequence.detection.rest.query;
 
 import com.datastax.driver.core.*;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.sequence.detection.rest.model.*;
 
@@ -46,20 +47,19 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
 //        List<QueryPair> query_tuples = query.getQueryTuples();
         String tableCount =String.join("_",Arrays.copyOfRange(tableName.split("_"),0,3))+"_count";
         List<QueryPair> query_tuples = query.getQueryTuplesConcequtive();
-        //TODO: add a query to counter to sort the pairs by the
+        // TODO: here an adaptive function will be useful to determine if consecutive events
+        //  will create more load than querying all STNM event-pairs
+        if (query_tuples.isEmpty())
+            return new HashSet<>(allCandidates); // Which is empty
+        allEventsPerSession = new ConcurrentHashMap<>();
+        if (ks.getTable(tableName) == null)
+            return new HashSet<>(allCandidates); // Which is empty
         HashMap<QueryPair,Integer> counts = this.getCounts(query_tuples,tableCount);
         List<QueryPair> orderedPairs = this.reorderQueryPairs(counts);
         //there is at least one pair that doesn't appear in the whole dataset, so the whole sequence cannot be found
         if(counts.size() <query_tuples.size()){
             return new HashSet<>(allCandidates);
         }
-        if (query_tuples.isEmpty())
-            return new HashSet<>(allCandidates); // Which is empty
-        allEventsPerSession = new ConcurrentHashMap<>();
-        if (ks.getTable(tableName) == null)
-            return new HashSet<>(allCandidates); // Which is empty
-
-
         Set<String> candidates = executeQuery(tableName, orderedPairs, query, start_date, end_date, allDetails);
 
         allCandidates.addAll(candidates);
@@ -73,8 +73,6 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
 
         final CountDownLatch doneSignal; // The countdown will reach zero once all threads have finished their task
         doneSignal = new CountDownLatch(Math.max(query_tuples.size() + allDetails.size() - 1, 0));
-
-        long tStart = System.currentTimeMillis();
         ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "." + tableName + " WHERE event1_name = ? AND event2_name = ? ", query_tuples.get(0).getFirst().getName(), query_tuples.get(0).getSecond().getName());
 
         Row row = rs.one();
@@ -86,10 +84,6 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
         } else
             candSessions = new ArrayList<>();
         Set<String> candidates = Collections.synchronizedSet(new HashSet<String>(candSessions));
-
-        long tEnd = System.currentTimeMillis();
-        System.out.println("It took "+(tEnd-tStart)/1000.0+" seconds for one pair");
-
         for (QueryPair ep : query_tuples) // Query (async) for all (but the first) event triples of the query
         {
             if (query_tuples.get(0) == ep)
