@@ -45,7 +45,8 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
     public Set<String> evaluateQueryLogFile(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> allDetails, String tableName) {
         List<String> allCandidates = new ArrayList<String>();
 //        List<QueryPair> query_tuples = query.getQueryTuples();
-        String tableCount =String.join("_",Arrays.copyOfRange(tableName.split("_"),0,3))+"_count";
+        int l = tableName.split("_").length;
+        String tableCount =String.join("_",Arrays.copyOfRange(tableName.split("_"),0,l-1))+"_count";
         List<QueryPair> query_tuples = query.getQueryTuplesConcequtive();
         // TODO: here an adaptive function will be useful to determine if consecutive events
         //  will create more load than querying all STNM event-pairs
