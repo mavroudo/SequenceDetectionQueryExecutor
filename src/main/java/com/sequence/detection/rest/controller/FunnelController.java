@@ -50,6 +50,7 @@ public class FunnelController {
         System.out.println("From date: " + from);
         System.out.println("Till date: " + till);
         System.out.println(funnel);
+        String optimization = "sc"; //lfc -> least frequent consecutive, lf -> least frequent from stnm, sc -> set cover
 
         ResponseBuilder responseBuilder = new ResponseBuilder(cassandraOperations.getSession().getCluster(),
                 cassandraOperations.getSession(),
@@ -58,7 +59,7 @@ public class FunnelController {
                 funnel, from, till
         );
 
-        DetectionResponse response = responseBuilder.buildDetectionResponse();
+        DetectionResponse response = responseBuilder.buildDetectionResponse(optimization);
 
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
 

@@ -77,9 +77,9 @@ public class ResponseBuilder {
         maxDuration = funnel.getMaxDuration();
     }
 
-    public DetectionResponse buildDetectionResponse() {
+    public DetectionResponse buildDetectionResponse(String optimization) {
         long tStart = System.currentTimeMillis();
-        List<DetectedSequence> ids = getDetections(steps, start_date, end_date, maxDuration, tableLogName);
+        List<DetectedSequence> ids = getDetections(steps, start_date, end_date, maxDuration, tableLogName,optimization);
         long tEnd = System.currentTimeMillis();
         System.out.println("Time Completions (Detection): " + (tEnd - tStart) / 1000.0 + " seconds.");
 
@@ -298,14 +298,14 @@ public class ResponseBuilder {
         return totalCount;
     }
 
-    private List<DetectedSequence> getDetections(List<Step> steps, Date start_date, Date end_date, long maxDuration, String tableName) {
+    private List<DetectedSequence> getDetections(List<Step> steps, Date start_date, Date end_date, long maxDuration, String tableName, String optimization) {
         List<List<Step>> listOfSteps = simplifySequences(steps);
         Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
         Map<Integer, Map<String, Lifetime>> allTruePositives = new TreeMap<Integer, Map<String, Lifetime>>();
         List<DetectedSequence> detectedSequences = new ArrayList<>();
 
         for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet()) {
-            SequenceQueryEvaluator sqev = new SequenceQueryEvaluator(cluster, session, ks, cassandra_keyspace_name);
+            SequenceQueryEvaluator sqev = new SequenceQueryEvaluator(cluster, session, ks, cassandra_keyspace_name,optimization);
 
             Sequence query = entry.getKey();
             if(query.getList().size()!=steps.size()){ //just return the whole query, without all the subqueries

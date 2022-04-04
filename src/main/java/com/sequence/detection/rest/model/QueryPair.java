@@ -1,5 +1,7 @@
 package com.sequence.detection.rest.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -25,6 +27,13 @@ public class QueryPair
     public Event getSecond()
     {
         return second_ev;
+    }
+
+    public List<Event> getEvents(){
+        List<Event> events = new ArrayList<>();
+        events.add(this.getFirst());
+        events.add(this.getSecond());
+        return events;
     }
 
     @Override
