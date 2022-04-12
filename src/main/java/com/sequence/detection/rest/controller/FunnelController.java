@@ -5,6 +5,7 @@ import com.sequence.detection.rest.query.ResponseBuilder;
 import com.sequence.detection.rest.model.DetectionResponseNoTime;
 import com.sequence.detection.rest.signatures.SignaturesResponseBuilder;
 import com.sequence.detection.rest.spring.exception.BadRequestException;
+import com.sequence.detection.rest.util.ParseGroups;
 import com.sequence.detection.rest.util.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -14,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.*;
 import com.sequence.detection.rest.setcontainment.SetContainmentResponseBuilder;
+
+import java.util.List;
 
 /**
  * The FunnelController class receives (through the JSON API) a user-provided funnel along with its method of execution.
@@ -34,6 +37,7 @@ public class FunnelController {
     public ResponseEntity<MappingJacksonValue>
     detect(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
            @RequestParam(value = "till", required = false, defaultValue = "") String till,
+           @RequestParam(value = "group_by", required = false, defaultValue = "") String group_by,
            @RequestBody FunnelWrapper funnelWrapper) {
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
@@ -58,6 +62,10 @@ public class FunnelController {
                 environment.getProperty("cassandra_keyspace"),
                 funnel, from, till
         );
+        List<List<Integer>> groups = ParseGroups.parse(group_by);
+        if(groups==null){
+            throw new BadRequestException("Wrong format: group_by cannot be parsed");
+        }
 
         DetectionResponse response = responseBuilder.buildDetectionResponse(optimization);
 
