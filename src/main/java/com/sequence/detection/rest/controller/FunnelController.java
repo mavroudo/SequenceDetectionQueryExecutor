@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import com.sequence.detection.rest.setcontainment.SetContainmentResponseBuilder;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * The FunnelController class receives (through the JSON API) a user-provided funnel along with its method of execution.
@@ -62,12 +63,16 @@ public class FunnelController {
                 environment.getProperty("cassandra_keyspace"),
                 funnel, from, till
         );
-        List<List<Integer>> groups = ParseGroups.parse(group_by);
+        List<Set<Integer>> groups = ParseGroups.parse(group_by);
         if(groups==null){
             throw new BadRequestException("Wrong format: group_by cannot be parsed");
         }
-
-        DetectionResponse response = responseBuilder.buildDetectionResponse(optimization);
+        DetectionResponse response;
+        if(groups.isEmpty()){
+            response = responseBuilder.buildDetectionResponse(optimization);
+        }else{
+            response = responseBuilder.buildGroupsDetectionResponse(groups);
+        }
 
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
 

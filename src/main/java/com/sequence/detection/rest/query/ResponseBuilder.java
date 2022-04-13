@@ -3,6 +3,7 @@ package com.sequence.detection.rest.query;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Session;
+import com.sequence.detection.rest.groups.SequenceQueryEvaluatorGroups;
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.model.AugmentedDetail;
 import com.sequence.detection.rest.model.Sequence;
@@ -87,6 +88,50 @@ public class ResponseBuilder {
         result.setIds(ids);
 
         return result;
+    }
+
+    public DetectionResponse buildGroupsDetectionResponse(List<Set<Integer>> groups){
+        long tStart = System.currentTimeMillis();
+        List<DetectedSequence> ids = getDetectionsGroups(steps, start_date, end_date, maxDuration, tableLogName,groups);
+        long tEnd = System.currentTimeMillis();
+        System.out.println("Time Completions (Detection Groups): " + (tEnd - tStart) / 1000.0 + " seconds.");
+
+        DetectionResponse result = new DetectionResponse();
+        result.setIds(ids);
+
+        return result;
+    }
+
+    private List<DetectedSequence> getDetectionsGroups(List<Step> steps, Date start_date, Date end_date, long maxDuration, String tableName, List<Set<Integer>> groups) {
+        List<List<Step>> listOfSteps = simplifySequences(steps);
+        Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
+        Map<Integer, Map<String, Lifetime>> allTruePositives = new TreeMap<Integer, Map<String, Lifetime>>();
+        List<DetectedSequence> detectedSequences = new ArrayList<>();
+
+        for (Map.Entry<Sequence, Map<Integer, List<AugmentedDetail>>> entry : allQueries.entrySet()) {
+            SequenceQueryEvaluatorGroups sqev = new SequenceQueryEvaluatorGroups(cluster, session, ks, cassandra_keyspace_name,groups);
+
+            Sequence query = entry.getKey();
+            if(query.getList().size()!=steps.size()){ //just return the whole query, without all the subqueries
+                continue;
+            }
+            Map<Integer, List<AugmentedDetail>> queryDetails = entry.getValue();
+
+            if (query.getSize() == 1)
+                continue;
+            Map<String, Lifetime> results = sqev.detect(start_date, end_date, query, queryDetails, tableName,groups);
+            detectedSequences.add(new DetectedSequence(results,query.toString()));
+//            Map<String, Lifetime> truePositives = sqev.findTruePositivesAndLifetime(query, candidates, maxDuration);
+//            detectedSequences.add(new DetectedSequence(truePositives, query.toString()));
+            int step = query.getSize() - 1;
+            if (!allTruePositives.containsKey(step))
+                allTruePositives.put(step, new HashMap<>());
+            allTruePositives.get(step).putAll(results);
+
+        }
+
+        return detectedSequences;
+
     }
 
     /**

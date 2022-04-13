@@ -1,9 +1,12 @@
 package com.sequence.detection.rest.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ParseGroups {
 
@@ -14,8 +17,8 @@ public class ParseGroups {
      * @param input
      * @return
      */
-    static public List<List<Integer>> parse(String input){
-        List<List<Integer>> response = new ArrayList<>();
+    static public List<Set<Integer>> parse(String input){
+        List<Set<Integer>> response = new ArrayList<>();
         if(input.equals("")){
             return response;
         }
@@ -35,7 +38,7 @@ public class ParseGroups {
                         n.add(Integer.parseInt(id));
                     }
                 }
-                response.add(n);
+                response.add(new HashSet<>(n));
             }
             return response;
         }catch(Exception e){
