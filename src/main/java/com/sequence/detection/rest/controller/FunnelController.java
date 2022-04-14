@@ -39,6 +39,7 @@ public class FunnelController {
     detect(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
            @RequestParam(value = "till", required = false, defaultValue = "") String till,
            @RequestParam(value = "group_by", required = false, defaultValue = "") String group_by,
+           @RequestParam(value = "grouping_method", required = false, defaultValue = "smart") String grouping,
            @RequestBody FunnelWrapper funnelWrapper) {
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
@@ -71,7 +72,7 @@ public class FunnelController {
         if(groups.isEmpty()){
             response = responseBuilder.buildDetectionResponse(optimization);
         }else{
-            response = responseBuilder.buildGroupsDetectionResponse(groups);
+            response = responseBuilder.buildGroupsDetectionResponse(groups,grouping);
         }
 
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);

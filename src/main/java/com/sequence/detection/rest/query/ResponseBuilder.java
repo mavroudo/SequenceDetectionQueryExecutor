@@ -90,9 +90,9 @@ public class ResponseBuilder {
         return result;
     }
 
-    public DetectionResponse buildGroupsDetectionResponse(List<Set<Integer>> groups){
+    public DetectionResponse buildGroupsDetectionResponse(List<Set<Integer>> groups, String method){
         long tStart = System.currentTimeMillis();
-        List<DetectedSequence> ids = getDetectionsGroups(steps, start_date, end_date, maxDuration, tableLogName,groups);
+        List<DetectedSequence> ids = getDetectionsGroups(steps, start_date, end_date, maxDuration, tableLogName,groups,method);
         long tEnd = System.currentTimeMillis();
         System.out.println("Time Completions (Detection Groups): " + (tEnd - tStart) / 1000.0 + " seconds.");
 
@@ -102,7 +102,8 @@ public class ResponseBuilder {
         return result;
     }
 
-    private List<DetectedSequence> getDetectionsGroups(List<Step> steps, Date start_date, Date end_date, long maxDuration, String tableName, List<Set<Integer>> groups) {
+    private List<DetectedSequence> getDetectionsGroups(List<Step> steps, Date start_date, Date end_date, long maxDuration,
+                                                       String tableName, List<Set<Integer>> groups,String method) {
         List<List<Step>> listOfSteps = simplifySequences(steps);
         Map<Sequence, Map<Integer, List<AugmentedDetail>>> allQueries = generateAllSubqueriesWithoutAppName(listOfSteps);
         Map<Integer, Map<String, Lifetime>> allTruePositives = new TreeMap<Integer, Map<String, Lifetime>>();
@@ -119,7 +120,14 @@ public class ResponseBuilder {
 
             if (query.getSize() == 1)
                 continue;
-            Map<String, Lifetime> results = sqev.detect(start_date, end_date, query, queryDetails, tableName,groups);
+
+            Map<String, Lifetime> results = null;
+            if(!method.equals("naive")){
+                results=sqev.detect(start_date, end_date, query, queryDetails, tableName,groups);
+            }else{
+                results=sqev.detectNaive(start_date, end_date, query, queryDetails, tableName,groups);
+            }
+
             detectedSequences.add(new DetectedSequence(results,query.toString()));
 //            Map<String, Lifetime> truePositives = sqev.findTruePositivesAndLifetime(query, candidates, maxDuration);
 //            detectedSequences.add(new DetectedSequence(truePositives, query.toString()));
