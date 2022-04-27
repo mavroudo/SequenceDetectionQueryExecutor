@@ -1,4 +1,4 @@
-package com.sequence.detection.rest.model;
+package com.sequence.detection.rest.model.Responses;
 import java.util.List;
 
 public class DetectedSequenceNoTime {

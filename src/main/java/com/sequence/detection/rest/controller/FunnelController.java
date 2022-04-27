@@ -1,8 +1,10 @@
 package com.sequence.detection.rest.controller;
 
 import com.sequence.detection.rest.model.*;
+import com.sequence.detection.rest.model.Responses.DetectionResponse;
+import com.sequence.detection.rest.model.Responses.DetectionResponseAllInstances;
 import com.sequence.detection.rest.query.ResponseBuilder;
-import com.sequence.detection.rest.model.DetectionResponseNoTime;
+import com.sequence.detection.rest.model.Responses.DetectionResponseNoTime;
 import com.sequence.detection.rest.signatures.SignaturesResponseBuilder;
 import com.sequence.detection.rest.spring.exception.BadRequestException;
 import com.sequence.detection.rest.util.ParseGroups;
@@ -40,6 +42,7 @@ public class FunnelController {
            @RequestParam(value = "till", required = false, defaultValue = "") String till,
            @RequestParam(value = "group_by", required = false, defaultValue = "") String group_by,
            @RequestParam(value = "grouping_method", required = false, defaultValue = "smart") String grouping,
+           @RequestParam(value = "return_all",required = false,defaultValue = "false") String returnAll,
            @RequestBody FunnelWrapper funnelWrapper) {
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
@@ -50,6 +53,8 @@ public class FunnelController {
             if (!Utilities.isValidDate(till))
                 throw new BadRequestException("Wrong parameter: until (end) date!");
         }
+
+        boolean return_all = Boolean.parseBoolean(returnAll);
 
         Funnel funnel = funnelWrapper.getFunnel();
         funnel.setMaxDuration(funnel.getMaxDuration() * 1000);
@@ -68,16 +73,22 @@ public class FunnelController {
         if(groups==null){
             throw new BadRequestException("Wrong format: group_by cannot be parsed");
         }
-        DetectionResponse response;
+
         if(groups.isEmpty()){
-            response = responseBuilder.buildDetectionResponse(optimization);
+            DetectionResponseAllInstances response;
+            response = responseBuilder.buildDetectionResponse(optimization,return_all);
+            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+            return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
         }else{
-            response = responseBuilder.buildGroupsDetectionResponse(groups,grouping);
+            DetectionResponseAllInstances response;
+            response = responseBuilder.buildGroupsDetectionResponse(groups,grouping,return_all);
+            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+            return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
         }
 
-        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
-
-        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
+//        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+//
+//        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
 
     }
 

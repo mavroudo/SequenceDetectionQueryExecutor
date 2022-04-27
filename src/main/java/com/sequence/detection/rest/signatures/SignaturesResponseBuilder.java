@@ -6,10 +6,8 @@ import com.datastax.driver.core.Session;
 import com.sequence.detection.rest.CassandraConfiguration;
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.query.ResponseBuilder;
-import com.sequence.detection.rest.model.DetectedSequenceNoTime;
-import com.sequence.detection.rest.model.DetectionResponseNoTime;
-import com.sequence.detection.rest.setcontainment.LCJoin;
-import com.sequence.detection.rest.setcontainment.SetContainmentSequenceQueryEvaluator;
+import com.sequence.detection.rest.model.Responses.DetectedSequenceNoTime;
+import com.sequence.detection.rest.model.Responses.DetectionResponseNoTime;
 
 import java.util.*;
 

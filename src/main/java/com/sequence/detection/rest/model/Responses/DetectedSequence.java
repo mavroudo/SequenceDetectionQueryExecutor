@@ -1,10 +1,12 @@
-package com.sequence.detection.rest.model;
+package com.sequence.detection.rest.model.Responses;
+
+import com.sequence.detection.rest.model.Lifetime;
 
 import java.util.Map;
 
 public class DetectedSequence {
 
-    private Map<String,Lifetime> ids;
+    private Map<String, Lifetime> ids;
     private String query;
 
     public DetectedSequence(Map<String, Lifetime> ids, String query) {

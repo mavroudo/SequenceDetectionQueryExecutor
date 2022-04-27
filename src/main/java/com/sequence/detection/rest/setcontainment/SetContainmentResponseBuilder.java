@@ -5,6 +5,8 @@ import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Session;
 import com.sequence.detection.rest.CassandraConfiguration;
 import com.sequence.detection.rest.model.*;
+import com.sequence.detection.rest.model.Responses.DetectedSequenceNoTime;
+import com.sequence.detection.rest.model.Responses.DetectionResponseNoTime;
 import com.sequence.detection.rest.query.ResponseBuilder;
 
 import java.util.*;

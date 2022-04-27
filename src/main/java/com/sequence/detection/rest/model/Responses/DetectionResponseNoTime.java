@@ -1,21 +1,20 @@
-package com.sequence.detection.rest.model;
+package com.sequence.detection.rest.model.Responses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Objects;
 
-public class DetectionResponse {
-
+public class DetectionResponseNoTime {
 
     @JsonProperty("sub-queries found in sequences")
-    private List<DetectedSequence> ids;
+    private List<DetectedSequenceNoTime> ids;
 
-    public List<DetectedSequence> getIds() {
+    public List<DetectedSequenceNoTime> getIds() {
         return ids;
     }
 
-    public void setIds(List<DetectedSequence> ids) {
+    public void setIds(List<DetectedSequenceNoTime> ids) {
         this.ids = ids;
     }
 
@@ -23,7 +22,7 @@ public class DetectionResponse {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DetectionResponse that = (DetectionResponse) o;
+        DetectionResponseNoTime that = (DetectionResponseNoTime) o;
         return ids.equals(that.ids);
     }
 
@@ -31,5 +30,4 @@ public class DetectionResponse {
     public int hashCode() {
         return Objects.hash(ids);
     }
-
 }

@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.util.SetCover;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,12 +100,83 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             Set<Event> universe=query_tuples.stream().flatMap(t->t.getEvents().stream()).collect(Collectors.toSet());
             orderedPairs = SetCover.findSetCover(query_tuples,counts,universe);
         }
-        Set<String> candidates = executeQuery(tableName, orderedPairs, query, start_date, end_date, allDetails);
+        Set<String> candidates = executeQueryParallel(tableName, orderedPairs, query, start_date, end_date, allDetails);
 
         allCandidates.addAll(candidates);
         return new HashSet<>(allCandidates);
     }
 
+
+    protected Set<String> executeQueryParallel(String tableName, List<QueryPair> query_tuples, Sequence query,
+                                               Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails){
+        return query_tuples.stream().parallel()
+                .flatMap(s->{
+                    ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "."
+                            + tableName + " WHERE event1_name = ? AND event2_name = ? ", s.getFirst().getName(),
+                            s.getSecond().getName());
+                    Row row = rs.one();
+                    return handleSequenceRow(query, s.getFirst().getName(), s.getSecond().getName(), start_date, end_date,
+                            row.getList("sequences", String.class), true).stream();
+                })
+                .collect(Collectors.toSet());
+    }
+
+    protected Map<String,List<Lifetime>> evaluateCandidates(Sequence query, Set<String> candidates, long maxDuration,boolean returnAll){
+        return candidates.stream().parallel()
+                .map(s->{
+                    List<TimestampedEvent> events = allEventsPerSession.get(s);
+                    Collections.sort(events);
+                    List<Lifetime> e;
+                    if(returnAll){
+                        e=this.evaluateCandidateAll(query,events,maxDuration);
+                    }else{
+                        e=this.evaluateCandidateOne(query,events,maxDuration);
+                    }
+                    return new ImmutablePair<>(s, e);
+                })
+                .filter(s-> !s.right.isEmpty())
+                .collect(Collectors.toMap(s->s.left,s->s.right));
+    }
+
+    private List<Lifetime> evaluateCandidateAll(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
+        List<Lifetime> results = new ArrayList<>();
+        int size=query.getSize();
+        int i =0;
+        Date start = null;
+        for(TimestampedEvent e:sortedEvents){
+            if(query.getEvent(i).getName().equals(e.event.getName())){
+                if(i==0){
+                    start=e.timestamp;
+                }else if(i==size-1){
+                    long diff = e.timestamp.getTime()-start.getTime();
+                    results.add(new Lifetime(start,e.timestamp,diff));
+                    i=-1;
+                }
+                i+=1;
+            }
+        }
+        return results;
+    }
+
+    private List<Lifetime> evaluateCandidateOne(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
+        List<Lifetime> results = new ArrayList<>();
+        int size=query.getSize();
+        int i =0;
+        Date start = null;
+        for(TimestampedEvent e:sortedEvents){
+            if(query.getEvent(i).getName().equals(e.event.getName())){
+                if(i==0){
+                    start=e.timestamp;
+                }else if(i==size-1){
+                    long diff = e.timestamp.getTime()-start.getTime();
+                    results.add(new Lifetime(start,e.timestamp,diff));
+                    break;
+                }
+                i+=1;
+            }
+        }
+        return results;
+    }
 
 
     protected Set<String> executeQuery(String tableName, List<QueryPair> query_tuples, Sequence query, Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails) {

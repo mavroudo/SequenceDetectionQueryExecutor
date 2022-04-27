@@ -138,20 +138,22 @@ public class SequenceQueryEvaluatorGroups extends SequenceQueryHandler {
         }
     }
 
-    public Map<String, Lifetime> detect(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> queryDetails, String table_name, List<Set<Integer>> groups) {
-        Map<String, Lifetime> results = new HashMap<>();
+    public Map<String, List<Lifetime>> detect(Date start_date, Date end_date, Sequence query, Map<Integer,
+            List<AugmentedDetail>> queryDetails, String table_name, boolean returnAll) {
+        Map<String, List<Lifetime>> results;
         int l = table_name.split("_").length;
         String table_one = String.join("_", Arrays.copyOfRange(table_name.split("_"), 0, l - 1)) + "_one";
         List<Map<String,EventWithTimestamps>> perGroup = this.queryEvent(query.getList(), queryDetails, table_one);
-        results = this.evaluateGroups(perGroup, start_date, end_date, query.getList());
+        results = this.evaluateGroups(perGroup, start_date, end_date, query.getList(),returnAll);
         return results;
     }
-    public Map<String, Lifetime> detectNaive(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> queryDetails, String table_name, List<Set<Integer>> groups) {
-        Map<String, Lifetime> results = new HashMap<>();
+    public Map<String, List<Lifetime>> detectNaive(Date start_date, Date end_date, Sequence query, Map<Integer,
+            List<AugmentedDetail>> queryDetails, String table_name, boolean returnAll) {
+        Map<String, List<Lifetime>> results;
         int l = table_name.split("_").length;
         String table_seq = String.join("_", Arrays.copyOfRange(table_name.split("_"), 0, l - 1)) + "_seq";
         List<CombinedTraces> perGroup =  this.queryEventNaive(groups, table_seq);
-        results = this.evaluateGroupsNaive(perGroup,start_date,end_date,query.getList());
+        results = this.evaluateGroupsNaive(perGroup,start_date,end_date,query.getList(),returnAll);
         return results;
     }
     private List<Map<String, EventWithTimestamps>> queryEvent(List<Event> events, Map<Integer, List<AugmentedDetail>> queryDetails, String table_one) {
@@ -239,20 +241,32 @@ public class SequenceQueryEvaluatorGroups extends SequenceQueryHandler {
         return results;
 
     }
-    private Map<String,Lifetime> evaluateGroups(List<Map<String,EventWithTimestamps>> perGroup, Date start_date, Date end_date, List<Event> query) {
+    private Map<String,List<Lifetime>> evaluateGroups(List<Map<String,EventWithTimestamps>> perGroup, Date start_date,
+                                                      Date end_date, List<Event> query,boolean returnAll) {
         return perGroup.stream().parallel()
                 .filter(s -> s.size() == query.size())
-                .map(s -> evaluateGroupAll(s,start_date,end_date,query))//Return only the first one or change to evaluateGroupAll to return all
+                .map(s -> {
+                    if(returnAll){
+                        return evaluateGroupAll(s,start_date,end_date,query);
+                    }else{
+                        return evaluateGroupOne(s,start_date,end_date,query);
+                    }
+                })
                 .filter(Objects::nonNull)
-                .map(x->new ImmutablePair(x.left,x.right.get(0)))//here only returns the first appearance even though the program finds all the sequences
-                        .collect(Collectors.toMap(s->s.left.toString(),s->(Lifetime)s.right));
+                .collect(Collectors.toMap(s->s.left,s->s.right));
     }
-    private Map<String,Lifetime> evaluateGroupsNaive(List<CombinedTraces> perGroup, Date start_date, Date end_date, List<Event> query){
+    private Map<String,List<Lifetime>> evaluateGroupsNaive(List<CombinedTraces> perGroup, Date start_date, Date end_date,
+                                                           List<Event> query, boolean returnAll){
         return perGroup.stream().parallel()
-                .map(s->evaluateGroupNaiveAll(s,start_date,end_date,query))
+                .map(s->{
+                    if(returnAll){
+                        return evaluateGroupNaiveAll(s,start_date,end_date,query);
+                    }else{
+                        return evaluateGroupNaiveOne(s,start_date,end_date,query);
+                    }
+                })
                 .filter(Objects::nonNull)
-                .map(x->new ImmutablePair(x.left,x.right.get(0)))
-                .collect(Collectors.toMap(s->s.left.toString(),s->(Lifetime)s.right));
+                .collect(Collectors.toMap(s->s.left,s->s.right));
     }
     private ImmutablePair<String,List<Lifetime>> evaluateGroupNaiveAll(CombinedTraces group, Date start_date, Date end_date, List<Event> query){
         ImmutablePair<String, List<Lifetime>> results=null;
@@ -303,9 +317,6 @@ public class SequenceQueryEvaluatorGroups extends SequenceQueryHandler {
         return results;
 
     }
-
-
-
     private ImmutablePair<String, List<Lifetime>> evaluateGroupAll(Map<String,EventWithTimestamps> group, Date start_date, Date end_date, List<Event> query) {
         List<Date> foundEvents = new ArrayList<>();
         ImmutablePair<String, List<Lifetime>> results=null;
@@ -352,7 +363,6 @@ public class SequenceQueryEvaluatorGroups extends SequenceQueryHandler {
         }
         return results;
     }
-
     private ImmutablePair<String, List<Lifetime>> evaluateGroupOne(Map<String,EventWithTimestamps> group, Date start_date, Date end_date, List<Event> query) {
         List<Date> foundEvents = new ArrayList<>();
         ImmutablePair<String, List<Lifetime>> results=null;
