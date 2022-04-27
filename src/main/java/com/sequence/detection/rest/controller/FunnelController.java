@@ -73,22 +73,14 @@ public class FunnelController {
         if(groups==null){
             throw new BadRequestException("Wrong format: group_by cannot be parsed");
         }
-
+        DetectionResponseAllInstances response;
         if(groups.isEmpty()){
-            DetectionResponseAllInstances response;
             response = responseBuilder.buildDetectionResponse(optimization,return_all);
-            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
-            return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
         }else{
-            DetectionResponseAllInstances response;
             response = responseBuilder.buildGroupsDetectionResponse(groups,grouping,return_all);
-            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
-            return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
         }
-
-//        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
-//
-//        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
+        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
 
     }
 
