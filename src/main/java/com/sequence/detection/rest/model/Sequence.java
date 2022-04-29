@@ -1,5 +1,7 @@
 package com.sequence.detection.rest.model;
 
+import com.sequence.detection.rest.triplets.QueryTriple;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -122,6 +124,19 @@ public class Sequence {
                 qpairs.add(new QueryPair(first, second));
             }
 
+        return qpairs;
+    }
+
+    public List<QueryTriple> getQueryTripletsConcequtive() {
+        ArrayList<QueryTriple> qpairs = new ArrayList<>();
+        int size = seq.size();
+        if (size == 3) {
+            qpairs.add(new QueryTriple(seq.get(0), seq.get(1), seq.get(2)));
+        } else if (size > 3) {
+            for (int j = 0; j < size - 2; j++) {
+                qpairs.add(new QueryTriple(seq.get(j), seq.get(j + 1), seq.get(j + 2)));
+            }
+        }
         return qpairs;
     }
 

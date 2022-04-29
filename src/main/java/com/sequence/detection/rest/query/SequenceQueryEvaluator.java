@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.sequence.detection.rest.model.*;
 import com.sequence.detection.rest.util.SetCover;
+import io.netty.util.internal.ConcurrentSet;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.*;
@@ -52,7 +53,8 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
      * @param tableName  The name of the log file
      * @return a set of potential candidate user/device IDs
      */
-    public Set<String> evaluateQueryLogFile(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> allDetails, String tableName) {
+    public Set<String> evaluateQueryLogFile(Date start_date, Date end_date, Sequence query, Map<Integer,
+            List<AugmentedDetail>> allDetails, String tableName) {
         List<String> allCandidates = new ArrayList<String>();
         int l = tableName.split("_").length;
         String tableCount = String.join("_", Arrays.copyOfRange(tableName.split("_"), 0, l - 1)) + "_count";
@@ -109,19 +111,32 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
 
     protected Set<String> executeQueryParallel(String tableName, List<QueryPair> query_tuples, Sequence query,
                                                Date start_date, Date end_date, Map<Integer, List<AugmentedDetail>> allDetails){
-        return query_tuples.stream().parallel()
-                .flatMap(s->{
+
+        Set<String> results = new ConcurrentSet<>();
+        QueryPair k = query_tuples.get(0);
+        ResultSet rs1 = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "."
+                        + tableName + " WHERE event1_name = ? AND event2_name = ? ", k.getFirst().getName(),
+                k.getSecond().getName());
+        Row row1 = rs1.one();
+        if(row1!=null) {
+            List<String> c = handleSequenceRow(query, k.getFirst().getName(), k.getSecond().getName(), start_date, end_date,
+                    row1.getList("sequences", String.class), true);
+            results.addAll(c);
+        }
+        query_tuples.subList(1,query_tuples.size()).stream().parallel()
+                .map(s->{
                     ResultSet rs = session.execute("SELECT " + "sequences" + " FROM " + cassandra_keyspace_name + "."
                             + tableName + " WHERE event1_name = ? AND event2_name = ? ", s.getFirst().getName(),
                             s.getSecond().getName());
                     Row row = rs.one();
                     return handleSequenceRow(query, s.getFirst().getName(), s.getSecond().getName(), start_date, end_date,
-                            row.getList("sequences", String.class), true).stream();
+                            row.getList("sequences", String.class), true);
                 })
-                .collect(Collectors.toSet());
+                .forEach(results::retainAll);
+                return results;
     }
 
-    protected Map<String,List<Lifetime>> evaluateCandidates(Sequence query, Set<String> candidates, long maxDuration,boolean returnAll){
+    public Map<String,List<Lifetime>> evaluateCandidates(Sequence query, Set<String> candidates, long maxDuration,boolean returnAll){
         return candidates.stream().parallel()
                 .map(s->{
                     List<TimestampedEvent> events = allEventsPerSession.get(s);
@@ -138,7 +153,7 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
                 .collect(Collectors.toMap(s->s.left,s->s.right));
     }
 
-    private List<Lifetime> evaluateCandidateAll(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
+    protected List<Lifetime> evaluateCandidateAll(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
         List<Lifetime> results = new ArrayList<>();
         int size=query.getSize();
         int i =0;
@@ -158,7 +173,7 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
         return results;
     }
 
-    private List<Lifetime> evaluateCandidateOne(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
+    protected List<Lifetime> evaluateCandidateOne(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
         List<Lifetime> results = new ArrayList<>();
         int size=query.getSize();
         int i =0;

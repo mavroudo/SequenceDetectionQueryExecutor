@@ -7,6 +7,7 @@ import com.sequence.detection.rest.query.ResponseBuilder;
 import com.sequence.detection.rest.model.Responses.DetectionResponseNoTime;
 import com.sequence.detection.rest.signatures.SignaturesResponseBuilder;
 import com.sequence.detection.rest.spring.exception.BadRequestException;
+import com.sequence.detection.rest.triplets.TripletsResponseBuilder;
 import com.sequence.detection.rest.util.ParseGroups;
 import com.sequence.detection.rest.util.Utilities;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,40 @@ public class FunnelController {
 
     @Autowired
     private Environment environment;
+
+    @RequestMapping(value = "/detect-triplets",method = RequestMethod.POST)
+    public ResponseEntity<MappingJacksonValue>
+    detectTriplet(@RequestParam(value = "from", required = false, defaultValue = "1970-01-01") String from,
+                  @RequestParam(value = "till", required = false, defaultValue = "") String till,
+                  @RequestParam(value = "false", required = false) boolean return_all,
+                  @RequestBody FunnelWrapper funnelWrapper){
+        if (!Utilities.isValidDate(from))
+            throw new BadRequestException("Wrong parameter: from (start) date!");
+
+        if (till.isEmpty()) {
+            till = Utilities.getToday();
+        } else {
+            if (!Utilities.isValidDate(till))
+                throw new BadRequestException("Wrong parameter: until (end) date!");
+        }
+        Funnel funnel = funnelWrapper.getFunnel();
+        funnel.setMaxDuration(funnel.getMaxDuration() * 1000);
+        System.out.println("From date: " + from);
+        System.out.println("Till date: " + till);
+        System.out.println(funnel);
+
+
+
+        TripletsResponseBuilder responseBuilder = new TripletsResponseBuilder(cassandraOperations.getSession().getCluster(),
+                cassandraOperations.getSession(),
+                cassandraOperations.getSession().getCluster().getMetadata().getKeyspace(environment.getProperty("cassandra_keyspace")),
+                environment.getProperty("cassandra_keyspace"),
+                funnel, from, till,return_all
+        );
+        DetectionResponseAllInstances response = responseBuilder.buildDetectionResponse();
+        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(response);
+        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
+    }
 
     @RequestMapping(value = "/detect", method = RequestMethod.POST)
     public ResponseEntity<MappingJacksonValue>
