@@ -65,7 +65,7 @@ public class TripletsResponseBuilder extends ResponseBuilder {
             if (query.getSize() == 1)
                 continue;
             Set<String> candidates = sqev.evaluateQuery(start_date, end_date, query, queryDetails, maxDuration, tableLogName);
-            Map<String,List<Lifetime>> truePositives = sqev.evaluateCandidates(query,candidates,maxDuration,return_all);
+            Map<String,List<Lifetime>> truePositives = sqev.evaluateCandidates(query,candidates,maxDuration,return_all,tableLogName);
             detectedSequences.add(new DetectedSequenceAllInstances(truePositives, query.toString()));
             int step = query.getSize() - 1;
             if (!allTruePositives.containsKey(step))

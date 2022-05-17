@@ -8,6 +8,8 @@ import com.sequence.detection.rest.util.SetCover;
 import io.netty.util.internal.ConcurrentSet;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -15,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -69,10 +72,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
-            //there is at least one pair that doesn't appear in the whole dataset, so the whole sequence cannot be found
-            if (counts.size() < query_tuples.size()) {
-                return new HashSet<>(allCandidates);
-            }
+//            if (counts.size() < query_tuples.size()) {
+//                return new HashSet<>(allCandidates);
+//            }
             orderedPairs = this.reorderQueryPairs(counts);
         } else if (this.optimization.equals("lf")) {
             query_tuples = query.getQueryTuples();
@@ -82,10 +84,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
-            //there is at least one pair that doesn't appear in the whole dataset, so the whole sequence cannot be found
-            if (counts.size() < query_tuples.size()) {
-                return new HashSet<>(allCandidates);
-            }
+//            if (counts.size() < query_tuples.size()) {
+//                return new HashSet<>(allCandidates);
+//            }
             orderedPairs = this.reorderQueryPairs(counts);
             orderedPairs = orderedPairs.subList(0, query.getQueryTuplesConcequtive().size());
         } else { //sc
@@ -96,9 +97,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
-            if (counts.size() < query_tuples.size()) {
-                return new HashSet<>(allCandidates);
-            }
+//            if (counts.size() < query_tuples.size()) {
+//                return new HashSet<>(allCandidates);
+//            }
             Set<Event> universe=query_tuples.stream().flatMap(t->t.getEvents().stream()).collect(Collectors.toSet());
             orderedPairs = SetCover.findSetCover(query_tuples,counts,universe);
         }
@@ -136,9 +137,11 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
                 return results;
     }
 
-    public Map<String,List<Lifetime>> evaluateCandidates(Sequence query, Set<String> candidates, long maxDuration,boolean returnAll){
-        return candidates.stream().parallel()
+    public Map<String,List<Lifetime>> evaluateCandidates(Sequence query, Set<String> candidates, long maxDuration,boolean returnAll,String tableName){
+        return candidates.stream()
+                .parallel()
                 .map(s->{
+//                    List<TimestampedEvent> events = getSeq(tableName,s);
                     List<TimestampedEvent> events = allEventsPerSession.get(s);
                     Collections.sort(events);
                     List<Lifetime> e;
@@ -151,6 +154,31 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
                 })
                 .filter(s-> !s.right.isEmpty())
                 .collect(Collectors.toMap(s->s.left,s->s.right));
+    }
+
+    private List<TimestampedEvent> getSeq(String tableName,String candidate){
+        int l = tableName.split("_").length;
+        String tableCount = String.join("_", Arrays.copyOfRange(tableName.split("_"), 0, l - 1)) + "_seq";
+        ResultSet rs = session.execute("SELECT " + "events" + " FROM " + cassandra_keyspace_name + "." + tableCount +
+                        " WHERE sequence_id = ?",candidate);
+        Row row = rs.one();
+        List<String> events =  row.getList("events", String.class);
+        return handleEvents(events);
+
+    }
+
+    private List<TimestampedEvent> handleEvents(List<String> events) {
+        List<TimestampedEvent> results= new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        for (String e: events){
+            String[] event = e.split("\\(")[1].split("\\)")[0].split(",");
+            try{
+                results.add(new TimestampedEvent(dateFormat.parse(event[0]),new Event(event[1])));
+            }catch (ParseException exception){
+                exception.printStackTrace();
+            }
+        }
+        return results;
     }
 
     protected List<Lifetime> evaluateCandidateAll(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){

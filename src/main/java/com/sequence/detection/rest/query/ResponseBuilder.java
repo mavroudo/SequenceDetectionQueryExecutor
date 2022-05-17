@@ -372,7 +372,7 @@ public class ResponseBuilder {
                 continue;
             Set<String> candidates = sqev.evaluateQueryLogFile(start_date, end_date, query, queryDetails, tableName);
 
-            Map<String,List<Lifetime>> truePositives = sqev.evaluateCandidates(query,candidates,maxDuration,returnAll);
+            Map<String,List<Lifetime>> truePositives = sqev.evaluateCandidates(query,candidates,maxDuration,returnAll,tableName);
             detectedSequences.add(new DetectedSequenceAllInstances(truePositives, query.toString()));
             int step = query.getSize() - 1;
             if (!allTruePositives.containsKey(step))

@@ -96,7 +96,7 @@ public class FunnelController {
         System.out.println("From date: " + from);
         System.out.println("Till date: " + till);
         System.out.println(funnel);
-        String optimization = "sc"; //lfc -> least frequent consecutive, lf -> least frequent from stnm, sc -> set cover
+        String optimization = "lfc"; //lfc -> least frequent consecutive, lf -> least frequent from stnm, sc -> set cover
 
         ResponseBuilder responseBuilder = new ResponseBuilder(cassandraOperations.getSession().getCluster(),
                 cassandraOperations.getSession(),
