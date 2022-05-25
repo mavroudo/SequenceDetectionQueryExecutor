@@ -72,9 +72,6 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
-//            if (counts.size() < query_tuples.size()) {
-//                return new HashSet<>(allCandidates);
-//            }
             orderedPairs = this.reorderQueryPairs(counts);
         } else if (this.optimization.equals("lf")) {
             query_tuples = query.getQueryTuples();
@@ -84,12 +81,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
-//            if (counts.size() < query_tuples.size()) {
-//                return new HashSet<>(allCandidates);
-//            }
             orderedPairs = this.reorderQueryPairs(counts);
-            orderedPairs = orderedPairs.subList(0, query.getQueryTuplesConcequtive().size());
-        } else { //sc
+            //orderedPairs = orderedPairs.subList(0, query.getQueryTuplesConcequtive().size());
+        } else { //gsc
             query_tuples = query.getQueryTuples();
             if (query_tuples.isEmpty())
                 return new HashSet<>(allCandidates);
@@ -97,12 +91,11 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
-//            if (counts.size() < query_tuples.size()) {
-//                return new HashSet<>(allCandidates);
-//            }
             Set<Event> universe=query_tuples.stream().flatMap(t->t.getEvents().stream()).collect(Collectors.toSet());
             orderedPairs = SetCover.findSetCover(query_tuples,counts,universe);
+            System.out.println("Queries in db: "+orderedPairs.size());
         }
+        System.out.println("Queries in db: "+orderedPairs.size());
         Set<String> candidates = executeQueryParallel(tableName, orderedPairs, query, start_date, end_date, allDetails);
 
         allCandidates.addAll(candidates);

@@ -78,6 +78,8 @@ public class FunnelController {
            @RequestParam(value = "group_by", required = false, defaultValue = "") String group_by,
            @RequestParam(value = "grouping_method", required = false, defaultValue = "smart") String grouping,
            @RequestParam(value = "return_all",required = false,defaultValue = "false") String returnAll,
+           @RequestParam(value = "optimization", required = false,defaultValue = "lfc") String optimization,
+           //lfc -> least frequent consecutive, lf -> least frequent from stnm, gsc -> set cover
            @RequestBody FunnelWrapper funnelWrapper) {
         if (!Utilities.isValidDate(from))
             throw new BadRequestException("Wrong parameter: from (start) date!");
@@ -96,7 +98,6 @@ public class FunnelController {
         System.out.println("From date: " + from);
         System.out.println("Till date: " + till);
         System.out.println(funnel);
-        String optimization = "lfc"; //lfc -> least frequent consecutive, lf -> least frequent from stnm, sc -> set cover
 
         ResponseBuilder responseBuilder = new ResponseBuilder(cassandraOperations.getSession().getCluster(),
                 cassandraOperations.getSession(),
