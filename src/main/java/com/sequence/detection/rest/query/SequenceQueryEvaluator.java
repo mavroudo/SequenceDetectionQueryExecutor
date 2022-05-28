@@ -72,6 +72,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
+            if(counts.isEmpty()){
+                return new HashSet<>(allCandidates);
+            }
             orderedPairs = this.reorderQueryPairs(counts);
         } else if (this.optimization.equals("lf")) {
             query_tuples = query.getQueryTuples();
@@ -81,6 +84,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
+            if(counts.isEmpty()){
+                return new HashSet<>(allCandidates);
+            }
             orderedPairs = this.reorderQueryPairs(counts);
             //orderedPairs = orderedPairs.subList(0, query.getQueryTuplesConcequtive().size());
         } else { //gsc
@@ -91,6 +97,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             if (ks.getTable(tableName) == null)
                 return new HashSet<>(allCandidates);
             HashMap<QueryPair, Integer> counts = this.getCounts(query_tuples, tableCount);
+            if(counts.isEmpty()){
+                return new HashSet<>(allCandidates);
+            }
             Set<Event> universe=query_tuples.stream().flatMap(t->t.getEvents().stream()).collect(Collectors.toSet());
             orderedPairs = SetCover.findSetCover(query_tuples,counts,universe);
             System.out.println("Queries in db: "+orderedPairs.size());
@@ -327,7 +336,11 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
             List<String> events = rs.one().getList("sequences_per_field", String.class);
             for (String event : events) {
                 if (event.split(DELAB_DELIMITER)[0].equals(queryPair.getSecond().getName())) {
-                    counts.put(queryPair, Integer.valueOf(event.split(DELAB_DELIMITER)[2]));
+                    int value = Integer.parseInt(event.split(DELAB_DELIMITER)[2]);
+                    if (value==0){
+                        return new HashMap<>();
+                    }
+                    counts.put(queryPair, value);
                     break;
                 }
             }
