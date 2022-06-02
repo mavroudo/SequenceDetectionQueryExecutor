@@ -140,6 +140,23 @@ public class Sequence {
         return qpairs;
     }
 
+    public List<QueryTriple> getQueryTripletsAll(){
+        ArrayList<QueryTriple> qpairs = new ArrayList<>();
+        int size = seq.size();
+        if (size == 3) {
+            qpairs.add(new QueryTriple(seq.get(0), seq.get(1), seq.get(2)));
+        } else if (size > 3) {
+            for (int n=0;n<size-2;n++){
+                for(int i=n;i<size-1;i++){
+                    for(int m=i;m<size;m++){
+                        qpairs.add(new QueryTriple(seq.get(n), seq.get(i), seq.get(m)));
+                    }
+                }
+            }
+        }
+        return qpairs;
+    }
+
     @Override
     public String toString() {
         String strseq = "{";

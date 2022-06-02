@@ -35,12 +35,49 @@ public class SequenceQueryEvaluatorTriplets extends SequenceQueryEvaluator {
 
 
     public Set<String> evaluateQuery(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> queryDetails, long maxDuration, String tableLogName) {
-        List<QueryTriple> query_triplets = query.getQueryTripletsConcequtive();
+        List<QueryTriple> query_triplets = query.getQueryTripletsAll();
+        //evaluate with count table
+        int l = tableLogName.split("_").length;
+        String tableCount = String.join("_", Arrays.copyOfRange(tableLogName.split("_"), 0, l - 1)) + "_count";
+        HashMap<QueryTriple, Integer> counts = this.getCounts(query_triplets, tableCount);
+        query_triplets=this.reorderQueryPairs(counts,query.getSize());
+
         allEventsPerSession = new ConcurrentHashMap<>();
         Set<String> candidates = this.executeQueriesParallel(tableLogName, query_triplets, query, start_date, end_date, queryDetails);
         List<String> allCandidates = new ArrayList<>(candidates);
         return new HashSet<>(allCandidates);
 
+    }
+
+    private List<QueryTriple> reorderQueryPairs(HashMap<QueryTriple, Integer> counts, int size) {
+        List<Map.Entry<QueryTriple, Integer>> list = new LinkedList<>(counts.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        List<QueryTriple> output = new ArrayList<>();
+        for (Map.Entry<QueryTriple, Integer> pair : list) {
+            output.add(pair.getKey());
+        }
+        return output.subList(0,size);
+
+    }
+
+    private HashMap<QueryTriple, Integer> getCounts(List<QueryTriple> query_tuples, String tableCount) {
+        HashMap<QueryTriple, Integer> counts = new HashMap<>();
+        for (QueryTriple queryTriple : query_tuples) {
+            ResultSet rs = session.execute("SELECT " + "sequences_per_field" + " FROM " + cassandra_keyspace_name + "." + tableCount +
+                    " WHERE event1_name = ? AND event2_name = ?", queryTriple.getFirst().getName(),queryTriple.getSecond().getName());
+            List<String> events = rs.one().getList("sequences_per_field", String.class);
+            for (String event : events) {
+                if (event.split(DELAB_DELIMITER)[0].equals(queryTriple.getThird_ev().getName())) {
+                    int value = Integer.parseInt(event.split(DELAB_DELIMITER)[2]);
+                    if (value==0){
+                        return new HashMap<>();
+                    }
+                    counts.put(queryTriple, value);
+                    break;
+                }
+            }
+        }
+        return counts;
     }
 
     private Set<String> executeQueriesParallel(String tableLogName, List<QueryTriple> query_triplets,
