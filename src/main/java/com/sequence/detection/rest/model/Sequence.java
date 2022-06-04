@@ -157,6 +157,22 @@ public class Sequence {
         return qpairs;
     }
 
+    public List<QueryTriple> getQueryTripletsNotOverlapping(){
+        ArrayList<QueryTriple> qpairs = new ArrayList<>();
+        int size = seq.size();
+        if (size == 3) {
+            qpairs.add(new QueryTriple(seq.get(0), seq.get(1), seq.get(2)));
+        } else if (size > 3) {
+            for (int k=0;k<size-2;k+=3){
+                qpairs.add(new QueryTriple(seq.get(k), seq.get(k+1), seq.get(k+2)));
+            }
+        }
+        if(size%3!=0){
+            qpairs.add(new QueryTriple(seq.get(size-3), seq.get(size-2), seq.get(size-1)));
+        }
+        return qpairs;
+    }
+
     @Override
     public String toString() {
         String strseq = "{";

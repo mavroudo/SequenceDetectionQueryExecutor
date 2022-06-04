@@ -35,14 +35,18 @@ public class SequenceQueryEvaluatorTriplets extends SequenceQueryEvaluator {
 
 
     public Set<String> evaluateQuery(Date start_date, Date end_date, Sequence query, Map<Integer, List<AugmentedDetail>> queryDetails, long maxDuration, String tableLogName) {
-        List<QueryTriple> query_triplets = query.getQueryTripletsAll();
+        List<QueryTriple> query_triplets = query.getQueryTripletsNotOverlapping();
         //evaluate with count table
+
         int l = tableLogName.split("_").length;
         String tableCount = String.join("_", Arrays.copyOfRange(tableLogName.split("_"), 0, l - 1)) + "_count";
         HashMap<QueryTriple, Integer> counts = this.getCounts(query_triplets, tableCount);
         query_triplets=this.reorderQueryPairs(counts,query.getSize());
 
+
+
         allEventsPerSession = new ConcurrentHashMap<>();
+
         Set<String> candidates = this.executeQueriesParallel(tableLogName, query_triplets, query, start_date, end_date, queryDetails);
         List<String> allCandidates = new ArrayList<>(candidates);
         return new HashSet<>(allCandidates);
@@ -56,7 +60,12 @@ public class SequenceQueryEvaluatorTriplets extends SequenceQueryEvaluator {
         for (Map.Entry<QueryTriple, Integer> pair : list) {
             output.add(pair.getKey());
         }
-        return output.subList(0,size);
+        if(size<counts.size()){
+            return output.subList(0,size);
+        }else{
+            return output;
+        }
+
 
     }
 
