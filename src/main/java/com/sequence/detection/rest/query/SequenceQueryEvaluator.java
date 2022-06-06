@@ -143,8 +143,8 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
         return candidates.stream()
                 .parallel()
                 .map(s->{
-//                    List<TimestampedEvent> events = getSeq(tableName,s);
-                    List<TimestampedEvent> events = allEventsPerSession.get(s);
+                    List<TimestampedEvent> events = getSeq(tableName,s);
+//                    List<TimestampedEvent> events = allEventsPerSession.get(s);
                     Collections.sort(events);
                     List<Lifetime> e;
                     if(returnAll){
@@ -206,10 +206,12 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
     protected List<Lifetime> evaluateCandidateOne(Sequence query, List<TimestampedEvent> sortedEvents,long maxDuration){
         List<Lifetime> results = new ArrayList<>();
         int size=query.getSize();
+        List<TimestampedEvent> evs = new ArrayList<>();
         int i =0;
         Date start = null;
         for(TimestampedEvent e:sortedEvents){
             if(query.getEvent(i).getName().equals(e.event.getName())){
+                evs.add(e);
                 if(i==0){
                     start=e.timestamp;
                 }else if(i==size-1){
