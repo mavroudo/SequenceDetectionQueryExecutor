@@ -143,8 +143,9 @@ public class SequenceQueryEvaluator extends SequenceQueryHandler {
         return candidates.stream()
                 .parallel()
                 .map(s->{
-                    List<TimestampedEvent> events = getSeq(tableName,s);
-//                    List<TimestampedEvent> events = allEventsPerSession.get(s);
+
+//                    List<TimestampedEvent> events = getSeq(tableName,s);
+                    List<TimestampedEvent> events = allEventsPerSession.get(s);
                     Collections.sort(events);
                     List<Lifetime> e;
                     if(returnAll){
