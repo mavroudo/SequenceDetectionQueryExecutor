@@ -1,6 +1,11 @@
-# Funnel Query API
+# SIESTA Query Processor
 
-This project implements a web api for funnel querying built with the Spring Framework. 
+This project implements the query processor of the SIESTA. A Scalable Infrastructure for Sequential Pattern Analysis.
+It utilizes the indices built by the Preprocess Component in order to efficiently respond to pattern queries.
+The supported functionalities so far is Pattern Detection, Pattern Continuation and Basic Statistics. There are a number of
+variations in the above queries that enables different scenarios.
+
+Additionally, on top of the basic SIESTA infrastructure, 2 others methods have been implemented, namely Signature and Set-Containment. 
 
 ## Requirements
 * JDK 1.8
