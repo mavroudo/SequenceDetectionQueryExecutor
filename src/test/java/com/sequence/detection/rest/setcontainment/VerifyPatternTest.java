@@ -2,13 +2,11 @@ package com.sequence.detection.rest.setcontainment;
 
 import com.sequence.detection.rest.model.Event;
 import com.sequence.detection.rest.model.Sequence;
+import com.sequence.detection.rest.util.VerifyPattern;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Date;
-
-import static org.junit.Assert.*;
 
 public class VerifyPatternTest {
 

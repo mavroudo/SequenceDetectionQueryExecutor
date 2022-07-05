@@ -1,4 +1,8 @@
-version: '2'
+version: '3.2'
+networks:
+  cluster_net:
+    external:
+      name: cassandra-net
 services:
   funnel:
     build: .
@@ -20,3 +24,5 @@ services:
       - ./build:/root/.m2
     ports:
       - '8080:8080'
+    networks:
+      - cluster_net

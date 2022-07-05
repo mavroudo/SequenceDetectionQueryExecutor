@@ -1,5 +1,7 @@
 package com.sequence.detection.rest.model;
 
+import com.sequence.detection.rest.triplets.QueryTriple;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -122,6 +124,52 @@ public class Sequence {
                 qpairs.add(new QueryPair(first, second));
             }
 
+        return qpairs;
+    }
+
+    public List<QueryTriple> getQueryTripletsConcequtive() {
+        ArrayList<QueryTriple> qpairs = new ArrayList<>();
+        int size = seq.size();
+        if (size == 3) {
+            qpairs.add(new QueryTriple(seq.get(0), seq.get(1), seq.get(2)));
+        } else if (size > 3) {
+            for (int j = 0; j < size - 2; j++) {
+                qpairs.add(new QueryTriple(seq.get(j), seq.get(j + 1), seq.get(j + 2)));
+            }
+        }
+        return qpairs;
+    }
+
+    public List<QueryTriple> getQueryTripletsAll(){
+        ArrayList<QueryTriple> qpairs = new ArrayList<>();
+        int size = seq.size();
+        if (size == 3) {
+            qpairs.add(new QueryTriple(seq.get(0), seq.get(1), seq.get(2)));
+        } else if (size > 3) {
+            for (int n=0;n<size-2;n++){
+                for(int i=n;i<size-1;i++){
+                    for(int m=i;m<size;m++){
+                        qpairs.add(new QueryTriple(seq.get(n), seq.get(i), seq.get(m)));
+                    }
+                }
+            }
+        }
+        return qpairs;
+    }
+
+    public List<QueryTriple> getQueryTripletsNotOverlapping(){
+        ArrayList<QueryTriple> qpairs = new ArrayList<>();
+        int size = seq.size();
+        if (size == 3) {
+            qpairs.add(new QueryTriple(seq.get(0), seq.get(1), seq.get(2)));
+        } else if (size > 3) {
+            for (int k=0;k<size-2;k+=3){
+                qpairs.add(new QueryTriple(seq.get(k), seq.get(k+1), seq.get(k+2)));
+            }
+        }
+        if(size%3!=0){
+            qpairs.add(new QueryTriple(seq.get(size-3), seq.get(size-2), seq.get(size-1)));
+        }
         return qpairs;
     }
 

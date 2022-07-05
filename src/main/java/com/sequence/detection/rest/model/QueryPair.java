@@ -1,5 +1,7 @@
 package com.sequence.detection.rest.model;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -8,8 +10,8 @@ import java.util.Objects;
  */
 public class QueryPair
 {
-    final Event first_ev;
-    final Event second_ev;
+    protected Event first_ev;
+    protected Event second_ev;
 
     public QueryPair(Event first_ev, Event second_ev)
     {
@@ -27,8 +29,15 @@ public class QueryPair
         return second_ev;
     }
 
+    public List<Event> getEvents(){
+        List<Event> events = new ArrayList<>();
+        events.add(this.getFirst());
+        events.add(this.getSecond());
+        return events;
+    }
+
     @Override
-    public final int hashCode()
+    public int hashCode()
     {
         int hash = 5;
         hash = 19 * hash + Objects.hashCode(this.first_ev);
@@ -37,7 +46,7 @@ public class QueryPair
     }
 
     @Override
-    public final boolean equals(Object obj)
+    public boolean equals(Object obj)
     {
         if (!(obj instanceof QueryPair))
             return false;
