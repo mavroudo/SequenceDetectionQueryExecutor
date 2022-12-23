@@ -637,7 +637,7 @@ public class ResponseBuilder {
             } else
                 results.add(prop);
         }
-
+        Collections.sort(results);
         return results;
     }
 
