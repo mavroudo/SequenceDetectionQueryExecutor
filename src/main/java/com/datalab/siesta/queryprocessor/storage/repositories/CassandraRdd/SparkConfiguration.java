@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
+import org.springframework.stereotype.Service;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -18,37 +19,40 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
         havingValue = "cassandra-rdd",
         matchIfMissing = true
 )
+@Service
 public class SparkConfiguration {
 
     @Value("${app.name:siesta2}")
     private String appName;
     @Value("${master.uri:local[*]}")
     private String masterUri;
-    @Value("${cassandra.host:localhost}")
+    @Value("${spring.data.cassandra.contact-points:rabbit.csd.auth.gr}")
     private String cassandra_host;
-    @Value("${cassandra.port:9042}")
+    @Value("${spring.data.cassandra.port:9042}")
     private String cassandra_port;
-    @Value("${cassandra.user:cassandra}")
+    @Value("${spring.data.cassandra.username:cassandra}")
     private String cassandra_user;
-    @Value("${cassandra.pass:cassandra}")
+    @Value("${spring.data.cassandra.password:cassandra}")
     private String cassandra_pass;
-    @Value("${cassandra.keyspace_name:siesta}")
+    @Value("${spring.data.cassandra.keyspace-name:siesta}")
     private String cassandra_keyspace_name;
 
-    @Bean
-    public SparkConf sparkConf() {
-        return new SparkConf()
-                .setAppName(appName)
-                .setMaster(masterUri)
-                .set("spark.cassandra.connection.host", cassandra_host)
-                .set("spark.cassandra.auth.username", cassandra_user)
-                .set("spark.cassandra.auth.password", cassandra_pass)
-                .set("spark.cassandra.connection.port", cassandra_port);
-    }
+//    @Bean
+//    public SparkConf sparkConf() {
+//        return new SparkConf()
+//                .setAppName(appName)
+//                .setMaster(masterUri)
+//                .set("spark.cassandra.connection.host", cassandra_host)
+//                .set("spark.cassandra.auth.username", cassandra_user)
+//                .set("spark.cassandra.auth.password", cassandra_pass)
+//                .set("spark.cassandra.connection.port", cassandra_port);
+//
+//
+//    }
 
     @Bean
     public JavaSparkContext javaSparkContext() {
-        return new JavaSparkContext(this.sparkConf());
+        return new JavaSparkContext(this.sparkSession().sparkContext());
     }
 
 //    @Bean
@@ -58,9 +62,20 @@ public class SparkConfiguration {
     public SparkSession sparkSession() {
         SparkSession spark = SparkSession
                 .builder()
-                .sparkContext(this.javaSparkContext().sc())
                 .appName(appName)
+                .config("spark.cassandra.connection.host", cassandra_host)
+                .config("spark.cassandra.connection.port", cassandra_port)
+                .config("spark.cassandra.auth.username", cassandra_user)
+                .config("spark.cassandra.auth.password", cassandra_pass)
+                .master(masterUri)
                 .getOrCreate();
+
+
+//        SparkSession spark = SparkSession
+//                .builder()
+//                .sparkContext(this.javaSparkContext().sc())
+//                .appName(appName)
+//                .getOrCreate();
         return spark;
     }
 
