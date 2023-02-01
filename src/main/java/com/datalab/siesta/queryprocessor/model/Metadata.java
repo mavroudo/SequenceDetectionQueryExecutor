@@ -4,6 +4,7 @@ package com.datalab.siesta.queryprocessor.model;
 import org.apache.spark.sql.Row;
 
 import java.util.List;
+import java.util.Map;
 
 public class Metadata {
 
@@ -20,17 +21,31 @@ public class Metadata {
     private Long traces;
 
     public Metadata(Row json) {
-        this.compression = json.getAs("compression");
-        this.events = json.getAs("events");
-        this.filename = json.getAs("filename");
-        this.has_previous_stored = json.getAs("has_previous_stored");
-        this.last_interval = json.getAs("last_interval");
-        this.logname = json.getAs("log_name");
-        this.lookback = json.getAs("lookback");
-        this.mode = json.getAs("mode");
-        this.pairs = json.getAs("pairs");
-        this.split_every_days = json.getAs("split_every_days");
-        this.traces = json.getAs("traces");
+        this.compression = (String) json.getAs("compression");
+        this.events = (Long) json.getAs("events");
+        this.filename = (String) json.getAs("filename");
+        this.has_previous_stored = (Boolean) json.getAs("has_previous_stored");
+        this.last_interval = (String) json.getAs("last_interval");
+        this.logname = (String) json.getAs("log_name");
+        this.lookback = (Long) json.getAs("lookback");
+        this.mode = (String) json.getAs("mode");
+        this.pairs = (Long) json.getAs("pairs");
+        this.split_every_days = (Long) json.getAs("split_every_days");
+        this.traces = (Long) json.getAs("traces");
+    }
+
+    public Metadata(Map<String,String> attributes){
+        this.compression = attributes.get("compression");
+        this.events = Long.valueOf(attributes.get("events"));
+        this.filename = attributes.get("filename");
+        this.has_previous_stored = (Boolean) Boolean.valueOf(attributes.get("has_previous_stored"));
+        this.last_interval = attributes.get("last_interval");
+        this.logname = attributes.get("log_name");
+        this.lookback = Long.valueOf(attributes.get("lookback"));
+        this.mode = attributes.get("mode");
+        this.pairs = Long.valueOf(attributes.get("pairs"));
+        this.split_every_days = Long.valueOf(attributes.get("split_every_days"));
+        this.traces = Long.valueOf(attributes.get("traces"));
     }
 
     public String getCompression() {

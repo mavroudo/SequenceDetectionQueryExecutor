@@ -2,20 +2,19 @@ package com.datalab.siesta.queryprocessor.storage.repositories.Cassandra;
 
 import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
-import com.datastax.spark.connector.cql.CassandraConnector;
-import com.datastax.spark.connector.japi.CassandraJavaUtil;
-import com.datastax.spark.connector.japi.CassandraRow;
-import com.datastax.spark.connector.japi.rdd.CassandraJavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.SparkSession;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.Row;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.cassandra.SessionFactory;
+import org.springframework.data.cassandra.config.CassandraSessionFactoryBean;
+import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
 
 @Configuration
 @ConditionalOnProperty(
@@ -26,28 +25,18 @@ import java.util.Map;
 @Service
 public class CassConnector implements DatabaseRepository {
 
-    private SparkSession sparkSession;
-
-    private JavaSparkContext javaSparkContext;
-
-    private SparkConfiguration sc;
-
-    private CassandraConnector cassandraConnector;
-
     @Autowired
-    public CassConnector(SparkSession sparkSession, JavaSparkContext javaSparkContext, SparkConfiguration sc,
-                         CassandraConnector cassandraConnector){
-        this.sparkSession=sparkSession;
-        this.javaSparkContext=javaSparkContext;
-        this.sc=sc;
-        this.cassandraConnector=cassandraConnector;
-    }
+    private SessionFactory cb;
+
 
     @Override
     public Metadata getMetadata(String logname) {
-        CassandraJavaRDD df = CassandraJavaUtil.javaFunctions(sparkSession.sparkContext())
-                .cassandraTable("siesta","bpi_2017_meta");
+        ResultSet x = cb.getSession().execute(String.format("select * from %s_meta",logname));
+        Map<String,String> m= new HashMap<>();
+        x.iterator().forEachRemaining(row->{
+            m.put(row.getString(0),row.getString(1));
+        });
 
-        return null;
+        return new Metadata(m);
     }
 }

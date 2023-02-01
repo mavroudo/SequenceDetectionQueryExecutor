@@ -1,6 +1,6 @@
-package com.datalab.siesta.queryprocessor.storage.repositories.Cassandra;
+package com.datalab.siesta.queryprocessor.storage.repositories.CassandraRdd;
 
-import com.datastax.spark.connector.cql.CassandraConnector;
+//import com.datastax.spark.connector.cql.CassandraConnector;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
@@ -15,7 +15,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 @PropertySource("classpath:application.properties")
 @ConditionalOnProperty(
         value = "database",
-        havingValue = "cassandra",
+        havingValue = "cassandra-rdd",
         matchIfMissing = true
 )
 public class SparkConfiguration {
@@ -51,8 +51,8 @@ public class SparkConfiguration {
         return new JavaSparkContext(this.sparkConf());
     }
 
-    @Bean
-    public CassandraConnector getConnector(){return CassandraConnector.apply(sparkConf());}
+//    @Bean
+//    public CassandraConnector getConnector(){return CassandraConnector.apply(sparkConf());}
 
     @Bean
     public SparkSession sparkSession() {

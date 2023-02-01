@@ -1,8 +1,8 @@
 version: '3.2'
 networks:
   cluster_net:
-    external:
-      name: cassandra-net
+#    external:
+#      name: cassandra-net
 services:
   funnel:
     build: .
