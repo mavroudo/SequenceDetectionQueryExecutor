@@ -3,7 +3,7 @@ package com.datalab.siesta.queryprocessor.model;
 
 import org.apache.spark.sql.Row;
 
-import java.util.List;
+
 import java.util.Map;
 
 public class Metadata {
@@ -19,6 +19,7 @@ public class Metadata {
     private Long pairs;
     private Long split_every_days;
     private Long traces;
+
 
     public Metadata(Row json) {
         this.compression = (String) json.getAs("compression");
