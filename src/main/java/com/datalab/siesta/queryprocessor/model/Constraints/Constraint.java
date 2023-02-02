@@ -1,6 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
-public abstract class Constraint {
+import jnr.ffi.provider.jffi.ClosureFromNativeConverter;
+
+public abstract class Constraint implements Cloneable {
 
     //position of the first event in the Pattern
     protected int posA;
@@ -28,5 +30,25 @@ public abstract class Constraint {
 
     public void setPosB(int posB) {
         this.posB = posB;
+    }
+
+    @Override
+    public String toString() {
+        return "Constraint{" +
+                "posA=" + posA +
+                ", posB=" + posB +
+                '}';
+    }
+
+    @Override
+    public Constraint clone() {
+        try {
+            Constraint clone = (Constraint) super.clone();
+            clone.setPosA(this.getPosA());
+            clone.setPosB(this.posB);
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

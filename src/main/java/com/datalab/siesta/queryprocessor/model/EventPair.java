@@ -1,6 +1,9 @@
 package com.datalab.siesta.queryprocessor.model;
 
+import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
+
+import java.util.Objects;
 
 public class EventPair {
 
@@ -8,19 +11,22 @@ public class EventPair {
 
     private Event eventB;
 
-    private long constraint;
-
-    private String type;
+    private Constraint constraint;
 
     public Event getEventA() {
         return eventA;
     }
 
-    public EventPair(Event eventA, Event eventB, long constraint, String type) {
+    public EventPair(Event eventA, Event eventB, Constraint constraint) {
         this.eventA = eventA;
         this.eventB = eventB;
         this.constraint = constraint;
-        this.type = type;
+    }
+
+    public EventPair(Event eventA, Event eventB) {
+        this.eventA = eventA;
+        this.eventB = eventB;
+        this.constraint=null;
     }
 
     public void setEventA(Event eventA) {
@@ -35,20 +41,12 @@ public class EventPair {
         this.eventB = eventB;
     }
 
-    public long getConstraint() {
+    public Constraint getConstraint() {
         return constraint;
     }
 
-    public void setConstraint(long constraint) {
+    public void setConstraint(Constraint constraint) {
         this.constraint = constraint;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     @Override
@@ -57,7 +55,19 @@ public class EventPair {
                 "eventA=" + eventA +
                 ", eventB=" + eventB +
                 ", constraint=" + constraint +
-                ", type='" + type + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EventPair eventPair = (EventPair) o;
+        return eventA.equals(eventPair.eventA) && eventB.equals(eventPair.eventB);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(eventA, eventB);
     }
 }

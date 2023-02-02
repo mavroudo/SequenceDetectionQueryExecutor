@@ -1,10 +1,14 @@
 package com.datalab.siesta.queryprocessor.storage;
 
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.EventPair;
 import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -13,13 +17,19 @@ public class DBConnector {
     private DatabaseRepository db;
 
     @Autowired
-    public DBConnector(DatabaseRepository databaseRepository){
-        this.db=databaseRepository;
+    public DBConnector(DatabaseRepository databaseRepository) {
+        this.db = databaseRepository;
     }
 
-    public Metadata getMetadata(String logname){
+    public Metadata getMetadata(String logname) {
         return db.getMetadata(logname);
     }
 
-    public Set<String> findAllLongNames() {return db.findAllLongNames();}
+    public Set<String> findAllLongNames() {
+        return db.findAllLongNames();
+    }
+
+    public Map<EventPair, Count> getStats(String logname, Set<EventPair> eventPairs) {
+        return db.getCounts(logname, eventPairs);
+    }
 }
