@@ -49,6 +49,9 @@ public class Metadata {
         this.traces = Long.valueOf(attributes.get("traces"));
     }
 
+    public Metadata() {
+    }
+
     public String getCompression() {
         return compression;
     }

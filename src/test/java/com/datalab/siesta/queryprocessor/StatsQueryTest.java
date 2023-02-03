@@ -45,7 +45,5 @@ public class StatsQueryTest {
         ResultActions trial = mockMvc.perform(get(url).content(s).contentType(MediaType.APPLICATION_JSON));
         MvcResult results = trial.andExpect(status().isOk()).andReturn();
         String response = results.getResponse().getContentAsString();
-        System.out.println("hey");
-
     }
 }

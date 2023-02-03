@@ -2,7 +2,6 @@ package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 
 import java.util.ArrayList;
@@ -55,6 +54,17 @@ public class SimplePattern {
                 if (c != null) n.setConstraint(c);
                 eventPairs.add(n);
             }
+        }
+        return eventPairs;
+    }
+
+    public Set<EventPair> extractPairsConsecutive() {
+        Set<EventPair> eventPairs = new HashSet<>();
+        for(int i =0 ; i< events.size()-1; i++){
+            EventPair n = new EventPair(this.events.get(i), this.events.get(i+1));
+            Constraint c = this.searchForConstraint(i, i+1);
+            if (c != null) n.setConstraint(c);
+            eventPairs.add(n);
         }
         return eventPairs;
     }
