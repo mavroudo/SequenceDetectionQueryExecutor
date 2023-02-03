@@ -99,7 +99,7 @@ public class S3Connector implements DatabaseRepository {
     public List<Count> getCounts(String logname, Set<EventPair> pairs) {
         String path = String.format("%s%s%s", bucket, logname, "/count.parquet/");
         String firstFilter = pairs.stream().map(x -> x.getEventA().getName()).collect(Collectors.toSet())
-                .stream().map(x -> String.format("eventA = '%s'", x)).collect(Collectors.joining(" "));
+                .stream().map(x -> String.format("eventA = '%s'", x)).collect(Collectors.joining(" or "));
         Broadcast<Set<EventPair>> b_pairs = javaSparkContext.broadcast(pairs);
         List<Count> counts = sparkSession.read()
                 .parquet(path)

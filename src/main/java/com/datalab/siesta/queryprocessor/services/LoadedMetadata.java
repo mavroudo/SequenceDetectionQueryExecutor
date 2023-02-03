@@ -2,12 +2,17 @@ package com.datalab.siesta.queryprocessor.services;
 
 
 import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
 public class LoadedMetadata {
 
     private Map<String, Metadata> metadata;
+
+    @Autowired
+    private DBConnector dbConnector;
 
 
     public LoadedMetadata(Map<String, Metadata> metadata) {
@@ -16,6 +21,18 @@ public class LoadedMetadata {
 
     public Map<String, Metadata> getMetadata() {
         return metadata;
+    }
+
+    public Metadata getMetadata(String logname){
+        if(metadata.containsKey(logname)) {
+            return metadata.get(logname);
+        }else{
+            if(dbConnector.findAllLongNames().contains(logname)){
+                return  dbConnector.getMetadata(logname);
+            }else{
+                return null;
+            }
+        }
     }
 
 

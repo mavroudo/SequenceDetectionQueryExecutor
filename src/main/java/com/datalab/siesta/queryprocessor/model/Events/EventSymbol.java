@@ -14,6 +14,10 @@ public class EventSymbol extends EventPos{
 
     }
 
+    public EventSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
     public EventSymbol(String name, int pos, String symbol) {
         super(name, pos);
         this.symbol = symbol;

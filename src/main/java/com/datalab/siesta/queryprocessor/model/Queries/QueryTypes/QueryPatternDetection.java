@@ -2,22 +2,20 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryTypes;
 
 import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanStats;
-import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryMetadataWrapper;
-import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class QueryStats implements Query {
+public class QueryPatternDetection implements Query{
 
     @Autowired
-    private QueryPlanStats qp;
-
+    private QueryPlanPatternDetection qppd;
 
     @Override
     public QueryPlan createQueryPlan(QueryWrapper qw, Metadata m) {
-        return qp;
+        //TODO: implement logic that will determine the different query plans
+        return qppd;
     }
 }
