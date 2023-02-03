@@ -1,6 +1,5 @@
 package com.datalab.siesta.queryprocessor.services;
 
-import com.datalab.siesta.queryprocessor.model.LoadedMetadata;
 import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,18 +8,19 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
 @Service
 @ComponentScan
-public class LoadMetadata {
+public class LoadInfo {
 
     private DBConnector dbConnector;
 
 
     @Autowired
-    public LoadMetadata(DBConnector dbConnector){
+    public LoadInfo(DBConnector dbConnector){
         this.dbConnector=dbConnector;
 
     }
@@ -32,5 +32,14 @@ public class LoadMetadata {
             m.put(l,dbConnector.getMetadata(l));
         }
         return new LoadedMetadata(m);
+    }
+
+    @Bean
+    public LoadedEventTypes getAllEventTypes(){
+        Map<String, List<String>> response = new HashMap<>();
+        for (String l : dbConnector.findAllLongNames()){
+            response.put(l,dbConnector.getEventNames(l));
+        }
+        return new LoadedEventTypes(response);
     }
 }

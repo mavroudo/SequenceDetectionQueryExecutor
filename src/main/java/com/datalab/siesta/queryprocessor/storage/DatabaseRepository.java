@@ -16,5 +16,7 @@ public interface DatabaseRepository {
 
     List<Count> getCounts(String logname, Set<EventPair> pairs);
 
+    List<String> getEventNames(String logname);
+
 
 }

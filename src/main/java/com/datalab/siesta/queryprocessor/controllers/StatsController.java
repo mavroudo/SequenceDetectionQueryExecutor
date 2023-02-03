@@ -6,6 +6,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryStats;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
+import com.datalab.siesta.queryprocessor.services.LoadedEventTypes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,9 @@ public class StatsController {
 
     @Autowired
     private QueryStats qs;
+
+    @Autowired
+    private LoadedEventTypes e;
 
 
     @RequestMapping(path = "/stats",method = RequestMethod.GET)

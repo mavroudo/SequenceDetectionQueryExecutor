@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.controllers;
 
-import com.datalab.siesta.queryprocessor.model.LoadedMetadata;
+import com.datalab.siesta.queryprocessor.services.LoadedMetadata;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryMetadataWrapper;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;

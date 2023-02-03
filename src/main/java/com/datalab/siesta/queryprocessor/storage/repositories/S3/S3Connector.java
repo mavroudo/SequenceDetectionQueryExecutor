@@ -119,19 +119,19 @@ public class S3Connector implements DatabaseRepository {
                     }
                     return c.iterator();
                 })
-                        .filter((Function<Count, Boolean>) c->{
-                            for(EventPair p : b_pairs.getValue()){
-                                if(c.getEventA().equals(p.getEventA().getName())&&c.getEventB().equals(p.getEventB().getName())){
-                                    return true;
-                                }
-                            }
-                            return false;
-                        })
-                                .collect();
+                .filter((Function<Count, Boolean>) c -> {
+                    for (EventPair p : b_pairs.getValue()) {
+                        if (c.getEventA().equals(p.getEventA().getName()) && c.getEventB().equals(p.getEventB().getName())) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .collect();
         List<Count> response = new ArrayList<>();
-        pairs.forEach(p->{
-            for(Count c: counts){
-                if(c.getEventA().equals(p.getEventA().getName()) && c.getEventB().equals(p.getEventB().getName())){
+        pairs.forEach(p -> {
+            for (Count c : counts) {
+                if (c.getEventA().equals(p.getEventA().getName()) && c.getEventB().equals(p.getEventB().getName())) {
                     response.add(c);
                     break;
                 }
@@ -139,6 +139,16 @@ public class S3Connector implements DatabaseRepository {
         });
 
         return response;
+    }
+
+    @Override
+    public List<String> getEventNames(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+        return sparkSession.read().parquet(path)
+                .select("event_type")
+                .toJavaRDD()
+                .map((Function<Row, String>) row -> row.getString(0))
+                .collect();
     }
 
 

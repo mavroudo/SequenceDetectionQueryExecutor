@@ -25,6 +25,8 @@ public class DBConnector {
         return db.getMetadata(logname);
     }
 
+    public List<String> getEventNames(String logname){ return db.getEventNames(logname);}
+
     public Set<String> findAllLongNames() {
         return db.findAllLongNames();
     }
