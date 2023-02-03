@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries;
+package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 

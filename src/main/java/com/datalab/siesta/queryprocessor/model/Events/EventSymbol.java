@@ -1,7 +1,11 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
+import com.fasterxml.jackson.annotation.JsonView;
+
 public class EventSymbol extends EventPos{
 
+    @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected String symbol;
 
     public EventSymbol() {
@@ -23,12 +27,5 @@ public class EventSymbol extends EventPos{
         this.symbol = symbol;
     }
 
-    @Override
-    public String toString() {
-        return "EventSymbol{" +
-                "symbol=" + symbol +
-                ", position=" + position +
-                ", name='" + name + '\'' +
-                '}';
-    }
+
 }

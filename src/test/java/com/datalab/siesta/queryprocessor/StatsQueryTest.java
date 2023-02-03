@@ -1,10 +1,8 @@
 package com.datalab.siesta.queryprocessor;
 
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
-import com.datalab.siesta.queryprocessor.model.Patterns.Pattern;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryStatsWrapper;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +32,7 @@ public class StatsQueryTest {
         String url = "http://localhost:8080/stats";
         SimplePattern p = new SimplePattern();
         EventPos e = new EventPos("A_Accepted",0);
-        EventPos e2 = new EventPos("A_Canceled",1);
+        EventPos e2 = new EventPos("A_Create Application",1);
         List<EventPos> events = new ArrayList<>();
         events.add(e);
         events.add(e2);
@@ -46,6 +44,8 @@ public class StatsQueryTest {
         String s = Obj.writeValueAsString(qsw);
         ResultActions trial = mockMvc.perform(get(url).content(s).contentType(MediaType.APPLICATION_JSON));
         MvcResult results = trial.andExpect(status().isOk()).andReturn();
+        String response = results.getResponse().getContentAsString();
+        System.out.println("hey");
 
     }
 }

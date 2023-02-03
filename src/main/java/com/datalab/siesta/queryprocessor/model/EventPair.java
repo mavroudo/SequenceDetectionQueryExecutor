@@ -3,9 +3,10 @@ package com.datalab.siesta.queryprocessor.model;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class EventPair {
+public class EventPair implements Serializable {
 
     private Event eventA;
 
@@ -49,14 +50,6 @@ public class EventPair {
         this.constraint = constraint;
     }
 
-    @Override
-    public String toString() {
-        return "EventPair{" +
-                "eventA=" + eventA +
-                ", eventB=" + eventB +
-                ", constraint=" + constraint +
-                '}';
-    }
 
     @Override
     public boolean equals(Object o) {

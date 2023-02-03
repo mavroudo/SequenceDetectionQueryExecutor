@@ -1,9 +1,13 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import java.sql.Timestamp;
 
 public class EventTs extends Event{
 
+    @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected Timestamp timestamp;
 
     public EventTs() {
@@ -23,11 +27,5 @@ public class EventTs extends Event{
         this.timestamp = timestamp;
     }
 
-    @Override
-    public String toString() {
-        return "EventTs{" +
-                "timestamp=" + timestamp +
-                ", name='" + name + '\'' +
-                "} ";
-    }
+
 }

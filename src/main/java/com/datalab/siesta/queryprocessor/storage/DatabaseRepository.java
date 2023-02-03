@@ -14,7 +14,7 @@ public interface DatabaseRepository {
 
     Set<String> findAllLongNames();
 
-    Map<EventPair, Count> getCounts(String logname, Set<EventPair> pairs);
+    List<Count> getCounts(String logname, Set<EventPair> pairs);
 
 
 }

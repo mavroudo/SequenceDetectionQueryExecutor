@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries;
+package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
 public class QueryMetadataWrapper extends QueryWrapper {
 

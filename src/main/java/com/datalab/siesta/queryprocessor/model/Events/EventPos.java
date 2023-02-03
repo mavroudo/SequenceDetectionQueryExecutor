@@ -1,7 +1,11 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
+import com.fasterxml.jackson.annotation.JsonView;
+
 public class EventPos extends Event{
 
+    @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected int position;
 
     public EventPos() {
@@ -21,11 +25,5 @@ public class EventPos extends Event{
         this.position = position;
     }
 
-    @Override
-    public String toString() {
-        return "EventPos{" +
-                "position=" + position +
-                ", name='" + name + '\'' +
-                '}';
-    }
+
 }

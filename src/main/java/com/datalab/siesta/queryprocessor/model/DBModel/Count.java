@@ -1,8 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.DBModel;
 
-import com.datalab.siesta.queryprocessor.storage.repositories.S3.CountRecords;
+import java.io.Serializable;
 
-public class Count {
+public class Count implements Serializable {
 
     private String eventA;
 
@@ -19,13 +19,13 @@ public class Count {
     public Count() {
     }
 
-    public Count(String eventA, CountRecords cr){
-        this.eventA=eventA;
-        this.eventB=cr.getEventB();
-        this.count=cr.getCount();
-        this.min_duration=cr.getMin_duration();
-        this.max_duration=cr.getMax_duration();
-        this.sum_duration=cr.getMax_duration();
+    public Count(String eventA, String eventB, long sum_duration, int count, long min_duration, long max_duration) {
+        this.eventA = eventA;
+        this.eventB = eventB;
+        this.sum_duration = sum_duration;
+        this.count = count;
+        this.min_duration = min_duration;
+        this.max_duration = max_duration;
     }
 
     public String getEventA() {

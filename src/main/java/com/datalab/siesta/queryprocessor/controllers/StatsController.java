@@ -2,8 +2,10 @@ package com.datalab.siesta.queryprocessor.controllers;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryStatsWrapper;
-import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryStats;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,12 +23,14 @@ import java.util.Set;
 public class StatsController {
 
     @Autowired
-    private DBConnector dbConnector;
+    private QueryStats qs;
+
 
     @RequestMapping(path = "/stats",method = RequestMethod.GET)
     public ResponseEntity<MappingJacksonValue> getStats(@RequestBody QueryStatsWrapper qsp){
-        Set<EventPair> eventPairs = qsp.getPattern().extractPairsAll();
-        Map<EventPair, Count> stats = dbConnector.getStats(qsp.getLog_name(),eventPairs);
-        return new ResponseEntity<>(HttpStatus.OK);
+        QueryPlan qp = qs.createQueryPlan(qsp);
+        QueryResponse qrs = qp.execute(qsp);
+        MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
+        return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
     }
 }

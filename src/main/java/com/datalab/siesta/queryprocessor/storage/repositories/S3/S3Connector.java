@@ -2,6 +2,8 @@ package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 
@@ -9,10 +11,17 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.rdd.RDD;
+
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +30,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.apache.spark.sql.Dataset;
 import scala.Function1;
+import scala.Tuple2;
 import scala.collection.TraversableOnce;
 import scala.collection.mutable.WrappedArray;
+import scala.collection.JavaConverters;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -65,7 +77,7 @@ public class S3Connector implements DatabaseRepository {
         try {
             FileSystem fs = FileSystem.get(new URI(this.bucket), sparkSession.sparkContext().hadoopConfiguration());
             RemoteIterator<LocatedFileStatus> f = fs.listFiles(new Path(this.bucket), true);
-            Pattern pattern = Pattern.compile(String.format("%s[^/]*/",this.bucket));
+            Pattern pattern = Pattern.compile(String.format("%s[^/]*/", this.bucket));
             Set<String> files = new HashSet<>();
             while (f.hasNext()) {
                 LocatedFileStatus fin = f.next();
@@ -84,42 +96,49 @@ public class S3Connector implements DatabaseRepository {
 
 
     @Override
-    public Map<EventPair, Count> getCounts(String logname, Set<EventPair> pairs) {
+    public List<Count> getCounts(String logname, Set<EventPair> pairs) {
         String path = String.format("%s%s%s", bucket, logname, "/count.parquet/");
-        String firstFilter = pairs.stream().map(x->x.getEventA().getName()).collect(Collectors.toSet())
-                        .stream().map(x-> String.format("eventA = '%s'",x)).collect(Collectors.joining(" "));
-        JavaRDD<WrappedArray<Row>> df = sparkSession.read()
+        String firstFilter = pairs.stream().map(x -> x.getEventA().getName()).collect(Collectors.toSet())
+                .stream().map(x -> String.format("eventA = '%s'", x)).collect(Collectors.joining(" "));
+        Broadcast<Set<EventPair>> b_pairs = javaSparkContext.broadcast(pairs);
+        List<Count> counts = sparkSession.read()
                 .parquet(path)
                 .where(firstFilter)
-                .javaRDD()
-                .map(row->{
+                .toJavaRDD()
+                .flatMap((FlatMapFunction<Row, Count>) row -> {
                     String eventA = row.getString(1);
-                    WrappedArray<Row> countRecords = row.getAs("times");
-                    return countRecords;
+                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
+                    List<Count> c = new ArrayList<>();
+                    for (Row v1 : countRecords) {
+                        String eventB = v1.getString(0);
+                        long sum_duration = v1.getLong(1);
+                        int count = v1.getInt(2);
+                        long min_duration = v1.getLong(3);
+                        long max_daration = v1.getLong(4);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_daration));
+                    }
+                    return c.iterator();
+                })
+                        .filter((Function<Count, Boolean>) c->{
+                            for(EventPair p : b_pairs.getValue()){
+                                if(c.getEventA().equals(p.getEventA().getName())&&c.getEventB().equals(p.getEventB().getName())){
+                                    return true;
+                                }
+                            }
+                            return false;
+                        })
+                                .collect();
+        List<Count> response = new ArrayList<>();
+        pairs.forEach(p->{
+            for(Count c: counts){
+                if(c.getEventA().equals(p.getEventA().getName()) && c.getEventB().equals(p.getEventB().getName())){
+                    response.add(c);
+                    break;
+                }
+            }
+        });
 
-                    //TODO: finish this logic
-//                    return new WrappedCount(eventA, (List<CountRecords>) countRecords.toList());
-                });
-        System.out.println("hey");
-
-
-
-
-
-//                        row->{
-//                    String eventA = row.getString(1);
-//                    WrappedArray<CountRecords> wrappedArray= row.getAs("times");
-//                })
-
-
-
-
-
-
-
-
-
-        return null;
+        return response;
     }
 
 

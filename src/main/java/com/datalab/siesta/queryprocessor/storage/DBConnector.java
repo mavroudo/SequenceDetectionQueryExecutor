@@ -29,7 +29,7 @@ public class DBConnector {
         return db.findAllLongNames();
     }
 
-    public Map<EventPair, Count> getStats(String logname, Set<EventPair> eventPairs) {
+    public List<Count> getStats(String logname, Set<EventPair> eventPairs) {
         return db.getCounts(logname, eventPairs);
     }
 }

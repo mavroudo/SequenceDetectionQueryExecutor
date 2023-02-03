@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries;
+package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 
