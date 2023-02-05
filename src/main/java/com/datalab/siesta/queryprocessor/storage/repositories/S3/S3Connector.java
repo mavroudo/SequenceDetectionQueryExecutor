@@ -1,12 +1,14 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 
+import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
@@ -51,7 +53,7 @@ import java.util.stream.Collectors;
         matchIfMissing = true
 )
 @Service
-public class S3Connector implements DatabaseRepository {
+public class S3Connector extends SparkDatabaseRepository {
 
     protected SparkSession sparkSession;
 
@@ -149,6 +151,11 @@ public class S3Connector implements DatabaseRepository {
                 .toJavaRDD()
                 .map((Function<Row, String>) row -> row.getString(0))
                 .collect();
+    }
+
+    @Override
+    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined) {
+        return null;
     }
 
 

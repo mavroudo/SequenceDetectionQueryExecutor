@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class Event implements Serializable {
+public class Event implements Serializable {
 
 
     protected String name;

@@ -15,7 +15,6 @@ public class EventPair implements Serializable {
 
     private Event eventB;
 
-
     private Constraint constraint;
 
     public Event getEventA() {
