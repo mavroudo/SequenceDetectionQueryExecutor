@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+
 public class TimeConstraints extends Constraint implements Cloneable{
 
     private long constraint;
@@ -13,6 +15,15 @@ public class TimeConstraints extends Constraint implements Cloneable{
 
     }
 
+    public boolean isConstraintHolds(Count c){
+        if(method.equals("within")){
+            return c.getMin_duration() <= this.constraint;
+        }else if (method.equals("atleast")){
+            return this.constraint <= c.getMax_duration();
+        }
+        else return false;
+    }
+
     public long getConstraint() {
         return constraint;
     }
@@ -21,14 +32,6 @@ public class TimeConstraints extends Constraint implements Cloneable{
         this.constraint = constraint;
     }
 
-    @Override
-    public String toString() {
-        return "TimeConstraints{" +
-                "constraint=" + constraint +
-                ", posA=" + posA +
-                ", posB=" + posB +
-                '}';
-    }
 
     @Override
     public TimeConstraints clone() {

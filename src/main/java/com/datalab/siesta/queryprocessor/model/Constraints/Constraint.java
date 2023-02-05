@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
-import jnr.ffi.provider.jffi.ClosureFromNativeConverter;
+
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 
 public abstract class Constraint implements Cloneable {
 
@@ -8,12 +9,16 @@ public abstract class Constraint implements Cloneable {
     protected int posA;
     protected int posB;
 
+    protected String method; //It will be set to atleast or within
+
     public Constraint() {
+        method="within";
     }
 
     public Constraint(int posA, int posB) {
         this.posA = posA;
         this.posB = posB;
+        method="within";
     }
 
     public int getPosA() {
@@ -32,12 +37,12 @@ public abstract class Constraint implements Cloneable {
         this.posB = posB;
     }
 
-    @Override
-    public String toString() {
-        return "Constraint{" +
-                "posA=" + posA +
-                ", posB=" + posB +
-                '}';
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
     }
 
     @Override

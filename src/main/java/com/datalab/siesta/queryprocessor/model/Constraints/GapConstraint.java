@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+
 public class GapConstraint extends Constraint implements Cloneable{
 
     private int constraint;
@@ -20,14 +22,6 @@ public class GapConstraint extends Constraint implements Cloneable{
         this.constraint = constraint;
     }
 
-    @Override
-    public String toString() {
-        return "GapConstraint{" +
-                "constraint=" + constraint +
-                ", posA=" + posA +
-                ", posB=" + posB +
-                '}';
-    }
 
 
     @Override
