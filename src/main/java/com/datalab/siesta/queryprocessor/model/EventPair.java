@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 
 import java.io.Serializable;
@@ -54,10 +55,16 @@ public class EventPair implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null ) return false;
+        if(o instanceof Count){
+            Count k = (Count) o;
+            return k.getEventA().equals(this.eventA.getName()) && k.getEventB().equals(this.eventB.getName());
+        }
+        if (getClass() != o.getClass()) return false;
         EventPair eventPair = (EventPair) o;
         return eventA.equals(eventPair.eventA) && eventB.equals(eventPair.eventB);
     }
+
 
     @Override
     public int hashCode() {

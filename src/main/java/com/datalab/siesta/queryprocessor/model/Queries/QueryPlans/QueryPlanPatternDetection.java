@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import scala.Tuple2;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -29,6 +29,7 @@ public class QueryPlanPatternDetection implements QueryPlan{
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         Set<EventPair> pairs =qpdw.getPattern().extractPairsWithSymbols();
         List<Count> sortedPairs = this.getStats(pairs,qpdw.getLog_name());
+        List<Tuple2<EventPair,Count>> combined= this.combineWithPairs(pairs,sortedPairs);
         return null;
     }
 
@@ -44,5 +45,17 @@ public class QueryPlanPatternDetection implements QueryPlan{
         List<Count> results = dbConnector.getStats(logname,pairs);
         results.sort((Count c1, Count c2) -> Integer.compare(c1.getCount(),c1.getCount())); //TODO: separate this function in order to be easily changed
         return results;
+    }
+
+    protected List<Tuple2<EventPair,Count>> combineWithPairs(Set<EventPair> pairs, List<Count> sortedCounts){
+        List<Tuple2<EventPair,Count>> response = new ArrayList<>();
+        for (Count c : sortedCounts){
+            for(EventPair p: pairs){
+                if(p.equals(c)) {
+                    response.add(new Tuple2<>(p,c));
+                }
+            }
+        }
+        return response;
     }
 }
