@@ -1,7 +1,4 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
-
-import com.datalab.siesta.queryprocessor.model.DBModel.Count;
-
 public class GapConstraint extends Constraint implements Cloneable{
 
     private int constraint;

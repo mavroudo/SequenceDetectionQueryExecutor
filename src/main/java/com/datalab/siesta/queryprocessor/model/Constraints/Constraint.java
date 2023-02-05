@@ -1,14 +1,18 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
 
-import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 public abstract class Constraint implements Cloneable {
 
     //position of the first event in the Pattern
+    @JsonIgnore
     protected int posA;
+    @JsonIgnore
     protected int posB;
 
+    @JsonProperty("type")
     protected String method; //It will be set to atleast or within
 
     public Constraint() {

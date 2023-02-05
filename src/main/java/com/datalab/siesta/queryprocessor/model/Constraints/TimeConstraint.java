@@ -2,14 +2,13 @@ package com.datalab.siesta.queryprocessor.model.Constraints;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 
-public class TimeConstraints extends Constraint implements Cloneable{
-
+public class TimeConstraint extends Constraint implements Cloneable{
     private long constraint;
 
-    public TimeConstraints() {
+    public TimeConstraint() {
     }
 
-    public TimeConstraints(int posA, int posB, long constraint) {
+    public TimeConstraint(int posA, int posB, long constraint) {
         super(posA, posB);
         this.constraint = constraint;
 
@@ -34,8 +33,8 @@ public class TimeConstraints extends Constraint implements Cloneable{
 
 
     @Override
-    public TimeConstraints clone() {
-        TimeConstraints clone = (TimeConstraints) super.clone();
+    public TimeConstraint clone() {
+        TimeConstraint clone = (TimeConstraint) super.clone();
         clone.setConstraint(constraint);
         return clone;
     }

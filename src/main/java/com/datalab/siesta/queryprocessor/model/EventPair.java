@@ -3,15 +3,18 @@ package com.datalab.siesta.queryprocessor.model;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventPair implements Serializable {
 
     private Event eventA;
 
     private Event eventB;
+
 
     private Constraint constraint;
 
