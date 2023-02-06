@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
@@ -148,9 +150,12 @@ public class S3Connector extends SparkDatabaseRepository {
     @Override
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
-        this.getAllEventPairs(pairs, logname, metadata);
+        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
+        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> x = this.splitConstraints(pairs);
         return null;
     }
+
+
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {

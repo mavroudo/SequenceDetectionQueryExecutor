@@ -1,9 +1,13 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
-public class GapConstraint extends Constraint implements Cloneable{
+
+import java.io.Serializable;
+
+public class GapConstraint extends Constraint implements Cloneable, Serializable {
 
     private int constraint;
 
     public GapConstraint() {
+        super();
     }
 
     public GapConstraint(int posA, int posB, int constraint) {

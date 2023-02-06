@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage;
 
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.EventPair;
@@ -21,6 +23,5 @@ public interface DatabaseRepository {
     List<String> getEventNames(String logname);
 
     IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata);
-
 
 }

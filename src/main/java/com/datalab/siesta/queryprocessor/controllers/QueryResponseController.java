@@ -11,6 +11,10 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper
 import com.datalab.siesta.queryprocessor.services.LoadedEventTypes;
 import com.datalab.siesta.queryprocessor.services.LoadedMetadata;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping(path = "/")
@@ -35,6 +41,9 @@ public class QueryResponseController {
 
     @Autowired
     private QueryPatternDetection qpd;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
 //    @Autowired
 //    private LoadedEventTypes e;
@@ -66,7 +75,13 @@ public class QueryResponseController {
     }
 
     @RequestMapping(path = "/detection",method = RequestMethod.GET)
-    public ResponseEntity<MappingJacksonValue> patternDetection(@RequestBody QueryPatternDetectionWrapper qpdw){
+    public ResponseEntity<MappingJacksonValue> patternDetection(@RequestBody String json){
+        QueryPatternDetectionWrapper qpdw = null;
+        try {
+            qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         Metadata m = allMetadata.getMetadata(qpdw.getLog_name());
         if(m == null){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

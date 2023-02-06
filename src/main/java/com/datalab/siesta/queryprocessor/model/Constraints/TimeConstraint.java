@@ -2,16 +2,18 @@ package com.datalab.siesta.queryprocessor.model.Constraints;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 
-public class TimeConstraint extends Constraint implements Cloneable{
+import java.io.Serializable;
+
+public class TimeConstraint extends Constraint implements Cloneable, Serializable {
     private long constraint;
 
     public TimeConstraint() {
+        super();
     }
 
     public TimeConstraint(int posA, int posB, long constraint) {
         super(posA, posB);
         this.constraint = constraint;
-
     }
 
     public boolean isConstraintHolds(Count c){

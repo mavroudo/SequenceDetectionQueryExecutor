@@ -1,15 +1,26 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
-
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
 
-public abstract class Constraint implements Cloneable {
+import java.io.Serializable;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "constraint_type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TimeConstraint.class, name = "timeConstraint"),
+        @JsonSubTypes.Type(value = GapConstraint.class, name = "gapConstraint")
+})
+public abstract class Constraint implements Cloneable, Serializable {
 
     //position of the first event in the Pattern
-    @JsonIgnore
+//    @JsonIgnore
     protected int posA;
-    @JsonIgnore
+//    @JsonIgnore
     protected int posB;
 
     @JsonProperty("type")
