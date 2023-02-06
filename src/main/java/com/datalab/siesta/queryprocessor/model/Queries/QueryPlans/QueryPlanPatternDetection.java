@@ -2,7 +2,9 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
@@ -25,6 +27,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
     @Autowired
     private DBConnector dbConnector;
 
+    private Metadata metadata;
+
     public QueryPlanPatternDetection() {
     }
 
@@ -36,8 +40,13 @@ public class QueryPlanPatternDetection implements QueryPlan {
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
         QueryResponse qr = this.firstParsing(pairs,combined);
         if(qr!=null) return qr; //There was an original error
-
+        IndexMiddleResult imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined,metadata);
         return null;
+    }
+
+    @Override
+    public void setMetadata(Metadata metadata) {
+        this.metadata=metadata;
     }
 
 

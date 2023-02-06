@@ -2,12 +2,9 @@ package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
-import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Metadata;
-import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
-
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -18,30 +15,25 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.rdd.RDD;
-
-import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
-import org.apache.spark.sql.Dataset;
-import scala.Function1;
 import scala.Tuple2;
-import scala.collection.TraversableOnce;
-import scala.collection.mutable.WrappedArray;
+import scala.collection.Iterable;
 import scala.collection.JavaConverters;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -154,9 +146,45 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined) {
+    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata) {
+        Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
+        this.getAllEventPairs(pairs, logname, metadata);
         return null;
     }
 
-
+    @Override
+    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
+        String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
+        String filterEvents = pairs.stream().map(x ->
+                String.format(" (eventA='%s' and eventB='%s') ", x.getEventA().getName(), x.getEventB().getName())
+        ).collect(Collectors.joining("or"));
+        Broadcast<String> mode = javaSparkContext.broadcast(metadata.getMode());
+        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> df = sparkSession.read()
+                .parquet(path)
+                .where(filterEvents)
+                .toJavaRDD()
+                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
+                    String eventA = row.getAs("eventA");
+                    String eventB = row.getAs("eventB");
+                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    List<IndexPair> response = new ArrayList<>();
+                    for (Row r2 : l) {
+                        long tid = r2.getLong(0);
+                        if (mode.getValue().equals("positions")) {
+                            List<Row> inner = JavaConverters.seqAsJavaList(r2.getSeq(1));
+                            int posA = inner.get(0).getInt(0);
+                            int posB = inner.get(0).getInt(1);
+                            response.add(new IndexPair(tid, eventA, eventB, posA, posB));
+                        } else {
+                            List<Row> inner = JavaConverters.seqAsJavaList(r2.getSeq(1));
+                            String tsA = inner.get(0).getString(0);
+                            String tsB = inner.get(0).getString(1);
+                            response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
+                        }
+                    }
+                    return response.iterator();
+                })
+                .groupBy((Function<IndexPair, Tuple2<String,String>>) indexPair-> new Tuple2<>(indexPair.getEventA(),indexPair.getEventB()));
+        return df;
+    }
 }

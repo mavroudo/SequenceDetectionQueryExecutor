@@ -24,6 +24,8 @@ public class QueryPlanStats implements QueryPlan{
 
     private DBConnector dbConnector;
 
+    private Metadata metadata;
+
 
     public QueryPlanStats() {
     }
@@ -39,6 +41,11 @@ public class QueryPlanStats implements QueryPlan{
         Set<EventPair> eventPairs = qsw.getPattern().extractPairsConsecutive();
         List<Count> stats = dbConnector.getStats(qsw.getLog_name(),eventPairs);
         return new QueryResponseStats(stats);
+    }
+
+    @Override
+    public void setMetadata(Metadata metadata) {
+        this.metadata=metadata;
     }
 
 }

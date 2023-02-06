@@ -20,7 +20,7 @@ public interface DatabaseRepository {
 
     List<String> getEventNames(String logname);
 
-    IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined);
+    IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata);
 
 
 }

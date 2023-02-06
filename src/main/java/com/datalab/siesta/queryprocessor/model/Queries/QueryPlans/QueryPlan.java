@@ -8,4 +8,6 @@ import org.springframework.stereotype.Component;
 
 public interface QueryPlan {
     QueryResponse execute(QueryWrapper qw);
+
+    void setMetadata(Metadata metadata);
 }

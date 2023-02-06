@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -21,21 +22,21 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
      * @param logname
      * @return
      */
-    protected JavaPairRDD<Tuple2<String, String>, IndexPair> getAllEventPairs(Set<EventPair> pairs, String logname) {
+    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
         return null;
     }
 
     protected JavaPairRDD<Tuple2<String, String>, IndexPair>
-    addTimeConstraintFilter(JavaPairRDD<Tuple2<String, String>, IndexPair> pairs, List<TimeConstraint> constraints) {
+    addTimeConstraintFilter(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs, List<TimeConstraint> constraints) {
         return null;
     }
 
     protected JavaPairRDD<Tuple2<String, String>, IndexPair>
-    addGapConstraintFilter(JavaPairRDD<Tuple2<String, String>, IndexPair> pairs, List<GapConstraint> constraints) {
+    addGapConstraintFilter(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs, List<GapConstraint> constraints) {
         return null;
     }
 
-    protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, IndexPair> pairs){
+    protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs){
         return null;
     }
 
