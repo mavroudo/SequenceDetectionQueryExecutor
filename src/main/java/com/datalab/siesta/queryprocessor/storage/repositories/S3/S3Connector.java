@@ -49,16 +49,13 @@ import java.util.stream.Collectors;
 @Service
 public class S3Connector extends SparkDatabaseRepository {
 
-    protected SparkSession sparkSession;
 
-    protected JavaSparkContext javaSparkContext;
 
     private String bucket = "s3a://siesta/";
 
     @Autowired
     public S3Connector(SparkSession sparkSession, JavaSparkContext javaSparkContext) {
-        this.sparkSession = sparkSession;
-        this.javaSparkContext = javaSparkContext;
+        super(sparkSession, javaSparkContext);
     }
 
 
@@ -151,7 +148,10 @@ public class S3Connector extends SparkDatabaseRepository {
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
-        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> x = this.splitConstraints(pairs);
+        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> lists = this.splitConstraints(pairs);
+        this.addTimeConstraintFilter(gpairs,lists._1);
+        this.addGapConstraintFilter(gpairs,lists._2);
+
         return null;
     }
 
