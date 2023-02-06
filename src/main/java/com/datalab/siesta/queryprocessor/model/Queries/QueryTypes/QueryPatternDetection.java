@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryTypes;
 
-import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;

@@ -1,8 +1,7 @@
-package com.datalab.siesta.queryprocessor.model;
+package com.datalab.siesta.queryprocessor.model.Events;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;

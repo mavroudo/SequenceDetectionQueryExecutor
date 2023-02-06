@@ -1,13 +1,14 @@
 package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
-import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SimplePattern extends SIESTAPattern{
 
@@ -59,6 +60,10 @@ public class SimplePattern extends SIESTAPattern{
 
     public Set<EventPair> extractPairsConsecutive() {
         return this.extractPairsConsecutive(this.events,this.constraints);
+    }
+
+    public List<String> getEventTypes(){
+        return this.events.stream().map(Event::getName).collect(Collectors.toList());
     }
 
 

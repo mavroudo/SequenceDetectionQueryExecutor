@@ -28,4 +28,9 @@ public class EventPos extends Event implements Serializable {
         this.position = position;
     }
 
+    @Override
+    public EventBoth getEventBoth(){
+        return new EventBoth(this.name,null,this.position);
+    }
+
 }

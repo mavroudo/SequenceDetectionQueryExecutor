@@ -56,4 +56,8 @@ public class Event implements Serializable {
     public void setTraceID(long traceID) {
         this.traceID = traceID;
     }
+
+    public EventBoth getEventBoth(){
+        return new EventBoth(this.name,null,-1);
+    }
 }

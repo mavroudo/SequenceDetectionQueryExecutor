@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
-import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class QueryResponseBadRequestForDetectionTest {
 

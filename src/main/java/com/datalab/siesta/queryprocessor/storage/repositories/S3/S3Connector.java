@@ -2,11 +2,11 @@ package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
-import com.datalab.siesta.queryprocessor.model.DBModel.Count;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
-import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -27,16 +27,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
-import scala.collection.Iterable;
 import scala.collection.JavaConverters;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,12 +50,13 @@ import java.util.stream.Collectors;
 public class S3Connector extends SparkDatabaseRepository {
 
 
-
+    private Utils utils;
     private String bucket = "s3a://siesta/";
 
     @Autowired
-    public S3Connector(SparkSession sparkSession, JavaSparkContext javaSparkContext) {
+    public S3Connector(SparkSession sparkSession, JavaSparkContext javaSparkContext, Utils utils) {
         super(sparkSession, javaSparkContext);
+        this.utils=utils;
     }
 
 
@@ -146,10 +146,48 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes) {
+        JavaRDD<Trace> df = this.querySingleTablePrivate(logname,traceIds);
+        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
+        return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
+                .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
+                .collectAsMap();
+    }
+
+    @Override
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
+        return this.querySingleTablePrivate(logname,traceIds)
+                .keyBy((Function<Trace, Long>) Trace::getTraceID)
+                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
+                .collectAsMap();
+    }
+
+    private JavaRDD<Trace> querySingleTablePrivate(String logname, List<Long> traceIds){
+        String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
+        String firstFilter = traceIds
+                .stream().map(x -> String.format("trace_id = %d", x)).collect(Collectors.joining(" or "));
+        return sparkSession.read()
+                .parquet(path)
+                .where(firstFilter)
+                .toJavaRDD()
+                .map((Function<Row, Trace>) row->{
+                    long trace_id= row.getAs("trace_id");
+                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    List<EventBoth> results = new ArrayList<>();
+                    for(int i=0;i< evs.size();i++){
+                        String event_name = evs.get(i).getString(0);
+                        Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
+                        results.add(new EventBoth(event_name,event_timestamp,i));
+                    }
+                    return new Trace(trace_id,results);
+                } );
+    }
+
+    @Override
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,int minPairs) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
-        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> lists = this.splitConstraints(pairs);
+        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> lists = utils.splitConstraints(pairs);
         this.addTimeConstraintFilter(gpairs,lists._1);
         this.addGapConstraintFilter(gpairs,lists._2);
         JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);

@@ -1,7 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
-import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 
@@ -92,6 +93,9 @@ public class ComplexPattern extends SIESTAPattern{
             }
         }
         return l;
+    }
 
+    public List<String> getEventTypes(){
+        return this.eventsWithSymbols.stream().map(Event::getName).collect(Collectors.toList());
     }
 }

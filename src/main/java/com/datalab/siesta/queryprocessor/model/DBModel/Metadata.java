@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model;
+package com.datalab.siesta.queryprocessor.model.DBModel;
 
 
 import org.apache.spark.sql.Row;

@@ -13,14 +13,14 @@ public class IndexMiddleResult {
 
     private List<Long> trace_ids;
 
-    private Map<Tuple2<Long,String>, List<Event>> events;
+    private Map<Long, List<Event>> events;
 
     public IndexMiddleResult() {
         this.trace_ids = new ArrayList<>();
         this.events = new HashMap<>();
     }
 
-    public IndexMiddleResult(List<Long> trace_ids, Map<Tuple2<Long, String>, List<Event>> events) {
+    public IndexMiddleResult(List<Long> trace_ids, Map<Long, List<Event>> events) {
         this.trace_ids = trace_ids;
         this.events = events;
     }
@@ -33,11 +33,11 @@ public class IndexMiddleResult {
         this.trace_ids = trace_ids;
     }
 
-    public Map<Tuple2<Long, String>, List<Event>> getEvents() {
+    public Map<Long, List<Event>> getEvents() {
         return events;
     }
 
-    public void setEvents(Map<Tuple2<Long, String>, List<Event>> events) {
+    public void setEvents(Map<Long, List<Event>> events) {
         this.events = events;
     }
 }

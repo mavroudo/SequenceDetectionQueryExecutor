@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
-import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.codehaus.jackson.annotate.JsonProperty;

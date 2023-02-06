@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor;
 
 import com.amazonaws.thirdparty.jackson.databind.ObjectMapper;
-import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

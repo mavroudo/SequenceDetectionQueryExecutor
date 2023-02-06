@@ -1,10 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
-import com.datalab.siesta.queryprocessor.model.EventPair;
 
 import java.util.List;
-import java.util.Map;
 
 public class QueryResponseStats implements QueryResponse{
 

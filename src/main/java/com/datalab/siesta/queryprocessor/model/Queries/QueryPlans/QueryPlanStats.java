@@ -1,8 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
-import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseStats;
 

@@ -30,4 +30,9 @@ public class EventTs extends Event implements Serializable {
         this.timestamp = timestamp;
     }
 
+    @Override
+    public EventBoth getEventBoth(){
+        return new EventBoth(this.name,this.timestamp,-1);
+    }
+
 }

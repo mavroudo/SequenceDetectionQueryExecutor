@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
-import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 
 import java.io.Serializable;
 

@@ -2,9 +2,9 @@ package com.datalab.siesta.queryprocessor.storage;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
-import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Metadata;
-import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
@@ -39,5 +39,9 @@ public class DBConnector {
 
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata, int minpairs){
         return db.patterDetectionTraceIds(logname,combined,metadata,minpairs);
+    }
+
+    public Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes){
+        return db.querySeqTable(logname,traceIds,eventTypes);
     }
 }

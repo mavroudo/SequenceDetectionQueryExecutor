@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.controllers;
 
-import com.datalab.siesta.queryprocessor.model.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
@@ -8,12 +8,8 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryStats;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryMetadataWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
-import com.datalab.siesta.queryprocessor.services.LoadedEventTypes;
 import com.datalab.siesta.queryprocessor.services.LoadedMetadata;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

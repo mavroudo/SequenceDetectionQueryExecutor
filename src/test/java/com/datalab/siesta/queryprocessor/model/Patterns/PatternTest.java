@@ -1,7 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Patterns;
 
-import com.datalab.siesta.queryprocessor.model.EventPair;
-import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
@@ -9,8 +8,6 @@ import org.springframework.util.Assert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class PatternTest {
 
