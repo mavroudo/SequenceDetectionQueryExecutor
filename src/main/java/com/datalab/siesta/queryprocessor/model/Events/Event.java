@@ -11,6 +11,8 @@ public class Event implements Serializable {
 
     protected String name;
 
+    protected long traceID;
+
     public Event() {
         this.name="";
     }
@@ -45,5 +47,13 @@ public class Event implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(name);
+    }
+
+    public long getTraceID() {
+        return traceID;
+    }
+
+    public void setTraceID(long traceID) {
+        this.traceID = traceID;
     }
 }

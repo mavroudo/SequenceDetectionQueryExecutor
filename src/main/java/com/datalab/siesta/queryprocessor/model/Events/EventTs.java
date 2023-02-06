@@ -3,12 +3,15 @@ package com.datalab.siesta.queryprocessor.model.Events;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class EventTs extends Event{
+public class EventTs extends Event implements Serializable {
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected Timestamp timestamp;
+
+
 
     public EventTs() {
         this.timestamp=null;
@@ -26,6 +29,5 @@ public class EventTs extends Event{
     public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
     }
-
 
 }

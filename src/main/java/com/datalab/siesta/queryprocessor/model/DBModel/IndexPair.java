@@ -1,7 +1,13 @@
 package com.datalab.siesta.queryprocessor.model.DBModel;
 
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.Events.EventTs;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 public class IndexPair implements Serializable {
 
@@ -106,5 +112,25 @@ public class IndexPair implements Serializable {
 
     public void setTraceId(long traceId) {
         this.traceId = traceId;
+    }
+
+    public List<Event> getEvents(){
+        List<Event> e = new ArrayList<>();
+        if(timestampA==null){//the events are pos
+            EventPos eventPos1 = new EventPos(this.eventA,this.positionA);
+            EventPos eventPos2 = new EventPos(this.eventB,this.positionB);
+            eventPos1.setTraceID(this.traceId);
+            eventPos2.setTraceID(this.traceId);
+            e.add(eventPos1);
+            e.add(eventPos2);
+        }else{//the events are ts
+            EventTs eventTs1 = new EventTs(this.eventA,this.timestampA);
+            EventTs eventTs2 = new EventTs(this.eventB,this.timestampB);
+            eventTs1.setTraceID(this.traceId);
+            eventTs2.setTraceID(this.traceId);
+            e.add(eventTs1);
+            e.add(eventTs2);
+        }
+        return e;
     }
 }

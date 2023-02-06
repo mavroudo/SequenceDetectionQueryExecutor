@@ -21,6 +21,7 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -145,14 +146,18 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata) {
+    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,int minPairs) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
         Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> lists = this.splitConstraints(pairs);
         this.addTimeConstraintFilter(gpairs,lists._1);
         this.addGapConstraintFilter(gpairs,lists._2);
-
-        return null;
+        JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
+        indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
+        List<Long> traces = this.getCommonIds(indexPairs,minPairs);
+        IndexMiddleResult imr = this.addFilterIds(indexPairs,traces);
+        indexPairs.unpersist();
+        return imr;
     }
 
 

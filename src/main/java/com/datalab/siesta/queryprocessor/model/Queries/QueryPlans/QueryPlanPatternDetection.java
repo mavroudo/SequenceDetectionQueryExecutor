@@ -29,7 +29,10 @@ public class QueryPlanPatternDetection implements QueryPlan {
 
     private Metadata metadata;
 
+    private int minPairs;
+
     public QueryPlanPatternDetection() {
+        minPairs = -1;
     }
 
     @Override
@@ -38,15 +41,16 @@ public class QueryPlanPatternDetection implements QueryPlan {
         Set<EventPair> pairs = qpdw.getPattern().extractPairsWithSymbols();
         List<Count> sortedPairs = this.getStats(pairs, qpdw.getLog_name());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
-        QueryResponse qr = this.firstParsing(pairs,combined);
-        if(qr!=null) return qr; //There was an original error
-        IndexMiddleResult imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined,metadata);
+        QueryResponse qr = this.firstParsing(pairs, combined);
+        if (qr != null) return qr; //There was an original error
+        minPairs = minPairs == -1? combined.size() : minPairs; //TODO: modify it to pass the arguments during initialization
+        IndexMiddleResult imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
         return null;
     }
 
     @Override
     public void setMetadata(Metadata metadata) {
-        this.metadata=metadata;
+        this.metadata = metadata;
     }
 
 

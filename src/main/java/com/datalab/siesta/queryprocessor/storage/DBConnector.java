@@ -37,7 +37,7 @@ public class DBConnector {
         return db.getCounts(logname, eventPairs);
     }
 
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata){
-        return db.patterDetectionTraceIds(logname,combined,metadata);
+    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata, int minpairs){
+        return db.patterDetectionTraceIds(logname,combined,metadata,minpairs);
     }
 }

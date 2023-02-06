@@ -4,22 +4,25 @@ import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import scala.Tuple2;
+import scala.collection.JavaConverters;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
@@ -98,15 +101,37 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs) {
-        return null;
+        return  pairs.flatMap((FlatMapFunction<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>, IndexPair>) g-> g._2.iterator());
     }
 
-    protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs) {
-        return null;
+    protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs, int minPairs) {
+        return pairs.map((Function<IndexPair, Tuple2<Long, Long>>) p-> new Tuple2<>(p.getTraceId(),1L))
+                .keyBy((Function<Tuple2<Long, Long>, Long>) p-> p._1 )
+                .reduceByKey((Function2<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>>) (p1,p2)->
+                    new Tuple2<>(p1._1,p1._2+p2._2)
+                ).filter((Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean>) p-> p._2._2>minPairs)
+                .map((Function<Tuple2<Long, Tuple2<Long, Long>>, Long>)p->p._1 )
+                .collect();
     }
 
-    protected JavaRDD<IndexPair> addFilterIds(JavaRDD<IndexPair> pairs, List<Long> traceIds) {
-        return null;
+    protected IndexMiddleResult addFilterIds(JavaRDD<IndexPair> pairs, List<Long> traceIds) {
+        Broadcast<Set<Long>> bTraces = javaSparkContext.broadcast(new HashSet<>(traceIds));
+        JavaRDD<IndexPair> filtered = pairs.filter((Function<IndexPair, Boolean>) pair->
+                bTraces.getValue().contains(pair.getTraceId()));
+        IndexMiddleResult imr = new IndexMiddleResult();
+        imr.setTrace_ids(traceIds);
+        Map<Tuple2<Long,String>,List<Event>> events = filtered.flatMap((FlatMapFunction<IndexPair, Event>) indexPair-> indexPair.getEvents().iterator())
+                .groupBy((Function<Event, Tuple2<Long,String>>) event -> new Tuple2<>(event.getTraceID(),event.getName()))
+                .mapValues((Function<Iterable<Event>, List<Event>>) p-> {
+                    List<Event> e = new ArrayList<>();
+                    for(Event ev : p){
+                        e.add(ev);
+                    }
+                    return e;
+                } )
+                        .collectAsMap();
+        imr.setEvents(events);
+        return imr;
     }
 
     protected Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> splitConstraints(Set<EventPair> pairs) {
