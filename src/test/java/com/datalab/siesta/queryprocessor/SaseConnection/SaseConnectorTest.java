@@ -14,12 +14,14 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanPatte
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import edu.umass.cs.sase.engine.Match;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -58,7 +60,7 @@ class SaseConnectorTest {
         QueryPlanPatternDetection queryPlan1 =(QueryPlanPatternDetection)queryPlan;
         IndexMiddleResult imr = queryPlan1.getImr();
 
-        saseConnector.evaluate(p.getItSimpler(),imr.getEvents());
+        Map<Long,List<Match>> matches = saseConnector.evaluate(p.getItSimpler(),imr.getEvents());
         System.out.println("hey");
 
 

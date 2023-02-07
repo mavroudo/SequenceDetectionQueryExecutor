@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class SaseConnector {
 
 
-    public void evaluate(SimplePattern pattern, Map<Long,List<Event>> events){
+    public Map<Long,List<Match>> evaluate(SimplePattern pattern, Map<Long,List<Event>> events){
         EngineController ec = this.getEngineController(pattern);
         Map<Long,List<Match>> results = new HashMap<>();
         for(Map.Entry<Long,List<Event>> e: events.entrySet()){
@@ -35,10 +35,7 @@ public class SaseConnector {
             }
             results.put(e.getKey(),ec.getMatches());
         }
-
-
-        System.out.println("hey");
-
+        return results;
     }
 
     private EngineController getEngineController(SimplePattern pattern){
