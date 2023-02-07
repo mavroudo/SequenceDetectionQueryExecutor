@@ -31,6 +31,12 @@ public class QueryPlanPatternDetection implements QueryPlan {
 
     private int minPairs;
 
+    private IndexMiddleResult imr;
+
+    public IndexMiddleResult getImr() { //no need for this is just for testing
+        return imr;
+    }
+
     public QueryPlanPatternDetection() {
         minPairs = -1;
     }
@@ -44,9 +50,11 @@ public class QueryPlanPatternDetection implements QueryPlan {
         QueryResponse qr = this.firstParsing(pairs, combined);
         if (qr != null) return qr; //There was an original error
         minPairs = minPairs == -1? combined.size() : minPairs; //TODO: modify it to pass the arguments during initialization
-        IndexMiddleResult imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
+        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
         return null;
     }
+
+
 
     @Override
     public void setMetadata(Metadata metadata) {

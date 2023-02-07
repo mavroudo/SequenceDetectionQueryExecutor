@@ -29,7 +29,7 @@ public class QueryResponseController {
     @Autowired
     private DBConnector dbConnector;
 
-    @Autowired
+//    @Autowired
     private LoadedMetadata allMetadata;
 
     @Autowired
@@ -39,7 +39,7 @@ public class QueryResponseController {
     private QueryPatternDetection qpd;
 
     @Autowired
-    private ObjectMapper objectMapper;
+private ObjectMapper objectMapper;
 
 //    @Autowired
 //    private LoadedEventTypes e;

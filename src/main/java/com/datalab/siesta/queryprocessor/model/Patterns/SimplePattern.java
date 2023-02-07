@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import edu.umass.cs.sase.query.State;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +65,14 @@ public class SimplePattern extends SIESTAPattern{
 
     public List<String> getEventTypes(){
         return this.events.stream().map(Event::getName).collect(Collectors.toList());
+    }
+
+    public State[] getNfa(){
+        State[] states = new State[this.events.size()];
+        for(int i = 0; i<this.events.size();i++){
+            states[i] = new State(i+1,"a",String.format("%s",this.events.get(i).getName()),"normal");
+        }
+        return states;
     }
 
 

@@ -98,4 +98,15 @@ public class ComplexPattern extends SIESTAPattern{
     public List<String> getEventTypes(){
         return this.eventsWithSymbols.stream().map(Event::getName).collect(Collectors.toList());
     }
+
+    public SimplePattern getItSimpler(){
+        List<EventPos> response = new ArrayList<>();
+        for(EventSymbol ep : this.eventsWithSymbols){
+            if( ep.getSymbol().equals("")) response.add(ep);
+            else return null;
+        }
+        SimplePattern sp = new SimplePattern(response);
+        sp.setConstraints(this.constraints);
+        return sp;
+    }
 }
