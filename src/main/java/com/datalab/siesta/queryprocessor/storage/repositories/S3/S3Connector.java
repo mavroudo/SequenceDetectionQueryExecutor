@@ -3,7 +3,6 @@ package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;

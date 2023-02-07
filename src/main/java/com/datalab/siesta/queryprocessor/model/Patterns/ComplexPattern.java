@@ -32,12 +32,13 @@ public class ComplexPattern extends SIESTAPattern{
     }
 
     public void setConstraints(List<Constraint> constraints) {
-        this.constraints = constraints;
+
+        this.constraints = this.fixConstraints(constraints);
     }
 
     public ComplexPattern(List<EventSymbol> eventsWithSymbols, List<Constraint> constraints) {
         this.eventsWithSymbols = eventsWithSymbols;
-        this.constraints = constraints;
+        this.constraints = this.fixConstraints(constraints);
     }
 
     public ComplexPattern(List<EventSymbol> eventsWithSymbols) {

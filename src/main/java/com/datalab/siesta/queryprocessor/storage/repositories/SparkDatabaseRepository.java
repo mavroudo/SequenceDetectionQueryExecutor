@@ -8,6 +8,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
+import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -121,11 +122,13 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         Map<Long,List<Event>> events = filtered.flatMap((FlatMapFunction<IndexPair, Event>) indexPair-> indexPair.getEvents().iterator())
                 .groupBy((Function<Event, Long>) Event::getTraceID)
                 .mapValues((Function<Iterable<Event>, List<Event>>) p-> {
-                    List<Event> e = new ArrayList<>();
+                    Set<Event> e = new HashSet<>();
                     for(Event ev : p){
                         e.add(ev);
                     }
-                    return e;
+                    List<Event> eventsList = new ArrayList<>(e);
+                    Collections.sort(eventsList);
+                    return eventsList;
                 } )
                         .collectAsMap();
         imr.setEvents(events);

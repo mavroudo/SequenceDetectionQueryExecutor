@@ -33,7 +33,7 @@ public class SaseConnector {
             } catch (CloneNotSupportedException | EvaluationException exe) {
                 throw new RuntimeException(exe);
             }
-            results.put(e.getKey(),ec.getMatches());
+            if(!ec.getMatches().isEmpty()) results.put(e.getKey(),ec.getMatches());
         }
         return results;
     }
@@ -43,7 +43,7 @@ public class SaseConnector {
         NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
         nfaWrapper.setSize(pattern.getEvents().size());
         nfaWrapper.setStates(pattern.getNfa());
-        nfaWrapper.setPartitionAttribute("trace_id"); //? TODO: check this out
+//        nfaWrapper.setPartitionAttribute("trace_id"); //? TODO: check this out
         ec.setNfa(new NFA(nfaWrapper));
         return ec;
     }

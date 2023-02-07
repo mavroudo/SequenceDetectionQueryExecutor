@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Event implements Serializable {
+public class Event implements Serializable, Comparable {
 
 
     protected String name;
@@ -70,4 +70,11 @@ public class Event implements Serializable {
         se.setTimestamp(position);
         return se;
     }
+
+    @Override
+    public int compareTo(Object o) {
+        return 0;
+    }
+
+
 }

@@ -1,6 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
@@ -40,7 +42,7 @@ public class SimplePattern extends SIESTAPattern{
 
     public void setConstraints(List<Constraint> constraints) {
         this.constraints = constraints;
-        this.fixConstraints(this.constraints);
+        this.constraints =this.fixConstraints(constraints);
     }
 
     @Override
@@ -70,10 +72,30 @@ public class SimplePattern extends SIESTAPattern{
     public State[] getNfa(){
         State[] states = new State[this.events.size()];
         for(int i = 0; i<this.events.size();i++){
-            states[i] = new State(i+1,"a",String.format("%s",this.events.get(i).getName()),"normal");
+            State s = new State(i+1,"a",String.format("%s",this.events.get(i).getName()),"normal");
+            this.generatePredicates(i).forEach(s::addPredicate);
+            states[i] = s;
         }
         return states;
     }
+
+    private List<String> generatePredicates(int i){
+        List<String> response = new ArrayList<>();
+        for(Constraint c: this.constraints){
+            if(c.getPosB()==i && c instanceof GapConstraint){
+                GapConstraint gc = (GapConstraint) c;
+                if(gc.getMethod().equals("within")) response.add(String.format(" position <= $previous.position + %d ",gc.getConstraint()));
+                else response.add(String.format(" position >= $%d.position + %d ",i-1,gc.getConstraint())); //atleast
+            }else if(c.getPosB()==i && c instanceof TimeConstraint){
+                TimeConstraint tc = (TimeConstraint) c;
+                if(tc.getMethod().equals("within")) response.add(String.format(" timestamp <= $previous.timestamp + %d ",tc.getConstraint()));
+                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",i-1,tc.getConstraint())); //atleast
+            }
+        }
+        return response;
+    }
+
+
 
 
 

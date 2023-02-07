@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJac
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 public class EventBoth extends EventTs{
 
@@ -35,5 +36,22 @@ public class EventBoth extends EventTs{
         return se;
     }
 
+    @Override
+    public int compareTo(Object o) {
+        return super.compareTo(o);
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        EventBoth eventBoth = (EventBoth) o;
+        return position == eventBoth.position;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), position);
+    }
 }

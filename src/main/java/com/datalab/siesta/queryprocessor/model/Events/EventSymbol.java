@@ -3,6 +3,8 @@ package com.datalab.siesta.queryprocessor.model.Events;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import java.util.Objects;
+
 public class EventSymbol extends EventPos{
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
@@ -31,5 +33,22 @@ public class EventSymbol extends EventPos{
         this.symbol = symbol;
     }
 
+    @Override
+    public int compareTo(Object o) {
+        return super.compareTo(o);
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        EventSymbol that = (EventSymbol) o;
+        return Objects.equals(symbol, that.symbol);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), symbol);
+    }
 }

@@ -4,7 +4,9 @@ import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import scala.collection.immutable.Stream;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -45,14 +47,20 @@ public abstract class SIESTAPattern {
         return eventPairs;
     }
 
-    protected void fixConstraints(List<Constraint> constraints) {
+    protected List<Constraint> fixConstraints(List<Constraint> constraints) {
+        List<Constraint> newConstraints = new ArrayList<>();
         for (Constraint c : constraints) {
-            for (int i = c.getPosA() + 1; i < c.getPosB(); i++) {
-                Constraint c1 = c.clone();
-                c1.setPosA(c.getPosA());
-                c1.setPosB(i);
-                constraints.add(c1);
+            if(c.getPosB()>c.getPosA()+1){ //multiple gaps
+                for (int i = c.getPosA(); i < c.getPosB(); i++) {
+                    Constraint c1 = c.clone();
+                    c1.setPosA(i);
+                    c1.setPosB(i+1);
+                    newConstraints.add(c1);
+                }
+            }else if(c.getPosB()==c.getPosA()+1){
+                newConstraints.add(c);
             }
         }
+        return newConstraints;
     }
 }

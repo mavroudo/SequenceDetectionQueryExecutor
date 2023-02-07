@@ -48,7 +48,11 @@ class SaseConnectorTest {
         events.add(es2);
         events.add(es3);
         events.add(es4);
+
+        List<Constraint> lc = new ArrayList<>();
+        lc.add(new GapConstraint(0,2,10));
         ComplexPattern p = new ComplexPattern(events);
+        p.setConstraints(lc);
 
         Metadata m = dbConnector.getMetadata("bpi_2017");
         QueryPatternDetectionWrapper queryPatternDetectionWrapper = new QueryPatternDetectionWrapper();

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.Objects;
 
 public class EventTs extends Event implements Serializable {
 
@@ -43,4 +44,23 @@ public class EventTs extends Event implements Serializable {
         return se;
     }
 
+    @Override
+    public int compareTo(Object o) {
+        EventTs ep = (EventTs) o;
+        return this.timestamp.compareTo(ep.getTimestamp());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        EventTs eventTs = (EventTs) o;
+        return Objects.equals(timestamp, eventTs.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), timestamp);
+    }
 }
