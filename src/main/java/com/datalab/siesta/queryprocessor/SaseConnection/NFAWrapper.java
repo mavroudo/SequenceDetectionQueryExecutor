@@ -16,7 +16,7 @@ public class NFAWrapper {
 
     public NFAWrapper(String selectionStrategy) {
         this.selectionStrategy=selectionStrategy;
-        this.timeWindow=-1;
+        this.timeWindow=Integer.MAX_VALUE;
         this.partitionAttribute="";
     }
 

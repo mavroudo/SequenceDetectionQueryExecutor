@@ -62,11 +62,12 @@ public class Event implements Serializable {
         return new EventBoth(this.name,null,-1);
     }
 
-    public SaseEvent transformSaseEvent(){
+    public SaseEvent transformSaseEvent(int position){
         SaseEvent se= new SaseEvent();
         se.setEventType(this.name);
-        se.setId((int) this.traceID);
+        se.setId(position);
         se.setTrace_id((int)this.traceID);
+        se.setTimestamp(position);
         return se;
     }
 }

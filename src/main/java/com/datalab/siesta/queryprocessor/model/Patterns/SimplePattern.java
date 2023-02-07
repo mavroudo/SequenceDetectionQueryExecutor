@@ -70,7 +70,7 @@ public class SimplePattern extends SIESTAPattern{
     public State[] getNfa(){
         State[] states = new State[this.events.size()];
         for(int i = 0; i<this.events.size();i++){
-            states[i] = new State(i+1,"a",String.format("saseevent%d",i+1),"normal");
+            states[i] = new State(i+1,"a",String.format("%s",this.events.get(i).getName()),"normal");
         }
         return states;
     }

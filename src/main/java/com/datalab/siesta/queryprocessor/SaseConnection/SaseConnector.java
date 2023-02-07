@@ -13,9 +13,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,17 +23,20 @@ public class SaseConnector {
 
     public void evaluate(SimplePattern pattern, Map<Long,List<Event>> events){
         EngineController ec = this.getEngineController(pattern);
-        ec.initializeEngine();
-        Stream s = this.getStream(events.values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList()));
-        ec.setInput(s);
-        try {
-            ec.runEngine();
-        } catch (CloneNotSupportedException | EvaluationException e) {
-            throw new RuntimeException(e);
+        Map<Long,List<Match>> results = new HashMap<>();
+        for(Map.Entry<Long,List<Event>> e: events.entrySet()){
+            ec.initializeEngine();
+            Stream s = this.getStream(new ArrayList<>(e.getValue()));
+            ec.setInput(s);
+            try {
+                ec.runEngine();
+            } catch (CloneNotSupportedException | EvaluationException exe) {
+                throw new RuntimeException(exe);
+            }
+            results.put(e.getKey(),ec.getMatches());
         }
-        List<Match> matches = ec.getMatches();
+
+
         System.out.println("hey");
 
     }
@@ -45,7 +46,7 @@ public class SaseConnector {
         NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
         nfaWrapper.setSize(pattern.getEvents().size());
         nfaWrapper.setStates(pattern.getNfa());
-//        nfaWrapper.setPartitionAttribute("trace_id"); //? TODO: check this out
+        nfaWrapper.setPartitionAttribute("trace_id"); //? TODO: check this out
         ec.setNfa(new NFA(nfaWrapper));
         return ec;
     }
@@ -53,7 +54,10 @@ public class SaseConnector {
 
     private Stream getStream(List<Event> events){
         Stream s = new Stream(events.size());
-        List<SaseEvent> saseEvents = events.stream().map(Event::transformSaseEvent).collect(Collectors.toList());
+        List<SaseEvent> saseEvents = new ArrayList<>();
+        for(int i=0;i<events.size();i++){
+            saseEvents.add(events.get(i).transformSaseEvent(i));
+        }
         s.setEvents(saseEvents.toArray(new SaseEvent[events.size()]));
         return s;
     }

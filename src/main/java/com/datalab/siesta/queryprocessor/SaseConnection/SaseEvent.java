@@ -1,8 +1,8 @@
 package com.datalab.siesta.queryprocessor.SaseConnection;
 
-import edu.umass.cs.sase.stream.ABCEvent;
+
 import edu.umass.cs.sase.stream.Event;
-import scala.reflect.internal.Trees;
+
 
 public class SaseEvent implements Event {
 

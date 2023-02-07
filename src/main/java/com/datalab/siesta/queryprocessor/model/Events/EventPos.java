@@ -35,8 +35,8 @@ public class EventPos extends Event implements Serializable {
     }
 
     @Override
-    public SaseEvent transformSaseEvent() {
-        SaseEvent se = super.transformSaseEvent();
+    public SaseEvent transformSaseEvent(int position) {
+        SaseEvent se = super.transformSaseEvent(position);
         se.setPosition(this.position);
         return se;
     }

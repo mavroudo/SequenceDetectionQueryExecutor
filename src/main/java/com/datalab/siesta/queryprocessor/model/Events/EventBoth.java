@@ -29,8 +29,8 @@ public class EventBoth extends EventTs{
     }
 
     @Override
-    public SaseEvent transformSaseEvent() {
-        SaseEvent se = super.transformSaseEvent();
+    public SaseEvent transformSaseEvent(int position) {
+        SaseEvent se = super.transformSaseEvent(position);
         se.setTimestamp((int)this.timestamp.getTime()/1000); //transform to seconds
         return se;
     }
