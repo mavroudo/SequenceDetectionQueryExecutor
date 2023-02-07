@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
+import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -59,5 +60,13 @@ public class Event implements Serializable {
 
     public EventBoth getEventBoth(){
         return new EventBoth(this.name,null,-1);
+    }
+
+    public SaseEvent transformSaseEvent(){
+        SaseEvent se= new SaseEvent();
+        se.setEventType(this.name);
+        se.setId((int) this.traceID);
+        se.setTrace_id((int)this.traceID);
+        return se;
     }
 }

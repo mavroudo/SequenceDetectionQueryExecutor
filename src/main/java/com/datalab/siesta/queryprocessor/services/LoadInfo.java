@@ -25,21 +25,21 @@ public class LoadInfo {
 
     }
 
-    @Bean
-    public LoadedMetadata getAllMetadata(){
-        Map<String,Metadata> m = new HashMap<>();
-        for (String l : dbConnector.findAllLongNames()){
-            m.put(l,dbConnector.getMetadata(l));
-        }
-        return new LoadedMetadata(m);
-    }
-
-    @Bean
-    public LoadedEventTypes getAllEventTypes(){
-        Map<String, List<String>> response = new HashMap<>();
-        for (String l : dbConnector.findAllLongNames()){
-            response.put(l,dbConnector.getEventNames(l));
-        }
-        return new LoadedEventTypes(response);
-    }
+//    @Bean
+//    public LoadedMetadata getAllMetadata(){
+//        Map<String,Metadata> m = new HashMap<>();
+//        for (String l : dbConnector.findAllLongNames()){
+//            m.put(l,dbConnector.getMetadata(l));
+//        }
+//        return new LoadedMetadata(m);
+//    }
+//
+//    @Bean
+//    public LoadedEventTypes getAllEventTypes(){
+//        Map<String, List<String>> response = new HashMap<>();
+//        for (String l : dbConnector.findAllLongNames()){
+//            response.put(l,dbConnector.getEventNames(l));
+//        }
+//        return new LoadedEventTypes(response);
+//    }
 }

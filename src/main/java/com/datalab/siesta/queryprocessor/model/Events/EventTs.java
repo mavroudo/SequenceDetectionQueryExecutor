@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
+import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -33,6 +34,13 @@ public class EventTs extends Event implements Serializable {
     @Override
     public EventBoth getEventBoth(){
         return new EventBoth(this.name,this.timestamp,-1);
+    }
+
+    @Override
+    public SaseEvent transformSaseEvent() {
+        SaseEvent se = super.transformSaseEvent();
+        se.setTimestamp((int)this.timestamp.getTime()/1000); //transform to seconds
+        return se;
     }
 
 }
