@@ -32,6 +32,8 @@ public class PatternDetectionQueryTest {
     @Test
     public void getStats() throws Exception{
         String url = "http://localhost:8080/detection";
+
+        ObjectMapper Obj = new ObjectMapper();
         EventSymbol es1 = new EventSymbol("A_Accepted",0,"");
         EventSymbol es2 = new EventSymbol("A_Create Application",1,"");
         EventSymbol es3 = new EventSymbol("A_Concept",2,"");
@@ -41,17 +43,17 @@ public class PatternDetectionQueryTest {
         events.add(es2);
         events.add(es3);
         events.add(es4);
-        TimeConstraint tc = new TimeConstraint(1,2,700);
+//        TimeConstraint tc = new TimeConstraint(1,2,700);
         GapConstraint gc = new GapConstraint(2,3,3);
         List<Constraint> lc = new ArrayList<>();
-        lc.add(tc);
+//        lc.add(tc);
         lc.add(gc);
         ComplexPattern p = new ComplexPattern(events);
         p.setConstraints(lc);
         QueryPatternDetectionWrapper qsw = new QueryPatternDetectionWrapper();
         qsw.setPattern(p);
         qsw.setLog_name("bpi_2017");
-        ObjectMapper Obj = new ObjectMapper();
+
         String s = Obj.writeValueAsString(qsw);
         System.out.println(s);
 

@@ -5,6 +5,8 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -62,6 +64,7 @@ public class ComplexPattern extends SIESTAPattern{
      *
      * @return Pair of events along with the constraints
      */
+    @JsonIgnore
     public Set<EventPair> extractPairsWithSymbols() {
         return this.splitIntoSimples().stream()
                 .flatMap(x ->
@@ -96,10 +99,12 @@ public class ComplexPattern extends SIESTAPattern{
         return l;
     }
 
+    @JsonIgnore
     public List<String> getEventTypes(){
         return this.eventsWithSymbols.stream().map(Event::getName).collect(Collectors.toList());
     }
 
+    @JsonIgnore
     public SimplePattern getItSimpler(){
         List<EventPos> response = new ArrayList<>();
         for(EventSymbol ep : this.eventsWithSymbols){

@@ -47,7 +47,7 @@ public abstract class SIESTAPattern {
         return eventPairs;
     }
 
-    protected List<Constraint> fixConstraints(List<Constraint> constraints) {
+    protected List<Constraint> fixConstraints(List<Constraint> constraints) { //TODO: test this, we should be able to maintain the original constraints -> for the getting from db
         List<Constraint> newConstraints = new ArrayList<>();
         for (Constraint c : constraints) {
             if(c.getPosB()>c.getPosA()+1){ //multiple gaps

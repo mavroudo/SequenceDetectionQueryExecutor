@@ -41,6 +41,10 @@ public class QueryPlanPatternDetection implements QueryPlan {
         minPairs = -1;
     }
 
+    public void setMinPairs(int minPairs) {
+        this.minPairs = minPairs;
+    }
+
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;

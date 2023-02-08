@@ -29,7 +29,7 @@ public class QueryResponseController {
     @Autowired
     private DBConnector dbConnector;
 
-//    @Autowired
+    @Autowired
     private LoadedMetadata allMetadata;
 
     @Autowired
@@ -39,39 +39,39 @@ public class QueryResponseController {
     private QueryPatternDetection qpd;
 
     @Autowired
-private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
 //    @Autowired
 //    private LoadedEventTypes e;
 
 
-    @RequestMapping(path = "/metadata",method = RequestMethod.GET)
+    @RequestMapping(path = "/metadata", method = RequestMethod.GET)
     public ResponseEntity<MappingJacksonValue> getMetadata(@RequestBody QueryMetadataWrapper qmw) {
         String logname = qmw.getLog_name();
         Metadata m = allMetadata.getMetadata(logname);
-        if(m == null){
+        if (m == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }else{
+        } else {
             MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(m);
             return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
         }
     }
 
-    @RequestMapping(path = "/stats",method = RequestMethod.GET)
-    public ResponseEntity<MappingJacksonValue> getStats(@RequestBody QueryStatsWrapper qsp){
+    @RequestMapping(path = "/stats", method = RequestMethod.GET)
+    public ResponseEntity<MappingJacksonValue> getStats(@RequestBody QueryStatsWrapper qsp) {
         Metadata m = allMetadata.getMetadata(qsp.getLog_name());
-        if(m == null){
+        if (m == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }else{
-            QueryPlan qp = qs.createQueryPlan(qsp,m);
+        } else {
+            QueryPlan qp = qs.createQueryPlan(qsp, m);
             QueryResponse qrs = qp.execute(qsp);
             MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
             return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
         }
     }
 
-    @RequestMapping(path = "/detection",method = RequestMethod.GET)
-    public ResponseEntity<MappingJacksonValue> patternDetection(@RequestBody String json){
+    @RequestMapping(path = "/detection", method = RequestMethod.GET)
+    public ResponseEntity<MappingJacksonValue> patternDetection(@RequestBody String json) {
         QueryPatternDetectionWrapper qpdw = null;
         try {
             qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
@@ -79,10 +79,10 @@ private ObjectMapper objectMapper;
             throw new RuntimeException(e);
         }
         Metadata m = allMetadata.getMetadata(qpdw.getLog_name());
-        if(m == null){
+        if (m == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }else{
-            QueryPlan qp = qpd.createQueryPlan(qpdw,m);
+        } else {
+            QueryPlan qp = qpd.createQueryPlan(qpdw, m);
             QueryResponse qrs = qp.execute(qpdw);
             MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
             return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);

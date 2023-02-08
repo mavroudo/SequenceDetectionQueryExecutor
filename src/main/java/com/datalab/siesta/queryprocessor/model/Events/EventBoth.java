@@ -3,6 +3,7 @@ package com.datalab.siesta.queryprocessor.model.Events;
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.sql.Timestamp;
 import java.util.Objects;
@@ -30,6 +31,7 @@ public class EventBoth extends EventTs{
     }
 
     @Override
+    @JsonIgnore
     public SaseEvent transformSaseEvent(int position) {
         SaseEvent se = super.transformSaseEvent(position);
         se.setTimestamp((int)this.timestamp.getTime()/1000); //transform to seconds
