@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
+import com.datalab.siesta.queryprocessor.model.PossiblePattern;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
 import edu.umass.cs.sase.query.NFA;
@@ -49,6 +50,31 @@ public class SaseConnector {
             }
         }
         return occurrences;
+    }
+
+    public WhyNotMatchResponse evaluate(SIESTAPattern pattern, List<PossiblePattern> possiblePatterns, boolean onlyAppearances) {
+        WhyNotMatchResponse whyNotMatchResponse = new WhyNotMatchResponse();
+        EngineController ec = this.getEngineController(pattern, onlyAppearances);
+        for (PossiblePattern p : possiblePatterns) {
+            ec.initializeEngine();
+            Stream s = this.getStream(new ArrayList<>(p.getEvents()));
+            ec.setInput(s);
+            try {
+                ec.runEngine();
+            } catch (CloneNotSupportedException | EvaluationException exe) {
+                throw new RuntimeException(exe);
+            }
+            if (!ec.getMatches().isEmpty()) {
+                whyNotMatchResponse.addFound(p);
+                for (Match m : ec.getMatches()) {
+                    whyNotMatchResponse.addMatchToLast(Arrays.stream(m.getEvents()).parallel()
+                            .map(x -> (SaseEvent) x)
+                            .map(SaseEvent::getEventBoth)
+                            .collect(Collectors.toList()));
+                }
+            }else whyNotMatchResponse.addNotFount(p);
+        }
+        return whyNotMatchResponse;
     }
 
     private EngineController getEngineController(SIESTAPattern pattern, boolean onlyAppearances) {

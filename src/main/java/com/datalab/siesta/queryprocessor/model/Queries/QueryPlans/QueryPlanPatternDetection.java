@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
+import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
@@ -34,17 +35,23 @@ import java.util.stream.Collectors;
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanPatternDetection implements QueryPlan {
 
-    private final DBConnector dbConnector;
+    protected final DBConnector dbConnector;
 
-    private Metadata metadata;
+    protected Metadata metadata;
 
-    private int minPairs;
+    protected int minPairs;
 
-    private final SaseConnector saseConnector;
+    protected final SaseConnector saseConnector;
 
-    private IndexMiddleResult imr;
+    protected IndexMiddleResult imr;
 
-    private Utils utils;
+    protected Utils utils;
+
+    protected Set<String> eventTypesInLog;
+
+    public void setEventTypesInLog(Set<String> eventTypesInLog) {
+        this.eventTypesInLog = eventTypesInLog;
+    }
 
     public IndexMiddleResult getImr() { //no need for this is just for testing
         return imr;
@@ -65,13 +72,9 @@ public class QueryPlanPatternDetection implements QueryPlan {
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
-        Set<EventPair> pairs = qpdw.getPattern().extractPairsWithSymbols();
-        List<Count> sortedPairs = this.getStats(pairs, qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
-        QueryResponse qr = this.firstParsing(pairs, combined);
-        if (qr != null) return qr; //There was an original error
-        minPairs = minPairs == -1 ? combined.size() : minPairs;
-        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
+        QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
+        this.getMiddleResults(qpdw,firstCheck);
+        if(!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
         Tuple2<List<TimeConstraint>, List<GapConstraint>> constraintLists = utils
                 .splitConstraints(qpdw.getPattern().getConstraints());
@@ -79,19 +82,30 @@ public class QueryPlanPatternDetection implements QueryPlan {
             //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
             List<Occurrences> ocs = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), true);
             List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-            imr.setEvents(this.querySeqDB(tracesToQuery,qpdw.getPattern(),qpdw.getLog_name()));
+            imr.setEvents(this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name()));
         }
-        List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(),false);
+        List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         queryResponsePatternDetection.setOccurrences(occurrences);
         return queryResponsePatternDetection;
     }
+
+    protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponse qr){
+        Set<EventPair> pairs = qpdw.getPattern().extractPairsWithSymbols();
+        List<Count> sortedPairs = this.getStats(pairs, qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
+        qr = this.firstParsing(qpdw, pairs, combined);
+        if (qr != null) return; //There was an original error
+        minPairs = minPairs == -1 ? combined.size() : minPairs;
+        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
+    }
+
 
     private boolean requiresQueryToDB(List<TimeConstraint> tcs, List<GapConstraint> gcs) {
         return (!tcs.isEmpty() && !gcs.isEmpty()) || (!gcs.isEmpty() && metadata.getMode().equals("timestamps")) ||
                 (!tcs.isEmpty() && metadata.getMode().equals("positions"));
     }
 
-    private Map<Long, List<Event>> querySeqDB(List<Long> trace_ids,SIESTAPattern pattern, String logname) {
+    private Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname) {
         List<String> eventTypes = pattern.getEventTypes();
         Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes);
         return fromDB.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)
@@ -131,7 +145,28 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return response;
     }
 
-    protected QueryResponseBadRequestForDetection firstParsing(Set<EventPair> pairs, List<Tuple2<EventPair, Count>> combined) {
+    protected QueryResponseBadRequestForDetection firstParsing(QueryPatternDetectionWrapper queryPatternDetectionWrapper,
+                                                               Set<EventPair> pairs,
+                                                               List<Tuple2<EventPair, Count>> combined) {
+        QueryResponseBadRequestForDetection qr = new QueryResponseBadRequestForDetection();
+        List<String> nonExistingEvents = new ArrayList<>();
+        for (String eventType : queryPatternDetectionWrapper.getPattern().getEventTypes()) {
+            if (!this.eventTypesInLog.contains(eventType)) {
+                nonExistingEvents.add(eventType);
+            }
+        }
+        if (!nonExistingEvents.isEmpty()) {
+            qr.setNonExistingEvents(nonExistingEvents);
+        }
+        List<Constraint> wrongConstraints = new ArrayList<>();
+        for(Constraint c: queryPatternDetectionWrapper.getPattern().getConstraints()){
+            if (c.hasError()) wrongConstraints.add(c);
+        }
+        if(!wrongConstraints.isEmpty()){
+            qr.setWrongConstraints(wrongConstraints);
+        }
+
+
         List<EventPair> inPairs = new ArrayList<>();
         if (pairs.size() != combined.size()) { //find non-existing event pairs
             for (Tuple2<EventPair, Count> c : combined) {
@@ -140,9 +175,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
                 }
             }
             if (inPairs.size() > 0) {
-                QueryResponseBadRequestForDetection qr = new QueryResponseBadRequestForDetection();
                 qr.setNonExistingPairs(inPairs);
-                return qr;
             }
         }
         for (Tuple2<EventPair, Count> c : combined) { //Find constraints that do not hold in all db
@@ -154,10 +187,10 @@ public class QueryPlanPatternDetection implements QueryPlan {
             }
         }
         if (inPairs.size() > 0) {
-            QueryResponseBadRequestForDetection qr = new QueryResponseBadRequestForDetection();
             qr.setConstraintsNotFulfilled(inPairs);
-            return qr;
-        } else return null;
+        }
+        return qr;
+
     }
 
 }
