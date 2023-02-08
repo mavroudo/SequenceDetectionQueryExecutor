@@ -7,6 +7,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
+import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
@@ -64,7 +65,8 @@ class SaseConnectorTest {
         QueryPlanPatternDetection queryPlan1 =(QueryPlanPatternDetection)queryPlan;
         IndexMiddleResult imr = queryPlan1.getImr();
 
-        Map<Long,List<Match>> matches = saseConnector.evaluate(p.getItSimpler(),imr.getEvents());
+        List<Occurrences> matches = saseConnector.evaluate(p.getItSimpler(),imr.getEvents(),false);
+
         System.out.println("hey");
 
 

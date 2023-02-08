@@ -1,14 +1,22 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
+import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
-import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Occurrences;
+import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -18,26 +26,35 @@ import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanPatternDetection implements QueryPlan {
 
-    @Autowired
-    private DBConnector dbConnector;
+    private final DBConnector dbConnector;
 
     private Metadata metadata;
 
     private int minPairs;
 
+    private final SaseConnector saseConnector;
+
     private IndexMiddleResult imr;
+
+    private Utils utils;
 
     public IndexMiddleResult getImr() { //no need for this is just for testing
         return imr;
     }
 
-    public QueryPlanPatternDetection() {
+    @Autowired
+    public QueryPlanPatternDetection(DBConnector dbConnector, SaseConnector saseConnector, Utils utils) {
+        this.saseConnector = saseConnector;
+        this.dbConnector = dbConnector;
+        this.utils = utils;
         minPairs = -1;
     }
 
@@ -53,11 +70,33 @@ public class QueryPlanPatternDetection implements QueryPlan {
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
         QueryResponse qr = this.firstParsing(pairs, combined);
         if (qr != null) return qr; //There was an original error
-        minPairs = minPairs == -1? combined.size() : minPairs; //TODO: modify it to pass the arguments during initialization
+        minPairs = minPairs == -1 ? combined.size() : minPairs;
         imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
-        return null;
+        QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
+        Tuple2<List<TimeConstraint>, List<GapConstraint>> constraintLists = utils
+                .splitConstraints(qpdw.getPattern().getConstraints());
+        if (this.requiresQueryToDB(constraintLists._1, constraintLists._2)) { // we need to get from SeqTable
+            //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
+            List<Occurrences> ocs = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), true);
+            List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+            imr.setEvents(this.querySeqDB(tracesToQuery,qpdw.getPattern(),qpdw.getLog_name()));
+        }
+        List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(),false);
+        queryResponsePatternDetection.setOccurrences(occurrences);
+        return queryResponsePatternDetection;
     }
 
+    private boolean requiresQueryToDB(List<TimeConstraint> tcs, List<GapConstraint> gcs) {
+        return (!tcs.isEmpty() && !gcs.isEmpty()) || (!gcs.isEmpty() && metadata.getMode().equals("timestamps")) ||
+                (!tcs.isEmpty() && metadata.getMode().equals("positions"));
+    }
+
+    private Map<Long, List<Event>> querySeqDB(List<Long> trace_ids,SIESTAPattern pattern, String logname) {
+        List<String> eventTypes = pattern.getEventTypes();
+        Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes);
+        return fromDB.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)
+                .collect(Collectors.toList())));
+    }
 
 
     @Override

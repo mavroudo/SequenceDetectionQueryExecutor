@@ -1,7 +1,12 @@
 package com.datalab.siesta.queryprocessor.SaseConnection;
 
 
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import edu.umass.cs.sase.stream.Event;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.joda.time.Instant;
+
+import java.sql.Timestamp;
 
 
 public class SaseEvent implements Event {
@@ -12,6 +17,15 @@ public class SaseEvent implements Event {
     private String eventType;
     private int timestamp;
 
+    private boolean isTimestampSet;
+
+    public boolean isTimestampSet() {
+        return isTimestampSet;
+    }
+
+    public void setTimestampSet(boolean timestampSet) {
+        isTimestampSet = timestampSet;
+    }
 
     public int getPosition() {
         return position;
@@ -46,6 +60,21 @@ public class SaseEvent implements Event {
         if(attributeName.equalsIgnoreCase("trace_id"))
             return trace_id;
         return -1;
+    }
+
+    @JsonIgnore
+    public EventBoth getEventBoth(){
+        EventBoth e = new EventBoth();
+        e.setName(this.eventType);
+        if(isTimestampSet) {
+            e.setTimestamp(new Timestamp((long) this.timestamp * 1000));
+        }
+        if(position!=-1) {
+            e.setPosition(this.position);
+        }
+
+        e.setTraceID(this.trace_id);
+        return e;
     }
 
     @Override

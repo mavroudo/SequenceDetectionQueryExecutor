@@ -71,7 +71,7 @@ public class QueryResponseController {
     }
 
     @RequestMapping(path = "/detection", method = RequestMethod.GET)
-    public ResponseEntity<MappingJacksonValue> patternDetection(@RequestBody String json) {
+    public ResponseEntity<String> patternDetection(@RequestBody String json) throws IOException {
         QueryPatternDetectionWrapper qpdw = null;
         try {
             qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
@@ -84,8 +84,8 @@ public class QueryResponseController {
         } else {
             QueryPlan qp = qpd.createQueryPlan(qpdw, m);
             QueryResponse qrs = qp.execute(qpdw);
-            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
-            return new ResponseEntity<>(mappingJacksonValue, HttpStatus.OK);
+//            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
+            return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.OK);
         }
     }
 }

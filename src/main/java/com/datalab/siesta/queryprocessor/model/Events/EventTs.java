@@ -44,6 +44,7 @@ public class EventTs extends Event implements Serializable {
     public SaseEvent transformSaseEvent(int position) {
         SaseEvent se = super.transformSaseEvent(position);
         se.setTimestamp((int)this.timestamp.getTime()/1000); //transform to seconds
+        se.setTimestampSet(true);
         return se;
     }
 

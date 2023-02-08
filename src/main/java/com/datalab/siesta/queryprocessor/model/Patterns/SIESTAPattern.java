@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import edu.umass.cs.sase.query.State;
 import scala.collection.immutable.Stream;
 
 import java.util.ArrayList;
@@ -62,5 +63,21 @@ public abstract class SIESTAPattern {
             }
         }
         return newConstraints;
+    }
+
+    public State[] getNfa(){
+        return new State[1];
+    }
+
+    public State[] getNfaWithoutConstraints(){
+        return new State[1];
+    }
+
+    public int getSize(){
+        return 0;
+    }
+
+    public List<String> getEventTypes(){
+        return new ArrayList<>();
     }
 }

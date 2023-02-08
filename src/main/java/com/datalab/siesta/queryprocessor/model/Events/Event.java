@@ -71,6 +71,7 @@ public class Event implements Serializable, Comparable {
         se.setId(position);
         se.setTrace_id((int)this.traceID);
         se.setTimestamp(position);
+        se.setTimestampSet(false);
         return se;
     }
 

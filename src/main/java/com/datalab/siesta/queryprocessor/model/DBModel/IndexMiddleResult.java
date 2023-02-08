@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.DBModel;
 
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import scala.Tuple2;
 
@@ -14,6 +16,7 @@ public class IndexMiddleResult {
     private List<Long> trace_ids;
 
     private Map<Long, List<Event>> events;
+
 
     public IndexMiddleResult() {
         this.trace_ids = new ArrayList<>();

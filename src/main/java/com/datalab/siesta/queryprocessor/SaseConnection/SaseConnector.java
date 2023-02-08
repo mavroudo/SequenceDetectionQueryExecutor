@@ -1,19 +1,22 @@
 package com.datalab.siesta.queryprocessor.SaseConnection;
 
 import com.datalab.siesta.queryprocessor.model.Events.Event;
-import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
-import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
+import com.datalab.siesta.queryprocessor.model.Occurrence;
+import com.datalab.siesta.queryprocessor.model.Occurrences;
+import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
 import edu.umass.cs.sase.query.NFA;
-
 import edu.umass.cs.sase.stream.Stream;
 import net.sourceforge.jeval.EvaluationException;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,10 +24,10 @@ import java.util.stream.Collectors;
 public class SaseConnector {
 
 
-    public Map<Long,List<Match>> evaluate(SimplePattern pattern, Map<Long,List<Event>> events){
-        EngineController ec = this.getEngineController(pattern);
-        Map<Long,List<Match>> results = new HashMap<>();
-        for(Map.Entry<Long,List<Event>> e: events.entrySet()){
+    public List<Occurrences> evaluate(SIESTAPattern pattern, Map<Long, List<Event>> events, boolean onlyAppearances) {
+        EngineController ec = this.getEngineController(pattern, onlyAppearances);
+        List<Occurrences> occurrences = new ArrayList<>();
+        for (Map.Entry<Long, List<Event>> e : events.entrySet()) {
             ec.initializeEngine();
             Stream s = this.getStream(new ArrayList<>(e.getValue()));
             ec.setInput(s);
@@ -33,32 +36,44 @@ public class SaseConnector {
             } catch (CloneNotSupportedException | EvaluationException exe) {
                 throw new RuntimeException(exe);
             }
-            if(!ec.getMatches().isEmpty()) results.put(e.getKey(),ec.getMatches());
+            if (!ec.getMatches().isEmpty()) {
+                Occurrences ocs = new Occurrences();
+                ocs.setTraceID(e.getKey());
+                for (Match m : ec.getMatches()) {
+                    ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
+                            .map(x -> (SaseEvent) x)
+                            .map(SaseEvent::getEventBoth)
+                            .collect(Collectors.toList())));
+                }
+                occurrences.add(ocs);
+            }
         }
-        return results;
+        return occurrences;
     }
 
-    private EngineController getEngineController(SimplePattern pattern){
+    private EngineController getEngineController(SIESTAPattern pattern, boolean onlyAppearances) {
         EngineController ec = new EngineController();
         NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
-        nfaWrapper.setSize(pattern.getEvents().size());
-        nfaWrapper.setStates(pattern.getNfa());
-//        nfaWrapper.setPartitionAttribute("trace_id"); //? TODO: check this out
+        nfaWrapper.setSize(pattern.getSize());
+        if (onlyAppearances) {
+            nfaWrapper.setStates(pattern.getNfaWithoutConstraints());
+        } else {
+            nfaWrapper.setStates(pattern.getNfa());
+        }
         ec.setNfa(new NFA(nfaWrapper));
         return ec;
     }
 
 
-    private Stream getStream(List<Event> events){
+    private Stream getStream(List<Event> events) {
         Stream s = new Stream(events.size());
         List<SaseEvent> saseEvents = new ArrayList<>();
-        for(int i=0;i<events.size();i++){
+        for (int i = 0; i < events.size(); i++) {
             saseEvents.add(events.get(i).transformSaseEvent(i));
         }
         s.setEvents(saseEvents.toArray(new SaseEvent[events.size()]));
         return s;
     }
-
 
 
 }

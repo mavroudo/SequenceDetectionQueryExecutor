@@ -70,11 +70,25 @@ public class SimplePattern extends SIESTAPattern{
     }
 
     @JsonIgnore
+    @Override
     public List<String> getEventTypes(){
         return this.events.stream().map(Event::getName).collect(Collectors.toList());
     }
 
     @JsonIgnore
+    @Override
+    public State[] getNfaWithoutConstraints() {
+        State[] states = new State[this.events.size()];
+        for(int i = 0; i<this.events.size();i++){
+            State s = new State(i+1,"a",String.format("%s",this.events.get(i).getName()),"normal");
+            states[i] = s;
+        }
+        return states;
+    }
+
+
+    @JsonIgnore
+    @Override
     public State[] getNfa(){
         State[] states = new State[this.events.size()];
         for(int i = 0; i<this.events.size();i++){
@@ -107,9 +121,9 @@ public class SimplePattern extends SIESTAPattern{
         return response;
     }
 
-
-
-
-
-
+    @Override
+    @JsonIgnore
+    public int getSize() {
+        return this.events.size();
+    }
 }

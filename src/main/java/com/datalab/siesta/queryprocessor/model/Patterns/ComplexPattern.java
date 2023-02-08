@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
+import edu.umass.cs.sase.query.State;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 
@@ -101,6 +102,7 @@ public class ComplexPattern extends SIESTAPattern{
     }
 
     @JsonIgnore
+    @Override
     public List<String> getEventTypes(){
         return this.eventsWithSymbols.stream().map(Event::getName).collect(Collectors.toList());
     }
@@ -115,5 +117,33 @@ public class ComplexPattern extends SIESTAPattern{
         SimplePattern sp = new SimplePattern(response);
         sp.setConstraints(this.constraints);
         return sp;
+    }
+
+    @Override
+    @JsonIgnore
+    public State[] getNfa() {
+        SimplePattern sp = this.getItSimpler();
+        if (sp!=null) {
+            return sp.getNfa();
+        }else{
+            return super.getNfa(); //TODO: implement it
+        }
+    }
+
+    @JsonIgnore
+    @Override
+    public State[] getNfaWithoutConstraints() {
+        SimplePattern sp = this.getItSimpler();
+        if (sp!=null) {
+            return sp.getNfaWithoutConstraints();
+        }else{
+            return super.getNfaWithoutConstraints(); //TODO: implement it
+        }
+    }
+
+    @Override
+    @JsonIgnore
+    public int getSize() {
+        return this.eventsWithSymbols.size();
     }
 }

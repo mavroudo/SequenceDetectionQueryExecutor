@@ -7,6 +7,9 @@ import java.io.Serializable;
 
 public class TimeConstraintWE extends ConstraintWithEvents implements Serializable {
 
+    /**
+     * constraint is referring to the seconds gap between 2 events
+     */
     private long constraint;
 
     public TimeConstraintWE(String eventA, String eventB, String method, long constraint) {

@@ -4,7 +4,11 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 
 import java.io.Serializable;
 
+
 public class TimeConstraint extends Constraint implements Cloneable, Serializable {
+    /**
+     * constraint is referring to the seconds gap between 2 events
+     */
     private long constraint;
 
     public TimeConstraint() {

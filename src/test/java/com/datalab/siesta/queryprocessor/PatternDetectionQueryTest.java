@@ -43,11 +43,11 @@ public class PatternDetectionQueryTest {
         events.add(es2);
         events.add(es3);
         events.add(es4);
-//        TimeConstraint tc = new TimeConstraint(1,2,700);
-        GapConstraint gc = new GapConstraint(2,3,3);
+        TimeConstraint tc = new TimeConstraint(1,2,7200);
+//        GapConstraint gc = new GapConstraint(2,3,10);
         List<Constraint> lc = new ArrayList<>();
-//        lc.add(tc);
-        lc.add(gc);
+        lc.add(tc);
+//        lc.add(gc);
         ComplexPattern p = new ComplexPattern(events);
         p.setConstraints(lc);
         QueryPatternDetectionWrapper qsw = new QueryPatternDetectionWrapper();
@@ -62,5 +62,6 @@ public class PatternDetectionQueryTest {
         ResultActions trial = mockMvc.perform(get(url).content(s).contentType(MediaType.APPLICATION_JSON));
         MvcResult results = trial.andExpect(status().isOk()).andReturn();
         String response = results.getResponse().getContentAsString();
+        System.out.println("hey");
     }
 }
