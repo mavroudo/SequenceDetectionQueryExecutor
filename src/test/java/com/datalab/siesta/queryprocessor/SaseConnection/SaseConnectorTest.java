@@ -50,7 +50,7 @@ class SaseConnectorTest {
         events.add(es4);
 
         List<Constraint> lc = new ArrayList<>();
-        lc.add(new GapConstraint(0,2,10));
+        lc.add(new GapConstraint(1,2,10));
         ComplexPattern p = new ComplexPattern(events);
         p.setConstraints(lc);
 

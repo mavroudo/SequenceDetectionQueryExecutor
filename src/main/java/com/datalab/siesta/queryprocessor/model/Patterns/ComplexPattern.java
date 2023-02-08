@@ -34,13 +34,14 @@ public class ComplexPattern extends SIESTAPattern{
     }
 
     public void setConstraints(List<Constraint> constraints) {
-
-        this.constraints = this.fixConstraints(constraints);
+        this.constraints = constraints;
     }
+
+    public List<Constraint> getConsecutiveConstraints(){ return this.fixConstraints(this.constraints);}
 
     public ComplexPattern(List<EventSymbol> eventsWithSymbols, List<Constraint> constraints) {
         this.eventsWithSymbols = eventsWithSymbols;
-        this.constraints = this.fixConstraints(constraints);
+        this.constraints = constraints;
     }
 
     public ComplexPattern(List<EventSymbol> eventsWithSymbols) {
@@ -68,7 +69,7 @@ public class ComplexPattern extends SIESTAPattern{
     public Set<EventPair> extractPairsWithSymbols() {
         return this.splitIntoSimples().stream()
                 .flatMap(x ->
-                        this.extractPairsAll(x,this.constraints).stream())
+                        this.extractPairsAll(x,this.getConsecutiveConstraints()).stream())
                 .collect(Collectors.toSet());
     }
 
