@@ -43,16 +43,16 @@ public class PatternDetectionQueryTest {
         events.add(es2);
         events.add(es3);
         events.add(es4);
-        TimeConstraint tc = new TimeConstraint(1,2,7200);
-//        GapConstraint gc = new GapConstraint(2,3,10);
+//        TimeConstraint tc = new TimeConstraint(1,2,72000);
+        GapConstraint gc = new GapConstraint(2,3,10);
         List<Constraint> lc = new ArrayList<>();
-        lc.add(tc);
-//        lc.add(gc);
+//        lc.add(tc);
+        lc.add(gc);
         ComplexPattern p = new ComplexPattern(events);
         p.setConstraints(lc);
         QueryPatternDetectionWrapper qsw = new QueryPatternDetectionWrapper();
         qsw.setPattern(p);
-        qsw.setLog_name("bpi_2017");
+        qsw.setLog_name("bpi_2017_ts");
 
         String s = Obj.writeValueAsString(qsw);
         System.out.println(s);
