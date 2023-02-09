@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
+import com.clearspring.analytics.util.Lists;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
@@ -26,6 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.JavaConverters;
 
 import java.io.IOException;
@@ -144,8 +146,9 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes) {
-        JavaRDD<Trace> df = this.querySingleTablePrivate(logname,traceIds);
+        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
         Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
+        JavaRDD<Trace> df = this.querySingleTablePrivate(logname,bTraceIds);
         return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
                 .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
                 .collectAsMap();
@@ -153,19 +156,17 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
-        return this.querySingleTablePrivate(logname,traceIds)
+        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
+        return this.querySingleTablePrivate(logname,bTraceIds)
                 .keyBy((Function<Trace, Long>) Trace::getTraceID)
                 .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
                 .collectAsMap();
     }
 
-    private JavaRDD<Trace> querySingleTablePrivate(String logname, List<Long> traceIds){
+    private JavaRDD<Trace> querySingleTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
         String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
-        String firstFilter = traceIds
-                .stream().map(x -> String.format("trace_id = %d", x)).collect(Collectors.joining(" or "));
         return sparkSession.read()
                 .parquet(path)
-                .where(firstFilter)
                 .toJavaRDD()
                 .map((Function<Row, Trace>) row->{
                     long trace_id= row.getAs("trace_id");
@@ -177,7 +178,8 @@ public class S3Connector extends SparkDatabaseRepository {
                         results.add(new EventBoth(event_name,event_timestamp,i));
                     }
                     return new Trace(trace_id,results);
-                } );
+                } )
+                .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
     @Override
@@ -196,6 +198,12 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
 
+    @Override
+    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
+        return new IndexRecords(this.getAllEventPairs(pairs,logname,metadata)
+                .collect());
+
+    }
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {

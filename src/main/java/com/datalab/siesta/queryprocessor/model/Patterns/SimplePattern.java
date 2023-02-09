@@ -27,6 +27,7 @@ public class SimplePattern extends SIESTAPattern{
 
     public SimplePattern(List<EventPos> events) {
         this.events = events;
+        constraints = new ArrayList<>();
     }
 
     public List<EventPos> getEvents() {
@@ -53,7 +54,7 @@ public class SimplePattern extends SIESTAPattern{
                 '}';
     }
 
-    public List<Constraint> getConsecutiveConstraints(){ return this.fixConstraints(this.constraints);}
+    public List<Constraint> getConsecutiveConstraints(){ return this.constraints;}
 
 
 
