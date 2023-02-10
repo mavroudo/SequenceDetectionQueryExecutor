@@ -200,8 +200,9 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
-        return new IndexRecords(this.getAllEventPairs(pairs,logname,metadata)
-                .collect());
+        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata)
+                .collect();
+        return new IndexRecords(results);
 
     }
 
@@ -223,16 +224,19 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<IndexPair> response = new ArrayList<>();
                     for (Row r2 : l) {
                         long tid = r2.getLong(0);
+                        List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
                         if (mode.getValue().equals("positions")) {
-                            List<Row> inner = JavaConverters.seqAsJavaList(r2.getSeq(1));
-                            int posA = inner.get(0).getInt(0);
-                            int posB = inner.get(0).getInt(1);
-                            response.add(new IndexPair(tid, eventA, eventB, posA, posB));
+                            for(Row inner: innerList) {
+                                int posA = inner.getInt(0);
+                                int posB = inner.getInt(1);
+                                response.add(new IndexPair(tid, eventA, eventB, posA, posB));
+                            }
                         } else {
-                            List<Row> inner = JavaConverters.seqAsJavaList(r2.getSeq(1));
-                            String tsA = inner.get(0).getString(0);
-                            String tsB = inner.get(0).getString(1);
-                            response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
+                            for(Row inner: innerList) {
+                                String tsA = inner.getString(0);
+                                String tsB = inner.getString(1);
+                                response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
+                            }
                         }
                     }
                     return response.iterator();
