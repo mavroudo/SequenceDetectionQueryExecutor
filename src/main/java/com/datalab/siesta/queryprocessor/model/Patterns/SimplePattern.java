@@ -57,12 +57,11 @@ public class SimplePattern extends SIESTAPattern{
     public List<Constraint> getConsecutiveConstraints(){ return this.constraints;}
 
 
-
     @JsonIgnore
-    public Set<EventPair> extractPairsAll() {
-        return this.extractPairsAll(this.events,this.getConsecutiveConstraints());
-    }
+    public Set<EventPair> extractPairsForPatternDetection(){
+        return  super.extractPairsForPatternDetection(this.events,this.getConstraints());
 
+    }
 
 
     @JsonIgnore

@@ -75,7 +75,7 @@ public class DatabaseTest {
         events.add(es4);
         SimplePattern p = new SimplePattern(events);
         //check the different formats
-        IndexRecords indexRecords = s3Connector.queryIndexTable(p.extractPairsAll(),logname,m);
+        IndexRecords indexRecords = s3Connector.queryIndexTable(p.extractPairsForPatternDetection(),logname,m);
 
         Assertions.assertNotNull(indexRecords);
     }

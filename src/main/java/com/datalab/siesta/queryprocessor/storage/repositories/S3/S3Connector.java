@@ -4,6 +4,7 @@ import com.clearspring.analytics.util.Lists;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
@@ -186,9 +187,9 @@ public class S3Connector extends SparkDatabaseRepository {
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,int minPairs) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
-        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> lists = utils.splitConstraints(pairs);
-        this.addTimeConstraintFilter(gpairs,lists._1);
-        this.addGapConstraintFilter(gpairs,lists._2);
+//        Tuple2<List<TimeConstraintWE>, List<GapConstraintWE>> lists = utils.splitConstraints(pairs);
+//        this.addTimeConstraintFilter(gpairs,lists._1);
+//        this.addGapConstraintFilter(gpairs,lists._2);
         JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
         indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
         List<Long> traces = this.getCommonIds(indexPairs,minPairs);
@@ -209,13 +210,14 @@ public class S3Connector extends SparkDatabaseRepository {
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
         String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
-        String filterEvents = pairs.stream().map(x ->
-                String.format(" (eventA='%s' and eventB='%s') ", x.getEventA().getName(), x.getEventB().getName())
-        ).collect(Collectors.joining("or"));
+        Broadcast<Set<EventPair>> bPairs = javaSparkContext.broadcast(pairs);
+//        String filterEvents = pairs.stream().map(x ->
+//                String.format(" (eventA='%s' and eventB='%s') ", x.getEventA().getName(), x.getEventB().getName())
+//        ).collect(Collectors.joining("or"));
         Broadcast<String> mode = javaSparkContext.broadcast(metadata.getMode());
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> df = sparkSession.read()
                 .parquet(path)
-                .where(filterEvents)
+//                .where(filterEvents)
                 .toJavaRDD()
                 .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
                     String eventA = row.getAs("eventA");
@@ -241,6 +243,7 @@ public class S3Connector extends SparkDatabaseRepository {
                     }
                     return response.iterator();
                 })
+                .filter((Function<IndexPair, Boolean>) indexPairs ->indexPairs.validate(bPairs.getValue()))
                 .groupBy((Function<IndexPair, Tuple2<String,String>>) indexPair-> new Tuple2<>(indexPair.getEventA(),indexPair.getEventB()));
         return df;
     }

@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class ComplexPattern extends SIESTAPattern{
@@ -66,11 +68,12 @@ public class ComplexPattern extends SIESTAPattern{
      *
      * @return Pair of events along with the constraints
      */
+
+
     @JsonIgnore
-    public Set<EventPair> extractPairsWithSymbols() {
-        return this.splitIntoSimples().stream()
-                .flatMap(x ->
-                        this.extractPairsAll(x,this.getConsecutiveConstraints()).stream())
+    public Set<EventPair> extractPairsForPatternDetection(){
+        return  this.splitIntoSimples().stream()
+                .flatMap( x-> super.extractPairsForPatternDetection(x,this.getConstraints()).stream())
                 .collect(Collectors.toSet());
     }
 

@@ -15,7 +15,7 @@ public class Occurrences {
     }
 
     public Occurrences() {
-        this.occurrences=new ArrayList<>();
+        this.occurrences = new ArrayList<>();
     }
 
     public long getTraceID() {
@@ -26,7 +26,7 @@ public class Occurrences {
         this.traceID = traceID;
     }
 
-    public void addOccurrence(Occurrence oc ){
+    public void addOccurrence(Occurrence oc) {
         this.occurrences.add(oc);
     }
 
@@ -36,5 +36,29 @@ public class Occurrences {
 
     public void setOccurrences(List<Occurrence> occurrences) {
         this.occurrences = occurrences;
+    }
+
+    public void clearOccurrences(boolean returnAll) {
+        List<Occurrence> response = new ArrayList<>() {
+            {
+                add(occurrences.get(0));
+            }
+        };
+        if (!returnAll) {
+            this.occurrences = response;
+            return;
+        } else {
+            for (int i = 1; i < occurrences.size(); i++) {
+                boolean overlaps = false;
+                for (Occurrence o : response) {
+                    if (occurrences.get(i).overlaps(o)) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+                if (!overlaps) response.add(occurrences.get(i));
+            }
+        }
+        this.occurrences = response;
     }
 }

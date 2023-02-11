@@ -104,11 +104,13 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs, int minPairs) {
+        Broadcast<Integer> bminPairs = javaSparkContext.broadcast(minPairs);
         return pairs.map((Function<IndexPair, Tuple2<Long, Long>>) p-> new Tuple2<>(p.getTraceId(),1L))
                 .keyBy((Function<Tuple2<Long, Long>, Long>) p-> p._1 )
                 .reduceByKey((Function2<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>>) (p1,p2)->
                     new Tuple2<>(p1._1,p1._2+p2._2)
-                ).filter((Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean>) p-> p._2._2>minPairs)
+                )
+                .filter((Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean>) p-> p._2._2>= bminPairs.getValue())
                 .map((Function<Tuple2<Long, Tuple2<Long, Long>>, Long>)p->p._1 )
                 .collect();
     }

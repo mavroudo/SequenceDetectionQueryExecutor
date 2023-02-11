@@ -85,15 +85,16 @@ public class QueryPlanPatternDetection implements QueryPlan {
             imr.setEvents(this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name()));
         }
         List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
+        occurrences.forEach(x->x.clearOccurrences(qpdw.isReturnAll()));
         queryResponsePatternDetection.setOccurrences(occurrences);
         return queryResponsePatternDetection;
     }
 
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponse qr){
-        Set<EventPair> pairs = qpdw.getPattern().extractPairsWithSymbols();
+        Set<EventPair> pairs = qpdw.getPattern().extractPairsForPatternDetection();
         List<Count> sortedPairs = this.getStats(pairs, qpdw.getLog_name());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
-        qr = this.firstParsing(qpdw, pairs, combined);
+        qr = this.firstParsing(qpdw, pairs, combined); // checks if all are correctly set before start querying
         if (!((QueryResponseBadRequestForDetection)qr).isEmpty()) return; //There was an original error
         minPairs = minPairs == -1 ? combined.size() : minPairs;
         imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);

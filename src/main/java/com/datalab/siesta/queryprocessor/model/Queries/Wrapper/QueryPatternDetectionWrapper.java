@@ -9,7 +9,11 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     private boolean whyNotMatchFlag;
 
+    private boolean returnAll;
+
     public QueryPatternDetectionWrapper() {
+        this.returnAll=false;
+        this.whyNotMatchFlag=false;
     }
 
     public ComplexPattern getPattern() {
@@ -26,5 +30,13 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     public void setWhyNotMatchFlag(boolean whyNotMatchFlag) {
         this.whyNotMatchFlag = whyNotMatchFlag;
+    }
+
+    public boolean isReturnAll() {
+        return returnAll;
+    }
+
+    public void setReturnAll(boolean returnAll) {
+        this.returnAll = returnAll;
     }
 }
