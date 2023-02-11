@@ -38,7 +38,7 @@ public class Occurrences {
         this.occurrences = occurrences;
     }
 
-    public void clearOccurrences(boolean returnAll) {
+    public void clearOccurrences(boolean returnAll) { //here we can determine different selection policies
         List<Occurrence> response = new ArrayList<>() {
             {
                 add(occurrences.get(0));

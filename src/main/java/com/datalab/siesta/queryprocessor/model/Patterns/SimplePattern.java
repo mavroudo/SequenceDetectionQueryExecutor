@@ -111,11 +111,11 @@ public class SimplePattern extends SIESTAPattern{
             if(c.getPosB()==i && c instanceof GapConstraint){
                 GapConstraint gc = (GapConstraint) c;
                 if(gc.getMethod().equals("within")) response.add(String.format(" position <= $%d.position + %d ",c.getPosA()+1,gc.getConstraint()));
-                else response.add(String.format(" position >= $%d.position + %d ",c.getPosA(),gc.getConstraint())); //atleast
+                else response.add(String.format(" position >= $%d.position + %d ",c.getPosA()+1,gc.getConstraint())); //atleast
             }else if(c.getPosB()==i && c instanceof TimeConstraint){
                 TimeConstraint tc = (TimeConstraint) c;
                 if(tc.getMethod().equals("within")) response.add(String.format(" timestamp <= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint()));
-                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",c.getPosA(),tc.getConstraint())); //atleast
+                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint())); //atleast
             }
         }
         return response;

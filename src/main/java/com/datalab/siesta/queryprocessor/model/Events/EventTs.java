@@ -39,12 +39,13 @@ public class EventTs extends Event implements Serializable {
         return new EventBoth(this.name,this.timestamp,-1);
     }
 
-    @Override
+
     @JsonIgnore
-    public SaseEvent transformSaseEvent(int position) {
+    public SaseEvent transformSaseEvent(int position, long minTs) {
         SaseEvent se = super.transformSaseEvent(position);
-        se.setTimestamp((int)this.timestamp.getTime()/1000); //transform to seconds
+        se.setTimestamp((int)((this.timestamp.getTime()-minTs)/1000)); //transform to differences in seconds
         se.setTimestampSet(true);
+        se.setMinTs(minTs);
         return se;
     }
 

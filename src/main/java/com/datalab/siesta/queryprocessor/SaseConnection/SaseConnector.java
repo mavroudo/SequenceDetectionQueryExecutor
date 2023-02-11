@@ -5,11 +5,13 @@ import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.PossiblePattern;
+import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
 import edu.umass.cs.sase.query.NFA;
 import edu.umass.cs.sase.stream.Stream;
 import net.sourceforge.jeval.EvaluationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,13 @@ import java.util.stream.Collectors;
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SaseConnector {
 
+
+    private Utils utils;
+
+    @Autowired
+    public SaseConnector(Utils utils){
+        this.utils=utils;
+    }
 
     public List<Occurrences> evaluate(SIESTAPattern pattern, Map<Long, List<Event>> events, boolean onlyAppearances) {
         EngineController ec = this.getEngineController(pattern, onlyAppearances);
@@ -93,10 +102,7 @@ public class SaseConnector {
 
     private Stream getStream(List<Event> events) {
         Stream s = new Stream(events.size());
-        List<SaseEvent> saseEvents = new ArrayList<>();
-        for (int i = 0; i < events.size(); i++) {
-            saseEvents.add(events.get(i).transformSaseEvent(i));
-        }
+        List<SaseEvent> saseEvents = utils.transformToSaseEvents(events);
         s.setEvents(saseEvents.toArray(new SaseEvent[events.size()]));
         return s;
     }
