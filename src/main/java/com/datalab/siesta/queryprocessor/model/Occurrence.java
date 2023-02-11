@@ -26,12 +26,14 @@ public class Occurrence {
         EventBoth fEvent = occurrence.getOccurrence().get(0);
         EventBoth lEvent = occurrence.getOccurrence().get(occurrence.getOccurrence().size()-1);
         int size = this.occurrence.size();
+        boolean notOverlaps;
         if(fEvent.getTimestamp()==null){ // we are handling positions
-            return this.occurrence.get(size-1).getPosition()<fEvent.getPosition() ||
+            notOverlaps = this.occurrence.get(size-1).getPosition()<fEvent.getPosition() ||
                     this.occurrence.get(0).getPosition()>lEvent.getPosition();
         }else{
-            return this.occurrence.get(size-1).getTimestamp().before(fEvent.getTimestamp()) ||
+            notOverlaps = this.occurrence.get(size-1).getTimestamp().before(fEvent.getTimestamp()) ||
                     this.occurrence.get(0).getTimestamp().after(lEvent.getTimestamp());
         }
+        return !notOverlaps;
     }
 }
