@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor;
 
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
@@ -60,7 +61,6 @@ public class PatternDetectionQueryTest {
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
         List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        ;
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertTrue(detectedInTraces.contains(2L));
         Assertions.assertTrue(detectedInTraces.contains(3L));
@@ -83,7 +83,6 @@ public class PatternDetectionQueryTest {
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(4, ocs.stream().mapToInt(x -> x.getOccurrences().size()).sum());
         List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        ;
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertTrue(detectedInTraces.contains(2L));
         Assertions.assertTrue(detectedInTraces.contains(3L));
@@ -105,7 +104,6 @@ public class PatternDetectionQueryTest {
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
         List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        ;
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertTrue(detectedInTraces.contains(2L));
         Assertions.assertTrue(detectedInTraces.contains(3L));
@@ -128,7 +126,6 @@ public class PatternDetectionQueryTest {
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(4, ocs.stream().mapToInt(x -> x.getOccurrences().size()).sum());
         List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        ;
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertTrue(detectedInTraces.contains(2L));
         Assertions.assertTrue(detectedInTraces.contains(3L));
@@ -139,7 +136,7 @@ public class PatternDetectionQueryTest {
     public void timeConstraintWithin() throws Exception {
         QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
         List<Constraint> constraints = new ArrayList<>() {{
-            add(new TimeConstraint(0, 1, 62 * 60));
+            add(new TimeConstraint(0, 1, 30 * 60));
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
@@ -156,7 +153,7 @@ public class PatternDetectionQueryTest {
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
         List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        ;
+
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertTrue(detectedInTraces.contains(2L));
         Assertions.assertTrue(detectedInTraces.contains(3L));
@@ -181,8 +178,6 @@ public class PatternDetectionQueryTest {
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 12:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 13:26:42"), eventsMatch.get(1).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 18:26:42"), eventsMatch.get(2).getTimestamp());
-
-
     }
 
     @Test
@@ -219,5 +214,96 @@ public class PatternDetectionQueryTest {
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 07:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 19:26:42"), eventsMatch.get(1).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 20:26:42"), eventsMatch.get(2).getTimestamp());
+    }
+
+    @Test
+    public void gapConstraintWithin() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        List<Constraint> constraints = new ArrayList<>() {{
+            add(new GapConstraint(0, 1, 1));
+        }};
+        ComplexPattern cp = this.getPattern();
+        cp.setConstraints(constraints);
+        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test_pos");
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("positions", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(3, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertTrue(detectedInTraces.contains(2L));
+        Assertions.assertTrue(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 1).collect(Collectors.toList()).get(0);
+        List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
+        Assertions.assertEquals(1, eventsMatch.get(0).getPosition());
+        Assertions.assertEquals(2, eventsMatch.get(1).getPosition());
+        Assertions.assertEquals(3, eventsMatch.get(2).getPosition());
+
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        eventsMatch.clear();
+        eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
+        Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
+        Assertions.assertEquals(1, eventsMatch.get(1).getPosition());
+        Assertions.assertEquals(4, eventsMatch.get(2).getPosition());
+
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        eventsMatch.clear();
+        eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
+        Assertions.assertEquals(2, eventsMatch.get(0).getPosition());
+        Assertions.assertEquals(3, eventsMatch.get(1).getPosition());
+        Assertions.assertEquals(4, eventsMatch.get(2).getPosition());
+    }
+
+    @Test
+    public void gapConstraintAtleast() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        List<Constraint> constraints = new ArrayList<>() {{
+            GapConstraint t = new GapConstraint(0, 1, 5);
+            t.setMethod("atleast");
+            add(t);
+        }};
+        ComplexPattern cp = this.getPattern();
+        cp.setConstraints(constraints);
+        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test_pos");
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("positions", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(2, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+
+        Assertions.assertFalse(detectedInTraces.contains(1L));
+        Assertions.assertTrue(detectedInTraces.contains(2L));
+        Assertions.assertTrue(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
+        Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
+        Assertions.assertEquals(5, eventsMatch.get(1).getPosition());
+        Assertions.assertEquals(6, eventsMatch.get(2).getPosition());
+
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        eventsMatch.clear();
+        eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
+        Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
+        Assertions.assertEquals(6, eventsMatch.get(1).getPosition());
+        Assertions.assertEquals(7, eventsMatch.get(2).getPosition());
     }
 }

@@ -42,7 +42,7 @@ class S3ConnectorTest {
 
     @Test
     void queryIndexTable(){
-        Metadata m = s3Connector.getMetadata("test");
+        Metadata m = s3Connector.getMetadata("test_pos");
         Set<EventPair> pairs = new HashSet<>();
         pairs.add(new EventPair(new Event("A"),new Event("A")));
         pairs.add(new EventPair(new Event("A"),new Event("B")));
@@ -53,7 +53,7 @@ class S3ConnectorTest {
         pairs.add(new EventPair(new Event("C"),new Event("A")));
         pairs.add(new EventPair(new Event("C"),new Event("B")));
         pairs.add(new EventPair(new Event("C"),new Event("C")));
-        IndexRecords  ir = s3Connector.queryIndexTable(pairs,"test",m);
+        IndexRecords  ir = s3Connector.queryIndexTable(pairs,m.getLogname(),m);
 
         Map<EventTypes,List<IndexPair>> r =  ir.getRecords();
         // <B,A>
