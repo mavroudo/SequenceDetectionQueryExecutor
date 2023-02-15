@@ -61,8 +61,8 @@ public class EventBoth extends EventTs{
     }
 
     @Override
-    public long calculateDiff(Event e) {
-        return (this.timestamp.getTime()-((EventBoth)e).getTimestamp().getTime())/1000;
+    public long calculateDiff(Event e) { //return the diff in seconds
+        return (((EventTs)e).getTimestamp().getTime()-this.timestamp.getTime())/1000;
     }
 
     @Override

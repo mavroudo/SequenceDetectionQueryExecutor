@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
-public class EventTs extends Event implements Serializable {
+public class EventTs extends Event implements Serializable, Cloneable {
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected Timestamp timestamp;
@@ -23,6 +23,11 @@ public class EventTs extends Event implements Serializable {
     public EventTs(String name, Timestamp ts) {
         super(name);
         this.timestamp=ts;
+    }
+
+    public EventTs(String name, long traceID, Timestamp timestamp) {
+        super(name, traceID);
+        this.timestamp = timestamp;
     }
 
     public Timestamp getTimestamp() {
@@ -71,7 +76,7 @@ public class EventTs extends Event implements Serializable {
 
     @Override
     public long calculateDiff(Event e) { //return the diff in seconds
-        return (this.timestamp.getTime()-((EventTs)e).getTimestamp().getTime())/1000;
+        return (((EventTs)e).getTimestamp().getTime()-this.timestamp.getTime())/1000;
     }
 
     @Override
@@ -83,5 +88,10 @@ public class EventTs extends Event implements Serializable {
     @Override
     public void setPrimaryMetric(long newPrimaryMetric) {
         this.timestamp= new Timestamp(newPrimaryMetric);
+    }
+
+    @Override
+    public EventTs clone() {
+        return new EventTs(name,traceID,timestamp);
     }
 }

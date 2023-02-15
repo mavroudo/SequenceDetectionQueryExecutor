@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Event implements Serializable, Comparable {
+public class Event implements Serializable, Comparable, Cloneable {
 
 
     protected String name;
@@ -21,6 +21,11 @@ public class Event implements Serializable, Comparable {
 
     public Event(String name) {
         this.name = name;
+    }
+
+    public Event(String name, long traceID) {
+        this.name = name;
+        this.traceID = traceID;
     }
 
     public String getName() {
@@ -92,6 +97,17 @@ public class Event implements Serializable, Comparable {
 
     @JsonIgnore
     public void setPrimaryMetric(long newPrimaryMetric){
+    }
+
+    @Override
+    public Event clone() {
+        Event cloned = null;
+        try{
+            cloned=(Event) super.clone();
+        }catch (CloneNotSupportedException e){
+            e.printStackTrace();
+        }
+        return cloned;
     }
 
 

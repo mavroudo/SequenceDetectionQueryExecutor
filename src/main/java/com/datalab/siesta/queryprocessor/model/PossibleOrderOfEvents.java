@@ -8,6 +8,7 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class PossibleOrderOfEvents {
@@ -81,7 +82,13 @@ public class PossibleOrderOfEvents {
                 while (!stop && e < this.events.size()) {
                     long diff = this.events.get(c._1).calculateDiff(this.events.get(e));
                     if (diff < k) {
-                        List<Event> newEvents = new ArrayList<>(this.events);
+                        List<Event> newEvents = new ArrayList<>(){
+                            {
+                                for(Event event:events){
+                                    this.add(event.clone());
+                                }
+                            }
+                        };
                         long prevValue = newEvents.get(c._1).getPrimaryMetric();
                         newEvents.get(c._1).setPrimaryMetric(prevValue+diff+1);
                         Collections.swap(newEvents, c._1, e);
@@ -93,10 +100,16 @@ public class PossibleOrderOfEvents {
                 }
             }else{
                 int e = c._1 -1; //starting from the previous event
-                while (!stop && e < this.events.size()) {
+                while (!stop && e >= 0) {
                     long diff = this.events.get(c._1).calculateDiff(this.events.get(e));
                     if (Math.abs(diff) < k) {
-                        List<Event> newEvents = new ArrayList<>(this.events);
+                        List<Event> newEvents = new ArrayList<>(){
+                            {
+                                for(Event event:events){
+                                    this.add(event.clone());
+                                }
+                            }
+                        };
                         long prevValue = newEvents.get(c._1).getPrimaryMetric();
                         newEvents.get(c._1).setPrimaryMetric(prevValue+diff-1);
                         Collections.swap(newEvents, c._1, e);
@@ -110,7 +123,7 @@ public class PossibleOrderOfEvents {
         }
 
 
-        return order; //TODO: implement this logic
+        return order;
 
 
     }
@@ -148,11 +161,11 @@ public class PossibleOrderOfEvents {
         this.posEventChanged = posEventChanged;
     }
 
-    public int getChange() {
+    public long getChange() {
         return change;
     }
 
-    public void setChange(int change) {
+    public void setChange(long change) {
         this.change = change;
     }
 
@@ -178,5 +191,18 @@ public class PossibleOrderOfEvents {
 
     public void setK(int k) {
         this.k = k;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PossibleOrderOfEvents that = (PossibleOrderOfEvents) o;
+        return trace_id == that.trace_id && events.equals(that.events);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(trace_id, events);
     }
 }
