@@ -112,7 +112,7 @@ class PossibleOrderOfEventsTest {
         Assertions.assertEquals(4,s.size());
 
         //The four previous possible order will go under evaluation
-        
+        s.get(0).evaluateConstraints();
 
 
         System.out.println("hey");

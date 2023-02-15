@@ -188,6 +188,8 @@ public class PossibleOrderOfEvents {
         for (int i = 0; i < constraints.size(); i++) {
             Constraint c = constraints.get(i);
             long minChange = c.minimumChangeRequired(eb.get(c.getPosA()), eb.get(c.getPosB()));
+            //TODO: ensure out of bounds exception for diffA and diffB
+
             long diffA = c.getMethod().equals("within") ? this.events.get(c.getPosA())
                     .calculateDiff(this.events.get(c.getPosA() + 1))
                     : this.events.get(c.getPosA()).calculateDiff(this.events.get(c.getPosA() - 1));
