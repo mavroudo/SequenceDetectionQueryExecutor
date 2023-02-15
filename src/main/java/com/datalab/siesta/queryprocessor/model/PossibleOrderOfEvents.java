@@ -64,19 +64,16 @@ public class PossibleOrderOfEvents {
     public List<PossibleOrderOfEvents> getPossibleOrderOfEvents() {
         List<PossibleOrderOfEvents> order = new ArrayList<>();
         order.add(this);
-        List<Tuple2<Integer, String>> constraintTypes = this.constraints.stream().parallel().flatMap(constraint -> {
-            List<Tuple2<Integer, String>> l = new ArrayList<>();
-            for (Constraint c : this.constraints) {
-                if (c.getMethod().equals("within")) {
-                    l.add(new Tuple2<>(c.getPosA(), "front")); //allowed movement
-                    l.add(new Tuple2<>(c.getPosB(), "back"));
+        List<Tuple2<Integer, String>> constraintTypes = new ArrayList<>();
+        this.constraints.forEach(constraint -> {
+                if (constraint.getMethod().equals("within")) {
+                    constraintTypes.add(new Tuple2<>(constraint.getPosA(), "front")); //allowed movement
+                    constraintTypes.add(new Tuple2<>(constraint.getPosB(), "back"));
                 } else {
-                    l.add(new Tuple2<>(c.getPosA(), "back"));
-                    l.add(new Tuple2<>(c.getPosB(), "front"));
+                    constraintTypes.add(new Tuple2<>(constraint.getPosA(), "back"));
+                    constraintTypes.add(new Tuple2<>(constraint.getPosB(), "front"));
                 }
-            }
-            return l.stream();
-        }).collect(Collectors.toList());
+        });
 
         for (Tuple2<Integer, String> c : constraintTypes) {
             boolean stop = false;
@@ -173,7 +170,7 @@ public class PossibleOrderOfEvents {
         }
     }
 
-    private boolean solveChanges(List<ChangeRequired> changes){
+    private boolean solveChanges(List<ChangeRequired> changes) {
         //check one by one the different changes and once one position is found that can solve all constraints
         // (which means evaluate on the total amount of constraints) -> use
         return false;

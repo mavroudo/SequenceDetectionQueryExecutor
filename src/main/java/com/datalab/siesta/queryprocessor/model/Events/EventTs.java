@@ -87,7 +87,7 @@ public class EventTs extends Event implements Serializable, Cloneable {
 
     @Override
     public void setPrimaryMetric(long newPrimaryMetric) {
-        this.timestamp= new Timestamp(newPrimaryMetric);
+        this.timestamp= new Timestamp(newPrimaryMetric*1000);
     }
 
     @Override
