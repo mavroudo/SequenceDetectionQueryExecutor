@@ -68,4 +68,20 @@ public class EventTs extends Event implements Serializable {
     public int hashCode() {
         return Objects.hash(super.hashCode(), timestamp);
     }
+
+    @Override
+    public long calculateDiff(Event e) { //return the diff in seconds
+        return (this.timestamp.getTime()-((EventTs)e).getTimestamp().getTime())/1000;
+    }
+
+    @Override
+    @JsonIgnore
+    public long getPrimaryMetric() {
+        return this.timestamp.getTime()/1000;
+    }
+
+    @Override
+    public void setPrimaryMetric(long newPrimaryMetric) {
+        this.timestamp= new Timestamp(newPrimaryMetric);
+    }
 }

@@ -140,7 +140,6 @@ public class SaseEvent implements Event {
         try {
             o = (SaseEvent)super.clone();
         } catch (CloneNotSupportedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return o;

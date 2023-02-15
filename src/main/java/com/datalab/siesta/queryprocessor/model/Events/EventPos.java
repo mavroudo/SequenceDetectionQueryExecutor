@@ -64,4 +64,19 @@ public class EventPos extends Event implements Serializable, Comparable {
     public int hashCode() {
         return Objects.hash(super.hashCode(), position);
     }
+
+    @Override
+    public long calculateDiff(Event e) {
+        return this.position-((EventPos) e).getPosition();
+    }
+
+    @Override
+    public long getPrimaryMetric() {
+        return this.position;
+    }
+
+    @Override
+    public void setPrimaryMetric(long newPrimaryMetric) {
+        this.position= (int) newPrimaryMetric;
+    }
 }

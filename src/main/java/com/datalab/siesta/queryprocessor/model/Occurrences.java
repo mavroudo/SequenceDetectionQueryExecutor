@@ -1,17 +1,24 @@
 package com.datalab.siesta.queryprocessor.model;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Occurrences {
 
-    private long traceID;
+    protected long traceID;
 
-    private List<Occurrence> occurrences;
+    protected List<Occurrence> occurrences;
 
     public Occurrences(long traceID, List<Occurrence> occurrences) {
         this.traceID = traceID;
         this.occurrences = occurrences;
+    }
+
+    @JsonIgnore
+    public boolean isEmpty(){
+        return this.occurrences.isEmpty();
     }
 
     public Occurrences() {

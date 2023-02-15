@@ -80,5 +80,19 @@ public class Event implements Serializable, Comparable {
         return 0;
     }
 
+    @JsonIgnore
+    public long calculateDiff(Event e){
+        return 0;
+    }
+
+    @JsonIgnore
+    public long getPrimaryMetric(){
+        return 0;
+    }
+
+    @JsonIgnore
+    public void setPrimaryMetric(long newPrimaryMetric){
+    }
+
 
 }
