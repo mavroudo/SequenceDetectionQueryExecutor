@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.annotate.JsonSubTypes;
@@ -76,5 +77,14 @@ public abstract class Constraint implements Cloneable, Serializable {
     @JsonIgnore
     public boolean hasError(){
         return posA>=posB;
+    }
+
+    public boolean isCorrect(EventBoth a, EventBoth b){
+        return false;
+    }
+
+
+    public long minimumChangeRequired(EventBoth a, EventBoth b){
+        return 0;
     }
 }

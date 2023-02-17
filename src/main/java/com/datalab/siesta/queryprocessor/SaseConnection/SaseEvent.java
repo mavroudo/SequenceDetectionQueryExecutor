@@ -19,6 +19,28 @@ public class SaseEvent implements Event {
 
     private boolean isTimestampSet;
 
+    private long minTs;
+
+    public SaseEvent() {
+    }
+
+    public long getMinTs() {
+        return minTs;
+    }
+
+    public void setMinTs(long minTs) {
+        this.minTs = minTs;
+    }
+
+    public SaseEvent(int trace_id, int position, String eventType, int timestamp, boolean isTimestampSet) {
+        this.trace_id = trace_id;
+        this.position = position;
+        this.eventType = eventType;
+        this.timestamp = timestamp;
+        this.isTimestampSet = isTimestampSet;
+        this.minTs=-1;
+    }
+
     public boolean isTimestampSet() {
         return isTimestampSet;
     }
@@ -67,7 +89,7 @@ public class SaseEvent implements Event {
         EventBoth e = new EventBoth();
         e.setName(this.eventType);
         if(isTimestampSet) {
-            e.setTimestamp(new Timestamp((long) this.timestamp * 1000));
+            e.setTimestamp(new Timestamp(this.timestamp * 1000L +minTs));
         }
         if(position!=-1) {
             e.setPosition(this.position);
@@ -118,7 +140,6 @@ public class SaseEvent implements Event {
         try {
             o = (SaseEvent)super.clone();
         } catch (CloneNotSupportedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return o;

@@ -59,4 +59,20 @@ public class EventBoth extends EventTs{
     public int hashCode() {
         return Objects.hash(super.hashCode(), position);
     }
+
+    @Override
+    public long calculateDiff(Event e) { //return the diff in seconds
+        return (((EventTs)e).getTimestamp().getTime()-this.timestamp.getTime())/1000;
+    }
+
+    @Override
+    @JsonIgnore
+    public long getPrimaryMetric() {
+        return this.timestamp.getTime()/1000;
+    }
+
+    @Override
+    public void setPrimaryMetric(long newPrimaryMetric) {
+        this.timestamp= new Timestamp(newPrimaryMetric);
+    }
 }

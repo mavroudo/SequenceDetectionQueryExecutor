@@ -19,7 +19,10 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.cassandra.core.mapping.Tuple;
 import scala.Tuple2;
+import scala.Tuple3;
+import scala.Tuple4;
 
 import java.util.*;
 
@@ -104,11 +107,15 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs, int minPairs) {
-        return pairs.map((Function<IndexPair, Tuple2<Long, Long>>) p-> new Tuple2<>(p.getTraceId(),1L))
+        Broadcast<Integer> bminPairs = javaSparkContext.broadcast(minPairs);
+        return pairs.map((Function<IndexPair, Tuple3<String,String,Long>>) pair->
+                new Tuple3<>(pair.getEventA(), pair.getEventB(),pair.getTraceId()))
+                .distinct() //remove all the duplicate event pairs that refer to the same trace
+                .map((Function<Tuple3<String, String, Long>, Tuple2<Long,Long>>) p-> new Tuple2<>(p._3(),1L) )
                 .keyBy((Function<Tuple2<Long, Long>, Long>) p-> p._1 )
                 .reduceByKey((Function2<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>>) (p1,p2)->
-                    new Tuple2<>(p1._1,p1._2+p2._2)
-                ).filter((Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean>) p-> p._2._2>minPairs)
+                    new Tuple2<>(p1._1,p1._2+p2._2))
+                .filter((Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean>) p-> p._2._2>= bminPairs.getValue())
                 .map((Function<Tuple2<Long, Tuple2<Long, Long>>, Long>)p->p._1 )
                 .collect();
     }

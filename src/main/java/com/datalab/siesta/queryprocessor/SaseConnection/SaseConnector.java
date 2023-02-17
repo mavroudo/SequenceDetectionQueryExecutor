@@ -3,14 +3,16 @@ package com.datalab.siesta.queryprocessor.SaseConnection;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
+import com.datalab.siesta.queryprocessor.model.OccurrencesWhyNotMatch;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
-import com.datalab.siesta.queryprocessor.model.PossiblePattern;
-import com.datalab.siesta.queryprocessor.model.WhyNotMatchResponse;
+import com.datalab.siesta.queryprocessor.model.PossibleOrderOfEvents;
+import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
 import edu.umass.cs.sase.query.NFA;
 import edu.umass.cs.sase.stream.Stream;
 import net.sourceforge.jeval.EvaluationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,13 @@ import java.util.stream.Collectors;
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SaseConnector {
 
+
+    private Utils utils;
+
+    @Autowired
+    public SaseConnector(Utils utils){
+        this.utils=utils;
+    }
 
     public List<Occurrences> evaluate(SIESTAPattern pattern, Map<Long, List<Event>> events, boolean onlyAppearances) {
         EngineController ec = this.getEngineController(pattern, onlyAppearances);
@@ -53,10 +62,10 @@ public class SaseConnector {
         return occurrences;
     }
 
-    public WhyNotMatchResponse evaluate(SIESTAPattern pattern, List<PossiblePattern> possiblePatterns, boolean onlyAppearances) {
-        WhyNotMatchResponse whyNotMatchResponse = new WhyNotMatchResponse();
+    public List<OccurrencesWhyNotMatch> evaluate(SIESTAPattern pattern, List<PossibleOrderOfEvents> possibleOrderOfEvents, boolean onlyAppearances) {
         EngineController ec = this.getEngineController(pattern, onlyAppearances);
-        for (PossiblePattern p : possiblePatterns) {
+        List<OccurrencesWhyNotMatch> occurrences = new ArrayList<>();
+        for (PossibleOrderOfEvents p : possibleOrderOfEvents) {
             ec.initializeEngine();
             Stream s = this.getStream(new ArrayList<>(p.getEvents()));
             ec.setInput(s);
@@ -66,16 +75,19 @@ public class SaseConnector {
                 throw new RuntimeException(exe);
             }
             if (!ec.getMatches().isEmpty()) {
-                whyNotMatchResponse.addFound(p);
+                OccurrencesWhyNotMatch ocs = new OccurrencesWhyNotMatch();
+                ocs.setTraceID(p.getTrace_id());
+                ocs.setPossiblePattern(p);
                 for (Match m : ec.getMatches()) {
-                    whyNotMatchResponse.addMatchToLast(Arrays.stream(m.getEvents()).parallel()
+                    ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
                             .map(x -> (SaseEvent) x)
                             .map(SaseEvent::getEventBoth)
-                            .collect(Collectors.toList()));
+                            .collect(Collectors.toList())));
                 }
-            }else whyNotMatchResponse.addNotFount(p);
+                occurrences.add(ocs);
+            }
         }
-        return whyNotMatchResponse;
+        return occurrences;
     }
 
     private EngineController getEngineController(SIESTAPattern pattern, boolean onlyAppearances) {
@@ -94,10 +106,7 @@ public class SaseConnector {
 
     private Stream getStream(List<Event> events) {
         Stream s = new Stream(events.size());
-        List<SaseEvent> saseEvents = new ArrayList<>();
-        for (int i = 0; i < events.size(); i++) {
-            saseEvents.add(events.get(i).transformSaseEvent(i));
-        }
+        List<SaseEvent> saseEvents = utils.transformToSaseEvents(events);
         s.setEvents(saseEvents.toArray(new SaseEvent[events.size()]));
         return s;
     }
