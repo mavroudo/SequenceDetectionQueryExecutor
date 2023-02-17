@@ -9,6 +9,7 @@ import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
 import edu.umass.cs.sase.query.NFA;
@@ -22,10 +23,7 @@ import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.collection.mutable.ListBuffer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,9 +33,9 @@ public class WhyNotMatchSASE {
     public WhyNotMatchSASE() {
     }
 
-    public void evaluate(SimplePattern sp, Map<Long, List<Event>> restEvents, int uncertaintyPerEvent, int k) {
+    public List<AlmostMatch> evaluate(SimplePattern sp, Map<Long, List<Event>> restEvents, int uncertaintyPerEvent, int k) {
         NFA nfa = this.getNFA(sp,k);
-        Map<Long, List<Match>> matches = restEvents.entrySet().stream().map(entry -> {
+        Map<Long, List<Match>> matches = restEvents.entrySet().stream().parallel().map(entry -> {
                     Stream s = this.getUnCertainStream(entry.getKey(), entry.getValue(), uncertaintyPerEvent);
                     EngineController ec = new EngineController();
                     ec.setNfa(nfa);
@@ -51,7 +49,7 @@ public class WhyNotMatchSASE {
                     return new Tuple2<>(entry.getKey(), ec.getMatches());
                 }).filter(x -> !x._2.isEmpty())
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
-        this.createResponse(matches);
+        return this.createResponse(matches,restEvents);
     }
 
     /**
@@ -137,9 +135,17 @@ public class WhyNotMatchSASE {
         return response;
     }
 
-    public void createResponse(Map<Long, List<Match>> maps) {
-        System.out.println("till here good");
+    public List<AlmostMatch> createResponse(Map<Long, List<Match>> maps, Map<Long,List<Event>> original) {
+        return maps.entrySet().stream().map(entry->{
+            List<UncertainTimeEvent> e = entry.getValue().stream().map(x -> {
+                        List<UncertainTimeEvent> u = new ArrayList<>() {{
+                            Arrays.stream(x.getEvents()).forEach(t -> add((UncertainTimeEvent) t));
+                        }};
+                        int sum = u.stream().mapToInt(UncertainTimeEvent::getChange).sum();
+                        return new Tuple2<>(u, sum);
+                    }).reduce((x, y) -> x._2 < y._2 ? x : y)
+                    .map(x -> x._1).get();
+                return  new AlmostMatch(entry.getKey(),original.get(entry.getKey()),e);
+        }).collect(Collectors.toList());
     }
-
-
 }

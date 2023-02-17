@@ -6,6 +6,7 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventTs;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import edu.umass.cs.sase.query.NFA;
 import edu.umass.cs.sase.stream.Stream;
 import org.junit.jupiter.api.Assertions;
@@ -71,7 +72,13 @@ class WhyNotMatchSASETest {
     void testEvaluation(){
         Map<Long,List<Event>> restEvents = new HashMap<>();
         restEvents.put(1L,this.getEvents());
-        whyNotMatchSASE.evaluate(this.getSp(),restEvents,3,3);
+        List<AlmostMatch> almostMatches = whyNotMatchSASE.evaluate(this.getSp(),restEvents,3,3);
+
+        Assertions.assertFalse(almostMatches.isEmpty());
+        Assertions.assertEquals(1,almostMatches.size());
+
+        String changes = almostMatches.get(0).getRecommendation();
+        Assertions.assertNotNull(changes);
     }
 
 

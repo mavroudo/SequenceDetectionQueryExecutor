@@ -86,6 +86,14 @@ public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent>
         this.position = position;
     }
 
+    public int getChange() {
+        return change;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
     @Override
     public int compareTo(UncertainTimeEvent o) {
         return Integer.compare(this.timestamp,o.getTimestamp());
