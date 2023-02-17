@@ -2,9 +2,9 @@ package com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase;
 
 import edu.umass.cs.sase.stream.Event;
 
-public class UncertainTimeEvent implements Event {
+public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent> {
 
-    private int trace_id;
+    private long trace_id;
     private int position;
     private String event_type;
     private int timestamp;
@@ -14,7 +14,7 @@ public class UncertainTimeEvent implements Event {
     public UncertainTimeEvent() {
     }
 
-    public UncertainTimeEvent(int trace_id, int position, String event_type, int timestamp, boolean isTimeStampSet, int change) {
+    public UncertainTimeEvent(long trace_id, int position, String event_type, int timestamp, boolean isTimeStampSet, int change) {
         this.trace_id = trace_id;
         this.position = position;
         this.event_type = event_type;
@@ -29,8 +29,6 @@ public class UncertainTimeEvent implements Event {
             return position;
         if(attributeName.equalsIgnoreCase("timestamp"))
             return timestamp;
-        if(attributeName.equalsIgnoreCase("trace_id"))
-            return trace_id;
         if(attributeName.equalsIgnoreCase("change"))
             return change;
         return -1;
@@ -84,5 +82,12 @@ public class UncertainTimeEvent implements Event {
         return event_type;
     }
 
+    public void setPosition(int position) {
+        this.position = position;
+    }
 
+    @Override
+    public int compareTo(UncertainTimeEvent o) {
+        return Integer.compare(this.timestamp,o.getTimestamp());
+    }
 }
