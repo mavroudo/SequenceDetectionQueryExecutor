@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.SaseConnection.WhyNotMatchResponse;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatchResponse;
 import com.datalab.siesta.queryprocessor.model.PossiblePattern;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;

@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.SaseConnection;
+package com.datalab.siesta.queryprocessor.model;
 
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.PossiblePattern;

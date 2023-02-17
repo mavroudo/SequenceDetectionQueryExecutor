@@ -97,6 +97,11 @@ public class EngineController {
         myEngine.setNfa(nfa);
     }
 
+    public void setNfa(List<String> query){
+        NFA nfa = new NFA(query);
+        myEngine.setNfa(nfa);
+    }
+
     /**
      * Sets the input stream for the engine
      *

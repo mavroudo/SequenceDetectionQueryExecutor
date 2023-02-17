@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.PossiblePattern;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatchResponse;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
 import edu.umass.cs.sase.query.NFA;
