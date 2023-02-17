@@ -2,21 +2,27 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.PossibleOrderOfEvents;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class QueryResponseWhyNotMatch implements QueryResponse{
 
     List<Occurrences> trueOccurrences;
 
-    List<PossibleOrderOfEvents> almostOccurrences;
+    Map<Long,String> almostOccurrences;
 
     public QueryResponseWhyNotMatch() {
     }
 
-    public QueryResponseWhyNotMatch(List<Occurrences> trueOccurrences, List<PossibleOrderOfEvents> almostOccurrences) {
+    public QueryResponseWhyNotMatch(List<Occurrences> trueOccurrences, List<AlmostMatch> almostMatches) {
         this.trueOccurrences = trueOccurrences;
-        this.almostOccurrences = almostOccurrences;
+        almostOccurrences = new HashMap<>(){{
+            for(AlmostMatch am : almostMatches)
+                put(am.getTrace_id(),am.getRecommendation());
+        }};
     }
 
     public List<Occurrences> getTrueOccurrences() {
@@ -27,11 +33,18 @@ public class QueryResponseWhyNotMatch implements QueryResponse{
         this.trueOccurrences = trueOccurrences;
     }
 
-    public List<PossibleOrderOfEvents> getAlmostOccurrences() {
+    public Map<Long, String> getAlmostOccurrences() {
         return almostOccurrences;
     }
 
-    public void setAlmostOccurrences(List<PossibleOrderOfEvents> almostOccurrences) {
+    public void setAlmostOccurrences(Map<Long, String> almostOccurrences) {
         this.almostOccurrences = almostOccurrences;
+    }
+
+    public void setAlmostOccurrences(List<AlmostMatch> almostMatches){
+        almostOccurrences = new HashMap<>(){{
+            for(AlmostMatch am : almostMatches)
+                put(am.getTrace_id(),am.getRecommendation());
+        }};
     }
 }

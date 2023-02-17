@@ -9,11 +9,17 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     private boolean whyNotMatchFlag;
 
+    private int k;
+
+    private int uncertaintyPerEvent;
+
     private boolean returnAll;
 
     public QueryPatternDetectionWrapper() {
         this.returnAll=false;
         this.whyNotMatchFlag=false;
+        k=30; // set by default to 30 seconds
+        uncertaintyPerEvent=10; // set by default to 10 seconds;
     }
 
     public ComplexPattern getPattern() {
@@ -38,5 +44,21 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     public void setReturnAll(boolean returnAll) {
         this.returnAll = returnAll;
+    }
+
+    public int getK() {
+        return k;
+    }
+
+    public void setK(int k) {
+        this.k = k;
+    }
+
+    public int getUncertaintyPerEvent() {
+        return uncertaintyPerEvent;
+    }
+
+    public void setUncertaintyPerEvent(int uncertaintyPerEvent) {
+        this.uncertaintyPerEvent = uncertaintyPerEvent;
     }
 }
