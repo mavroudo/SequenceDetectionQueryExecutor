@@ -3,9 +3,7 @@ package com.datalab.siesta.queryprocessor.SaseConnection;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
-import com.datalab.siesta.queryprocessor.model.OccurrencesWhyNotMatch;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
-import com.datalab.siesta.queryprocessor.model.PossibleOrderOfEvents;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import edu.umass.cs.sase.engine.EngineController;
 import edu.umass.cs.sase.engine.Match;
@@ -50,34 +48,6 @@ public class SaseConnector {
             if (!ec.getMatches().isEmpty()) {
                 Occurrences ocs = new Occurrences();
                 ocs.setTraceID(e.getKey());
-                for (Match m : ec.getMatches()) {
-                    ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
-                            .map(x -> (SaseEvent) x)
-                            .map(SaseEvent::getEventBoth)
-                            .collect(Collectors.toList())));
-                }
-                occurrences.add(ocs);
-            }
-        }
-        return occurrences;
-    }
-
-    public List<OccurrencesWhyNotMatch> evaluate(SIESTAPattern pattern, List<PossibleOrderOfEvents> possibleOrderOfEvents, boolean onlyAppearances) {
-        EngineController ec = this.getEngineController(pattern, onlyAppearances);
-        List<OccurrencesWhyNotMatch> occurrences = new ArrayList<>();
-        for (PossibleOrderOfEvents p : possibleOrderOfEvents) {
-            ec.initializeEngine();
-            Stream s = this.getStream(new ArrayList<>(p.getEvents()));
-            ec.setInput(s);
-            try {
-                ec.runEngine();
-            } catch (CloneNotSupportedException | EvaluationException exe) {
-                throw new RuntimeException(exe);
-            }
-            if (!ec.getMatches().isEmpty()) {
-                OccurrencesWhyNotMatch ocs = new OccurrencesWhyNotMatch();
-                ocs.setTraceID(p.getTrace_id());
-                ocs.setPossiblePattern(p);
                 for (Match m : ec.getMatches()) {
                     ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
                             .map(x -> (SaseEvent) x)

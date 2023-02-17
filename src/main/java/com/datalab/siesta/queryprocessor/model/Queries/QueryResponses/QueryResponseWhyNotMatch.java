@@ -1,7 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
 import com.datalab.siesta.queryprocessor.model.Occurrences;
-import com.datalab.siesta.queryprocessor.model.PossibleOrderOfEvents;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 
 import java.util.HashMap;
