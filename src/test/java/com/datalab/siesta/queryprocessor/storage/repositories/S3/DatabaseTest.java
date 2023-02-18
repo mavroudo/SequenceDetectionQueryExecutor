@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class DatabaseTest {
         events.add("A_Concept");
         events.add("A_Submitted");
 
-        Map<Long,List<EventBoth>> results2 = s3Connector.querySeqTable("bpi_2017",trace_ids,events);
+        Map<Long,List<EventBoth>> results2 = s3Connector.querySeqTable("bpi_2017",trace_ids,new HashSet<>(events));
         Assertions.assertFalse(results.isEmpty());
         Assertions.assertEquals(results.size(),trace_ids.size());
         List<String> worked = results2.get(15L).stream()

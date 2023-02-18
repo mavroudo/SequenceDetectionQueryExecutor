@@ -1,11 +1,17 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
+import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -36,18 +42,27 @@ class QueryPlanWhyNotMatchTest {
     }
 
 
-    public void testWhyNotMatch(){
+    @Test
+    void testWhyNotMatch(){
         QueryPatternDetectionWrapper queryPatternDetectionWrapper = new QueryPatternDetectionWrapper();
         queryPatternDetectionWrapper.setLog_name("test");
         queryPatternDetectionWrapper.setWhyNotMatchFlag(true);
+        queryPatternDetectionWrapper.setK(30*60);
+        queryPatternDetectionWrapper.setUncertaintyPerEvent(90);
 
+        ComplexPattern cp = this.getPattern();
+        List<Constraint> constraints = new ArrayList<>(){{
+            add(new TimeConstraint(0, 1, 29*60));
+        }};
+        cp.setConstraints(constraints);
+        queryPatternDetectionWrapper.setPattern(cp);
 
         Metadata m = dbConnector.getMetadata(queryPatternDetectionWrapper.getLog_name());
-        QueryPlanWhyNotMatch queryPlanWhyNotMatch = (QueryPlanWhyNotMatch)
+        QueryPlan queryPlan =
                 queryPatternDetection.createQueryPlan(queryPatternDetectionWrapper,m);
 
-
-
+        QueryResponse qr = queryPlan.execute(queryPatternDetectionWrapper);
+        Assertions.assertNotNull(qr);
     }
 
 

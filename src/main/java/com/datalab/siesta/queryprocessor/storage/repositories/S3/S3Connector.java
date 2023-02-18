@@ -146,9 +146,9 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes) {
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes) {
         Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
-        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
+        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(eventTypes);
         JavaRDD<Trace> df = this.querySingleTablePrivate(logname,bTraceIds);
         return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
                 .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))

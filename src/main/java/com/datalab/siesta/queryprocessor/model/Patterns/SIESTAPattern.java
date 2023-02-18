@@ -96,7 +96,7 @@ public abstract class SIESTAPattern {
         return 0;
     }
 
-    public List<String> getEventTypes(){
-        return new ArrayList<>();
+    public Set<String> getEventTypes(){
+        return new HashSet<>();
     }
 }

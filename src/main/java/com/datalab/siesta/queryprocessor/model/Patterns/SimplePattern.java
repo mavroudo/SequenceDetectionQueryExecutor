@@ -71,8 +71,8 @@ public class SimplePattern extends SIESTAPattern{
 
     @JsonIgnore
     @Override
-    public List<String> getEventTypes(){
-        return this.events.stream().map(Event::getName).collect(Collectors.toList());
+    public Set<String> getEventTypes(){
+        return this.events.stream().map(Event::getName).collect(Collectors.toSet());
     }
 
     @JsonIgnore

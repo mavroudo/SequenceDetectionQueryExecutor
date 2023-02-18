@@ -20,7 +20,7 @@ public interface DatabaseRepository {
 
     List<String> getEventNames(String logname);
 
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes);
+    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes);
 
     Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds);
 

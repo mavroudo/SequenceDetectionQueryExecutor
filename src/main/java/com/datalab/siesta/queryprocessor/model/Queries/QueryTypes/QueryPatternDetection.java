@@ -30,7 +30,8 @@ public class QueryPatternDetection implements Query{
         if(qpdw.isWhyNotMatchFlag()){
             planWhyNotMatch.setMetadata(m);
             int n = qpdw.getPattern().getSize();
-            planWhyNotMatch.setMinPairs(((n-2)*(n-3))/2); //set min pairs
+            planWhyNotMatch.setEventTypesInLog(qpdw.getPattern().getEventTypes());
+            planWhyNotMatch.setMinPairs(((n-1)*(n-2))/2); //set min pairs
             return planWhyNotMatch;
         }else {
             qppd.setMetadata(m);
