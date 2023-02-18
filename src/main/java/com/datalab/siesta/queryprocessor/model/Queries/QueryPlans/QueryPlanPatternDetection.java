@@ -76,14 +76,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
         this.getMiddleResults(qpdw,firstCheck);
         if(!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
-        Tuple2<List<TimeConstraint>, List<GapConstraint>> constraintLists = utils
-                .splitConstraints(qpdw.getPattern().getConstraints());
-        if (this.requiresQueryToDB(constraintLists._1, constraintLists._2)) { // we need to get from SeqTable
-            //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
-            List<Occurrences> ocs = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), true);
-            List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-            imr.setEvents(this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name()));
-        }
+        checkIfRequiresDataFromSequenceTable(qpdw); //check if data is required from the sequence table and gets them
         List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         occurrences.forEach(x->x.clearOccurrences(qpdw.isReturnAll()));
         queryResponsePatternDetection.setOccurrences(occurrences);
@@ -101,12 +94,23 @@ public class QueryPlanPatternDetection implements QueryPlan {
     }
 
 
-    private boolean requiresQueryToDB(List<TimeConstraint> tcs, List<GapConstraint> gcs) {
-        return (!tcs.isEmpty() && !gcs.isEmpty()) || (!gcs.isEmpty() && metadata.getMode().equals("timestamps")) ||
-                (!tcs.isEmpty() && metadata.getMode().equals("positions"));
+    protected boolean requiresQueryToDB(List<Constraint> constraints) {
+        Tuple2<List<TimeConstraint>, List<GapConstraint>> cl= utils.splitConstraints(constraints);
+        return (!cl._1.isEmpty() && !cl._2.isEmpty()) || (!cl._2.isEmpty() && metadata.getMode().equals("timestamps")) ||
+                (!cl._1.isEmpty() && metadata.getMode().equals("positions"));
     }
 
-    private Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname) {
+    protected void checkIfRequiresDataFromSequenceTable(QueryPatternDetectionWrapper qpdw){
+        if (this.requiresQueryToDB(qpdw.getPattern().getConstraints())) { // we need to get from SeqTable
+            //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
+            List<Occurrences> ocs = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), true);
+            List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+            Map<Long,List<Event>> e = this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name());
+            imr.setEvents(e);
+        }
+    }
+
+    protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname) {
         List<String> eventTypes = pattern.getEventTypes();
         Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes);
         return fromDB.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)

@@ -1,6 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
@@ -43,14 +45,15 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
     public QueryResponse execute(QueryWrapper qw) {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
-        this.getMiddleResults(qpdw, firstCheck);
+        super.getMiddleResults(qpdw, firstCheck);
         if (!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         if (qpdw.getPattern().getItSimpler() == null) { //the pattern is not simple (we don't allow that yet)
             QueryResponseBadRequestWhyNotMatch queryResponseBadRequestWhyNotMatch = new QueryResponseBadRequestWhyNotMatch();
             queryResponseBadRequestWhyNotMatch.setSimple(false);
             return queryResponseBadRequestWhyNotMatch;
         }
-        //TODO: add here to check in the Seq table if not all data available
+        super.checkIfRequiresDataFromSequenceTable(qpdw); //checks if data is required from the sequence table and gets them
+
         List<Occurrences> trueOccurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         trueOccurrences.forEach(x -> x.clearOccurrences(qpdw.isReturnAll()));
         QueryResponseWhyNotMatch queryResponseWhyNotMatch = new QueryResponseWhyNotMatch();
