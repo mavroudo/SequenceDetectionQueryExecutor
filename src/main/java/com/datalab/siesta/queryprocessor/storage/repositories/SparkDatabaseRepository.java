@@ -1,14 +1,11 @@
 package com.datalab.siesta.queryprocessor.storage.repositories;
 
-import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
-import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -16,13 +13,10 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.cassandra.core.mapping.Tuple;
 import scala.Tuple2;
 import scala.Tuple3;
-import scala.Tuple4;
 
 import java.util.*;
 
@@ -50,57 +44,6 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return null;
     }
 
-    protected void
-    addTimeConstraintFilter(JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> pairs, List<TimeConstraintWE> tc) {
-        if(tc.isEmpty()) return;
-        Broadcast<List<TimeConstraintWE>> bc = javaSparkContext.broadcast(tc);
-        pairs.mapValues((Function<Iterable<IndexPair>, Iterable<IndexPair>>) groups -> {
-            List<IndexPair> indexPairs = (List<IndexPair>) groups;
-            ArrayList<IndexPair> response = new ArrayList<>();
-            IndexPair f = indexPairs.get(0);
-            boolean found = false;
-            for (TimeConstraintWE c : bc.getValue()) {
-                if (c.isForThisConstraint(f.getEventA(), f.getEventB())) {
-                    found = true;
-                    for (IndexPair i : indexPairs) {
-                        if (!c.isConstraintTrue(i)) response.add(i);
-                    }
-                    break;
-                }
-            }
-            if (found) {
-                return (Iterable<IndexPair>) response;
-            } else {
-                return groups;
-            }
-        });
-    }
-
-    protected void
-    addGapConstraintFilter(JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> pairs, List<GapConstraintWE> gc) {
-        if(gc.isEmpty()) return;
-        Broadcast<List<GapConstraintWE>> bc = javaSparkContext.broadcast(gc);
-        pairs.mapValues((Function<Iterable<IndexPair>, Iterable<IndexPair>>) groups -> {
-            List<IndexPair> indexPairs = (List<IndexPair>) groups;
-            ArrayList<IndexPair> response = new ArrayList<>();
-            IndexPair f = indexPairs.get(0);
-            boolean found = false;
-            for (GapConstraintWE c : bc.getValue()) {
-                if (c.isForThisConstraint(f.getEventA(), f.getEventB())) {
-                    found = true;
-                    for (IndexPair i : indexPairs) {
-                        if (!c.isConstraintTrue(i)) response.add(i);
-                    }
-                    break;
-                }
-            }
-            if (found) {
-                return (Iterable<IndexPair>) response;
-            } else {
-                return groups;
-            }
-        });
-    }
 
     protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs) {
         return  pairs.flatMap((FlatMapFunction<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>, IndexPair>) g-> g._2.iterator());
