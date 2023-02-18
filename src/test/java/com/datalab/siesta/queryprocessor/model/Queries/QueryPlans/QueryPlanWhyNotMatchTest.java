@@ -7,8 +7,10 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseWhyNotMatch;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatch.WhyNotMatchConfig;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -47,8 +49,7 @@ class QueryPlanWhyNotMatchTest {
         QueryPatternDetectionWrapper queryPatternDetectionWrapper = new QueryPatternDetectionWrapper();
         queryPatternDetectionWrapper.setLog_name("test");
         queryPatternDetectionWrapper.setWhyNotMatchFlag(true);
-        queryPatternDetectionWrapper.setK(30*60);
-        queryPatternDetectionWrapper.setUncertaintyPerEvent(90);
+        queryPatternDetectionWrapper.setWhyNotMatchConfig(new WhyNotMatchConfig(30,"minutes",2,"minutes"));
 
         ComplexPattern cp = this.getPattern();
         List<Constraint> constraints = new ArrayList<>(){{
@@ -62,6 +63,8 @@ class QueryPlanWhyNotMatchTest {
                 queryPatternDetection.createQueryPlan(queryPatternDetectionWrapper,m);
 
         QueryResponse qr = queryPlan.execute(queryPatternDetectionWrapper);
+        Assertions.assertEquals(0,((QueryResponseWhyNotMatch) qr).getTrueOccurrences().size());
+        Assertions.assertEquals(3,((QueryResponseWhyNotMatch) qr).getAlmostOccurrences().size());
         Assertions.assertNotNull(qr);
     }
 

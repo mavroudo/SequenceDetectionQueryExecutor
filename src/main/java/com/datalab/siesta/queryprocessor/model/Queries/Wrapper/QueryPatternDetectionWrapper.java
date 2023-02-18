@@ -1,6 +1,9 @@
 package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
+import com.datalab.siesta.queryprocessor.model.WhyNotMatch.WhyNotMatchConfig;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 
 public class QueryPatternDetectionWrapper extends QueryWrapper {
@@ -9,17 +12,15 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     private boolean whyNotMatchFlag;
 
-    private int k;
-
-    private int uncertaintyPerEvent;
+    @JsonProperty("wnm-config")
+    private WhyNotMatchConfig whyNotMatchConfig;
 
     private boolean returnAll;
 
     public QueryPatternDetectionWrapper() {
         this.returnAll=false;
         this.whyNotMatchFlag=false;
-        k=30; // set by default to 30 seconds
-        uncertaintyPerEvent=10; // set by default to 10 seconds;
+        this.whyNotMatchConfig = new WhyNotMatchConfig();
     }
 
     public ComplexPattern getPattern() {
@@ -47,18 +48,23 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
     }
 
     public int getK() {
-        return k;
+        return whyNotMatchConfig.getK();
     }
 
-    public void setK(int k) {
-        this.k = k;
+    public int getUncertainty(){
+        return whyNotMatchConfig.getUncertaintyPerEvent();
     }
 
-    public int getUncertaintyPerEvent() {
-        return uncertaintyPerEvent;
+    public int getStepInSeconds(){
+        return whyNotMatchConfig.getStepInSeconds();
     }
 
-    public void setUncertaintyPerEvent(int uncertaintyPerEvent) {
-        this.uncertaintyPerEvent = uncertaintyPerEvent;
+
+    public WhyNotMatchConfig getWhyNotMatchConfig() {
+        return whyNotMatchConfig;
+    }
+
+    public void setWhyNotMatchConfig(WhyNotMatchConfig whyNotMatchConfig) {
+        this.whyNotMatchConfig = whyNotMatchConfig;
     }
 }

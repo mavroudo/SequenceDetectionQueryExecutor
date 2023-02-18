@@ -137,7 +137,8 @@ public class PatternDetectionQueryTest {
     public void timeConstraintWithin() throws Exception {
         QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
         List<Constraint> constraints = new ArrayList<>() {{
-            add(new TimeConstraint(0, 1, 30 * 60));
+//            add(new TimeConstraint(0, 1, 30 * 60));
+            add(new TimeConstraint(0, 1, 30, "minutes"));
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);

@@ -70,7 +70,7 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
 
         // Execute the whyNotMatch search
         SimplePattern sp = qpdw.getPattern().getItSimpler();
-        List<AlmostMatch> almostMatches = whyNotMatchSASE.evaluate(sp,restTraces, qpdw.getUncertaintyPerEvent(), qpdw.getK());
+        List<AlmostMatch> almostMatches = whyNotMatchSASE.evaluate(sp,restTraces, qpdw.getUncertainty(), qpdw.getStepInSeconds(), qpdw.getK());
         queryResponseWhyNotMatch.setAlmostOccurrences(almostMatches);
         return queryResponseWhyNotMatch;
     }

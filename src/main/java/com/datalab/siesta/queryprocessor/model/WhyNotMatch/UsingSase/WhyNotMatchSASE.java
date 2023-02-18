@@ -33,10 +33,10 @@ public class WhyNotMatchSASE {
     public WhyNotMatchSASE() {
     }
 
-    public List<AlmostMatch> evaluate(SimplePattern sp, Map<Long, List<Event>> restEvents, int uncertaintyPerEvent, int k) {
+    public List<AlmostMatch> evaluate(SimplePattern sp, Map<Long, List<Event>> restEvents, int uncertaintyPerEvent, int step, int k) {
         NFA nfa = this.getNFA(sp,k);
         Map<Long, List<Match>> matches = restEvents.entrySet().stream().parallel().map(entry -> {
-                    Stream s = this.getUnCertainStream(entry.getKey(), entry.getValue(), uncertaintyPerEvent);
+                    Stream s = this.getUnCertainStream(entry.getKey(), entry.getValue(), uncertaintyPerEvent, step);
                     EngineController ec = new EngineController();
                     ec.setNfa(nfa);
                     ec.initializeEngine();
@@ -58,13 +58,13 @@ public class WhyNotMatchSASE {
      * @param uncertaintyPerEvent the range that a timestamp or position can move
      * @return a Stream of the events to be handled by the Sase Engine
      */
-    public Stream getUnCertainStream(long trace_id, List<Event> events, int uncertaintyPerEvent) {
+    public Stream getUnCertainStream(long trace_id, List<Event> events, int uncertaintyPerEvent, int step) {
         List<UncertainTimeEvent> eventBuffer = new ArrayList<>();
         for (Event e : events) {
             long original = e.getPrimaryMetric();
             long minimum = Math.max(original - uncertaintyPerEvent, 0);
             long maximum = original + uncertaintyPerEvent;
-            for (long i = minimum; i <= maximum; i++) {
+            for (long i = minimum; i <= maximum; i+=step) {
                 eventBuffer.add(new UncertainTimeEvent(trace_id, 0,
                         e.getName(), (int) i, true, (int) Math.abs(original - i)));
             }
