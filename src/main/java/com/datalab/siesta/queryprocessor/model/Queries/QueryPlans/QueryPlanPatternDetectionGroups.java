@@ -8,7 +8,6 @@ import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseGroups;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
@@ -39,10 +38,10 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
         this.getMiddleResults(qpdw, firstCheck);
-        if(!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
+        if (!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponseGroups queryResponseGroups = new QueryResponseGroups();
-        List<GroupOccurrences> occurrences = null;
-        occurrences.forEach(x->x.clearOccurrences(qpdw.isReturnAll()));
+        List<GroupOccurrences> occurrences = saseConnector.evaluateGroups(qpdw.getPattern(), middleResults);
+        occurrences.forEach(x -> x.clearOccurrences(qpdw.isReturnAll()));
         queryResponseGroups.setOccurrences(occurrences);
         return queryResponseGroups;
     }

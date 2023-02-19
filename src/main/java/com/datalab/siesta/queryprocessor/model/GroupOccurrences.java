@@ -11,6 +11,8 @@ public class GroupOccurrences extends Occurrences{
 
     private int groupId;
 
+    public GroupOccurrences() {
+    }
 
     public GroupOccurrences(int groupId, List<Occurrence> occurrences) {
         this.groupId = groupId;

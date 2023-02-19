@@ -1,6 +1,8 @@
 package com.datalab.siesta.queryprocessor.SaseConnection;
 
 import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
@@ -48,6 +50,33 @@ public class SaseConnector {
             if (!ec.getMatches().isEmpty()) {
                 Occurrences ocs = new Occurrences();
                 ocs.setTraceID(e.getKey());
+                for (Match m : ec.getMatches()) {
+                    ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
+                            .map(x -> (SaseEvent) x)
+                            .map(SaseEvent::getEventBoth)
+                            .collect(Collectors.toList())));
+                }
+                occurrences.add(ocs);
+            }
+        }
+        return occurrences;
+    }
+
+    public List<GroupOccurrences> evaluateGroups(SIESTAPattern pattern, Map<Integer, List<EventBoth>> events){
+        EngineController ec = this.getEngineController(pattern,false);
+        List<GroupOccurrences> occurrences = new ArrayList<>();
+        for (Map.Entry<Integer, List<EventBoth>> e : events.entrySet()) {
+            ec.initializeEngine();
+            Stream s = this.getStream(new ArrayList<>(e.getValue()));
+            ec.setInput(s);
+            try {
+                ec.runEngine();
+            } catch (CloneNotSupportedException | EvaluationException exe) {
+                throw new RuntimeException(exe);
+            }
+            if (!ec.getMatches().isEmpty()) {
+                GroupOccurrences ocs = new GroupOccurrences();
+                ocs.setGroupId(e.getKey());
                 for (Match m : ec.getMatches()) {
                     ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
                             .map(x -> (SaseEvent) x)
