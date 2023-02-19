@@ -84,12 +84,12 @@ public class QueryPlanPatternDetection implements QueryPlan {
     }
 
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponse qr){
-        Set<EventPair> pairs = qpdw.getPattern().extractPairsForPatternDetection();
-        List<Count> sortedPairs = this.getStats(pairs, qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs, sortedPairs);
-        qr = this.firstParsing(qpdw, pairs, combined); // checks if all are correctly set before start querying
+        Tuple2<Integer,Set<EventPair>> pairs = qpdw.getPattern().extractPairsForPatternDetection();
+        List<Count> sortedPairs = this.getStats(pairs._2, qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
+        qr = this.firstParsing(qpdw, pairs._2, combined); // checks if all are correctly set before start querying
         if (!((QueryResponseBadRequestForDetection)qr).isEmpty()) return; //There was an original error
-        minPairs = minPairs == -1 ? combined.size() : minPairs;
+        minPairs = minPairs == -1 ? pairs._1 : minPairs; //set minPairs to the one returned from the extractPairsForPatternDetection
         imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
     }
 

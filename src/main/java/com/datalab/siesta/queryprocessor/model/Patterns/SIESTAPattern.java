@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import edu.umass.cs.sase.query.State;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,22 +30,24 @@ public abstract class SIESTAPattern {
 //        return eventPairs;
 //    }
 
-    protected Set<EventPair> extractPairsForPatternDetection(List<EventPos> events, List<Constraint> constraints){
-        Set<EventPair> eventPairs = new HashSet<>();
+    protected Tuple2<Integer,Set<EventPair>> extractPairsForPatternDetection(List<EventPos> events, List<Constraint> constraints){
+        Set<EventPair> allEventPairs = new HashSet<>();
         Set<Integer> positionOfConstraints = constraints.stream().flatMap((Function<Constraint, Stream<Integer>>)  x->{
             List<Integer> l = new ArrayList<>();
             l.add(x.getPosA());
             l.add(x.getPosB());
             return l.stream();
         }).collect(Collectors.toSet());
+        Set<EventPair> trueEventPairs = new HashSet<>();
         for (int i = 0; i < events.size() - 1; i++) {
-            if(positionOfConstraints.contains(i)) eventPairs.add(new EventPair(events.get(i),events.get(i))); //get double pairs
+            if(positionOfConstraints.contains(i)) allEventPairs.add(new EventPair(events.get(i),events.get(i))); //get double pairs
             for (int j = i+1; j < events.size(); j++) { //get the rest of the pairs
-                EventPair n = new EventPair(events.get(i), events.get(j));
-                eventPairs.add(n);
+                EventPair p = new EventPair(events.get(i), events.get(j));
+                trueEventPairs.add(p);
             }
         }
-        return eventPairs;
+        allEventPairs.addAll(trueEventPairs);
+        return new Tuple2<>(trueEventPairs.size(), allEventPairs);
     }
 
     protected Constraint searchForConstraint(int posA, int posB, List<Constraint> constraints) {

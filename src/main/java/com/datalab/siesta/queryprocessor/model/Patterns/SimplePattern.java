@@ -8,6 +8,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import edu.umass.cs.sase.query.State;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ public class SimplePattern extends SIESTAPattern{
 
 
     @JsonIgnore
-    public Set<EventPair> extractPairsForPatternDetection(){
+    public Tuple2<Integer,Set<EventPair>> extractPairsForPatternDetection(){
         return  super.extractPairsForPatternDetection(this.events,this.getConstraints());
 
     }

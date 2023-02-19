@@ -7,6 +7,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import edu.umass.cs.sase.query.State;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import scala.Tuple2;
 
 
 import java.util.ArrayList;
@@ -71,10 +72,15 @@ public class ComplexPattern extends SIESTAPattern{
 
 
     @JsonIgnore
-    public Set<EventPair> extractPairsForPatternDetection(){
-        return  this.splitIntoSimples().stream()
-                .flatMap( x-> super.extractPairsForPatternDetection(x,this.getConstraints()).stream())
-                .collect(Collectors.toSet());
+    public Tuple2<Integer,Set<EventPair> > extractPairsForPatternDetection(){
+        Set<EventPair> eventPairs = new HashSet<>();
+        int n = Integer.MAX_VALUE;
+        for(List<EventPos> events : this.splitIntoSimples()){
+            Tuple2<Integer,Set<EventPair>> s = this.extractPairsForPatternDetection(events,this.getConstraints());
+            eventPairs.addAll(s._2);
+            n=Math.min(n,s._1);
+        }
+        return new Tuple2<>(n,eventPairs);
     }
 
     private Set<List<EventPos>> splitIntoSimples() {

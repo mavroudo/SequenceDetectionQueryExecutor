@@ -6,6 +6,7 @@ import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import scala.Tuple2;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -142,7 +144,8 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -150,7 +153,8 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        Assertions.assertEquals(3,pairs._1);
+        plan.setMinPairs(pairs._1); //remove the double pairs created by the constraints from the necessary pairs
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -190,7 +194,8 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -198,7 +203,7 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        plan.setMinPairs(pairs._1); //remove the double pairs created by the constraints from the necessary pairs
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -240,7 +245,8 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -248,7 +254,8 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        Assertions.assertEquals(3,pairs._1);
+        plan.setMinPairs(pairs._1); //remove the double pairs created by the constraints from the necessary pairs
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
@@ -274,7 +281,8 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Assertions.assertEquals(5,pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -282,7 +290,8 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        Assertions.assertEquals(3,pairs._1);
+        plan.setMinPairs(pairs._1); //remove the double pairs created by the constraints from the necessary pairs
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -322,7 +331,8 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -330,7 +340,8 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        Assertions.assertEquals(3,pairs._1);
+        plan.setMinPairs(pairs._1); //remove the double pairs created by the constraints from the necessary pairs
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -372,7 +383,8 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Assertions.assertEquals(5, cp.extractPairsForPatternDetection().size());
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -380,7 +392,7 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        plan.setMinPairs(3); //remove the double pairs created by the constraints from the necessary pairs
+        plan.setMinPairs(pairs._1); //remove the double pairs created by the constraints from the necessary pairs
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(2, ocs.size());
