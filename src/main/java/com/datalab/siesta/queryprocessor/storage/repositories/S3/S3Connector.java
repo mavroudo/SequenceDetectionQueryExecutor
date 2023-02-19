@@ -237,6 +237,7 @@ public class S3Connector extends SparkDatabaseRepository {
                 .flatMap((java.util.function.Function<Set<Long>, Stream<Long>>) Collection::stream)
                 .collect(Collectors.toSet());
         Broadcast<List<Set<Long>>> bgroups = javaSparkContext.broadcast(groups);
+        Broadcast<Integer> bEventTypesSize= javaSparkContext.broadcast(eventTypes.size());
         JavaRDD<EventBoth> eventRDD = this.getFromSingle(logname, allTraces, eventTypes);
         Map<Integer, List<EventBoth>> response = eventRDD.map((Function<EventBoth, Tuple2<Integer, EventBoth>>) event -> {
                     for (int g = 0; g < bgroups.value().size(); g++) {
@@ -246,6 +247,12 @@ public class S3Connector extends SparkDatabaseRepository {
                 })
                 .filter((Function<Tuple2<Integer, EventBoth>, Boolean>) event -> event._1 != -1)
                 .groupBy((Function<Tuple2<Integer, EventBoth>, Integer>) event -> event._1)
+                //maintain only these groups that contain all of the event types in the query
+                .filter((Function<Tuple2<Integer, Iterable<Tuple2<Integer, EventBoth>>>, Boolean>) group->{
+                    Set<String> events = new HashSet<>();
+                    group._2.forEach(x->events.add(x._2.getName()));
+                    return events.size()==bEventTypesSize.value();
+                })
                 .mapValues((Function<Iterable<Tuple2<Integer, EventBoth>>, List<EventBoth>>) group->{
                     List<EventBoth> eventBoth = new ArrayList<>();
                     for(Tuple2<Integer,EventBoth> e : group){

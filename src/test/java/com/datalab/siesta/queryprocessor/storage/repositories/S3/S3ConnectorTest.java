@@ -168,13 +168,28 @@ class S3ConnectorTest {
         eventTypes.add("A");
         eventTypes.add("B");
         Map<Integer,List<EventBoth>> events = s3Connector.querySingleTableGroups("test",groupConfig.getGroups(),eventTypes);
-        Assertions.assertTrue(events.size()>0);
+        assertEquals(1, events.size());
         List<Long> traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
-        List<Long> traceIds2 = events.get(2).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
         Assertions.assertTrue(traceIds1.contains(1L));
         Assertions.assertTrue(traceIds1.contains(2L));
         Assertions.assertTrue(traceIds1.contains(3L));
         Assertions.assertFalse(traceIds1.contains(4L));
-        Assertions.assertTrue(traceIds2.contains(4L));
+
+        groupConfig = new GroupConfig("[(1-2),(3)]");
+        eventTypes.clear();
+        eventTypes.add("A");
+        eventTypes.add("B");
+        events = s3Connector.querySingleTableGroups("test",groupConfig.getGroups(),eventTypes);
+
+        assertEquals(2, events.size());
+        traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        List<Long> traceIds2 = events.get(2).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(traceIds1.contains(1L));
+        Assertions.assertTrue(traceIds1.contains(2L));
+        Assertions.assertFalse(traceIds1.contains(3L));
+        Assertions.assertFalse(traceIds1.contains(4L));
+        Assertions.assertTrue(traceIds2.contains(3L));
+
+
     }
 }
