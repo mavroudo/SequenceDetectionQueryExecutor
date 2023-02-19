@@ -7,13 +7,16 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import edu.umass.cs.sase.query.State;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import scala.Tuple2;
 
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class ComplexPattern extends SIESTAPattern{
@@ -66,12 +69,18 @@ public class ComplexPattern extends SIESTAPattern{
      *
      * @return Pair of events along with the constraints
      */
+
+
     @JsonIgnore
-    public Set<EventPair> extractPairsWithSymbols() {
-        return this.splitIntoSimples().stream()
-                .flatMap(x ->
-                        this.extractPairsAll(x,this.getConsecutiveConstraints()).stream())
-                .collect(Collectors.toSet());
+    public Tuple2<Integer,Set<EventPair> > extractPairsForPatternDetection(){
+        Set<EventPair> eventPairs = new HashSet<>();
+        int n = Integer.MAX_VALUE;
+        for(List<EventPos> events : this.splitIntoSimples()){
+            Tuple2<Integer,Set<EventPair>> s = this.extractPairsForPatternDetection(events,this.getConstraints());
+            eventPairs.addAll(s._2);
+            n=Math.min(n,s._1);
+        }
+        return new Tuple2<>(n,eventPairs);
     }
 
     private Set<List<EventPos>> splitIntoSimples() {
@@ -103,8 +112,8 @@ public class ComplexPattern extends SIESTAPattern{
 
     @JsonIgnore
     @Override
-    public List<String> getEventTypes(){
-        return this.eventsWithSymbols.stream().map(Event::getName).collect(Collectors.toList());
+    public Set<String> getEventTypes(){
+        return this.eventsWithSymbols.stream().map(Event::getName).collect(Collectors.toSet());
     }
 
     @JsonIgnore

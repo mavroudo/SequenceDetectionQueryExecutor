@@ -3,18 +3,22 @@ package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
+import com.datalab.siesta.queryprocessor.model.DBModel.EventTypes;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexRecords;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
-import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
-import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,6 +27,94 @@ class S3ConnectorTest {
 
     @Autowired
     private S3Connector s3Connector;
+
+    @Test
+    void queryMetadata(){
+        Metadata m = s3Connector.getMetadata("test");
+        Assertions.assertEquals(23L,m.getEvents());
+        Assertions.assertEquals("timestamps",m.getMode());
+        Assertions.assertTrue(m.getHas_previous_stored());
+        m = s3Connector.getMetadata("test_pos");
+        Assertions.assertEquals(23L,m.getEvents());
+        Assertions.assertEquals("positions",m.getMode());
+        Assertions.assertTrue(m.getHas_previous_stored());
+    }
+
+    @Test
+    void queryIndexTable(){
+        Metadata m = s3Connector.getMetadata("test_pos");
+        Set<EventPair> pairs = new HashSet<>();
+        pairs.add(new EventPair(new Event("A"),new Event("A")));
+        pairs.add(new EventPair(new Event("A"),new Event("B")));
+        pairs.add(new EventPair(new Event("A"),new Event("C")));
+        pairs.add(new EventPair(new Event("B"),new Event("A")));
+        pairs.add(new EventPair(new Event("B"),new Event("B")));
+        pairs.add(new EventPair(new Event("B"),new Event("C")));
+        pairs.add(new EventPair(new Event("C"),new Event("A")));
+        pairs.add(new EventPair(new Event("C"),new Event("B")));
+        pairs.add(new EventPair(new Event("C"),new Event("C")));
+        IndexRecords  ir = s3Connector.queryIndexTable(pairs,m.getLogname(),m);
+
+        Map<EventTypes,List<IndexPair>> r =  ir.getRecords();
+        // <B,A>
+        Assertions.assertEquals(2,r.get(new EventTypes("B","A")).size());
+        List<Long> contained =  r.get(new EventTypes("C","B")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        // <C,B>
+        Assertions.assertEquals(2,r.get(new EventTypes("C","B")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("C","B")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+        // <C,C>
+        Assertions.assertEquals(2,r.get(new EventTypes("C","C")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("C","C")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+        // <A,A>
+        Assertions.assertEquals(6,r.get(new EventTypes("A","A")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("A","A")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+        Assertions.assertTrue(contained.contains(1L));
+        Assertions.assertTrue(contained.contains(4L));
+        // <A,B>
+        Assertions.assertEquals(5,r.get(new EventTypes("A","B")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("A","B")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+        Assertions.assertTrue(contained.contains(1L));
+        // <B,C>
+        Assertions.assertEquals(5,r.get(new EventTypes("B","C")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("B","C")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+        Assertions.assertTrue(contained.contains(1L));
+        // <A,C>
+        Assertions.assertEquals(5,r.get(new EventTypes("A","C")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("A","C")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+        Assertions.assertTrue(contained.contains(1L));
+        Assertions.assertTrue(contained.contains(4L));
+        // <C,A>
+        Assertions.assertEquals(2,r.get(new EventTypes("C","A")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("C","A")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(4L));
+        // <B,B>
+        Assertions.assertEquals(3,r.get(new EventTypes("B","B")).size());
+        contained.clear();
+        contained =  r.get(new EventTypes("B","B")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        Assertions.assertTrue(contained.contains(2L));
+        Assertions.assertTrue(contained.contains(3L));
+    }
 
     @Test
     void querySeqTable() {

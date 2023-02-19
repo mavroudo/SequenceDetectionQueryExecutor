@@ -29,6 +29,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.NFAWrapper;
@@ -142,8 +143,30 @@ public class NFA {
 		}
 		this.compileValueVectorOptimized();
 
-
 	}
+
+	public NFA(List<String> query){
+		parseQueryToNFA(query);
+		this.testNegation();
+		this.compileValueVectorOptimized();
+	}
+
+	public void parseQueryToNFA(List<String> query){
+		this.morePartitionAttribute = new ArrayList<>();
+		this.hasMorePartitionAttribute = false;
+		for(String line : query){
+			this.parseFastQueryLine(line);
+		}
+		if(this.hasMorePartitionAttribute){
+			this.addMorePartitionAttribute();
+		}
+		if(this.size > 0){
+			states[0].setStart(true);
+			states[size-1].setEnding(true);
+		}
+	}
+
+
 	
 	/**
 	 * Parses the nfa file
@@ -203,7 +226,6 @@ public class NFA {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 		if(this.size > 0){
 		states[0].setStart(true);
 		states[size-1].setEnding(true);

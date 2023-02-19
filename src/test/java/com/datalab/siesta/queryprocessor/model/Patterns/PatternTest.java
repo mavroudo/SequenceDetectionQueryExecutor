@@ -2,8 +2,10 @@ package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +24,8 @@ class PatternTest {
         events.add(es3);
         ComplexPattern p = new ComplexPattern(events);
 
-        Set<EventPair> pairs = p.extractPairsWithSymbols();
-        Assert.isTrue(pairs.size()==3);
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Assertions.assertEquals(3,pairs._2.size());
     }
     @Test
     void extractPairsOr(){
@@ -38,8 +40,8 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Set<EventPair> pairs = p.extractPairsWithSymbols();
-        Assert.isTrue(pairs.size()==5);
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Assertions.assertEquals(5,pairs._2.size());
     }
 
     @Test
@@ -55,8 +57,8 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Set<EventPair> pairs = p.extractPairsWithSymbols();
-        Assert.isTrue(pairs.size()==3);
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Assertions.assertEquals(3,pairs._2.size());
     }
 
     @Test
@@ -72,7 +74,7 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Set<EventPair> pairs = p.extractPairsWithSymbols();
-        Assert.isTrue(pairs.size()==3);
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Assertions.assertEquals(3,pairs._2.size());
     }
 }

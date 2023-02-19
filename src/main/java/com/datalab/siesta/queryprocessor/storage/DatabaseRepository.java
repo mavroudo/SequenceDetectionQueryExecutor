@@ -1,11 +1,9 @@
 package com.datalab.siesta.queryprocessor.storage;
 
-import com.datalab.siesta.queryprocessor.model.DBModel.Count;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
+import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
-import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import scala.Tuple2;
 
 import java.util.List;
@@ -22,10 +20,12 @@ public interface DatabaseRepository {
 
     List<String> getEventNames(String logname);
 
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes);
+    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes);
 
     Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds);
 
     IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata, int minPairs);
+
+    IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata);
 
 }

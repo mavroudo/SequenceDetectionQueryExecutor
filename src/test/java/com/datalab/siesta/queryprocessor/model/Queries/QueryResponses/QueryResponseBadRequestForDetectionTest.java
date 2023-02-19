@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.converter.json.MappingJacksonValue;
+import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,19 +31,18 @@ class QueryResponseBadRequestForDetectionTest {
         events.add(ep4);
         SimplePattern p = new SimplePattern();
         p.setEvents(events);
-        Set<EventPair> pairs = p.extractPairsAll();
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
         QueryResponseBadRequestForDetection qrbd = new QueryResponseBadRequestForDetection();
-        qrbd.setNonExistingPairs(new ArrayList<>(pairs));
+        qrbd.setNonExistingPairs(new ArrayList<>(pairs._2));
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrbd);
         String s1 = mapper.writeValueAsString(mappingJacksonValue.getValue());
 
 
         qrbd = new QueryResponseBadRequestForDetection();
-        qrbd.setConstraintsNotFulfilled(new ArrayList<>(pairs));
+        qrbd.setConstraintsNotFulfilled(new ArrayList<>(pairs._2));
         mappingJacksonValue = new MappingJacksonValue(qrbd);
 
         String s2 = mapper.writeValueAsString(mappingJacksonValue.getValue());
-        System.out.println("Hey");
 
     }
 

@@ -1,13 +1,16 @@
 package com.datalab.siesta.queryprocessor.model.DBModel;
 
 import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventTs;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class IndexPair implements Serializable {
 
@@ -114,6 +117,7 @@ public class IndexPair implements Serializable {
         this.traceId = traceId;
     }
 
+    @JsonIgnore
     public List<Event> getEvents(){
         List<Event> e = new ArrayList<>();
         if(timestampA==null){//the events are pos
@@ -132,5 +136,13 @@ public class IndexPair implements Serializable {
             e.add(eventTs2);
         }
         return e;
+    }
+
+    @JsonIgnore
+    public boolean validate(Set<EventPair> pairs){
+        for(EventPair p:pairs){
+            if(p.getEventA().getName().equals(this.eventA)&&p.getEventB().getName().equals(this.eventB)) return true;
+        }
+        return false;
     }
 }

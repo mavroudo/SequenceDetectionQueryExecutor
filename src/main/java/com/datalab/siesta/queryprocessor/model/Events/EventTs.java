@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
-public class EventTs extends Event implements Serializable {
+public class EventTs extends Event implements Serializable, Cloneable {
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected Timestamp timestamp;
@@ -23,6 +23,11 @@ public class EventTs extends Event implements Serializable {
     public EventTs(String name, Timestamp ts) {
         super(name);
         this.timestamp=ts;
+    }
+
+    public EventTs(String name, long traceID, Timestamp timestamp) {
+        super(name, traceID);
+        this.timestamp = timestamp;
     }
 
     public Timestamp getTimestamp() {
@@ -39,12 +44,13 @@ public class EventTs extends Event implements Serializable {
         return new EventBoth(this.name,this.timestamp,-1);
     }
 
-    @Override
+
     @JsonIgnore
-    public SaseEvent transformSaseEvent(int position) {
+    public SaseEvent transformSaseEvent(int position, long minTs) {
         SaseEvent se = super.transformSaseEvent(position);
-        se.setTimestamp((int)this.timestamp.getTime()/1000); //transform to seconds
+        se.setTimestamp((int)((this.timestamp.getTime()-minTs)/1000)); //transform to differences in seconds
         se.setTimestampSet(true);
+        se.setMinTs(minTs);
         return se;
     }
 
@@ -66,5 +72,26 @@ public class EventTs extends Event implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), timestamp);
+    }
+
+    @Override
+    public long calculateDiff(Event e) { //return the diff in seconds
+        return (((EventTs)e).getTimestamp().getTime()-this.timestamp.getTime())/1000;
+    }
+
+    @Override
+    @JsonIgnore
+    public long getPrimaryMetric() {
+        return this.timestamp.getTime()/1000;
+    }
+
+    @Override
+    public void setPrimaryMetric(long newPrimaryMetric) {
+        this.timestamp= new Timestamp(newPrimaryMetric*1000);
+    }
+
+    @Override
+    public EventTs clone() {
+        return new EventTs(name,traceID,timestamp);
     }
 }

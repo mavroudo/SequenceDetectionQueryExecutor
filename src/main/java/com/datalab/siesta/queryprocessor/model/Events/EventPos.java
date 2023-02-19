@@ -8,7 +8,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class EventPos extends Event implements Serializable, Comparable {
+public class EventPos extends Event implements Serializable, Comparable, Cloneable {
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
     protected int position;
@@ -21,6 +21,11 @@ public class EventPos extends Event implements Serializable, Comparable {
     public EventPos(String name, int pos) {
         super(name);
         this.position=pos;
+    }
+
+    public EventPos(String name, long traceID, int position) {
+        super(name, traceID);
+        this.position = position;
     }
 
     public int getPosition() {
@@ -64,4 +69,24 @@ public class EventPos extends Event implements Serializable, Comparable {
     public int hashCode() {
         return Objects.hash(super.hashCode(), position);
     }
+
+    @Override
+    public long calculateDiff(Event e) {
+        return ((EventPos) e).getPosition()-this.position;
+    }
+
+    @Override
+    public long getPrimaryMetric() {
+        return this.position;
+    }
+
+    @Override
+    public void setPrimaryMetric(long newPrimaryMetric) {
+        this.position= (int) newPrimaryMetric;
+    }
+    @Override
+    public EventPos clone() {
+        return new EventPos(name,traceID,position);
+    }
+
 }

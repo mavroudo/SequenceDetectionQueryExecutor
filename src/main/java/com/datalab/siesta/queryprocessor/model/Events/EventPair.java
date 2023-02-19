@@ -69,6 +69,6 @@ public class EventPair implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventA, eventB);
+        return Objects.hash(eventA.getName(), eventB.getName());
     }
 }

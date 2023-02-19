@@ -8,6 +8,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import edu.umass.cs.sase.query.State;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ public class SimplePattern extends SIESTAPattern{
 
     public SimplePattern(List<EventPos> events) {
         this.events = events;
+        constraints = new ArrayList<>();
     }
 
     public List<EventPos> getEvents() {
@@ -53,15 +55,14 @@ public class SimplePattern extends SIESTAPattern{
                 '}';
     }
 
-    public List<Constraint> getConsecutiveConstraints(){ return this.fixConstraints(this.constraints);}
-
+    public List<Constraint> getConsecutiveConstraints(){ return this.constraints;}
 
 
     @JsonIgnore
-    public Set<EventPair> extractPairsAll() {
-        return this.extractPairsAll(this.events,this.getConsecutiveConstraints());
-    }
+    public Tuple2<Integer,Set<EventPair>> extractPairsForPatternDetection(){
+        return  super.extractPairsForPatternDetection(this.events,this.getConstraints());
 
+    }
 
 
     @JsonIgnore
@@ -71,8 +72,8 @@ public class SimplePattern extends SIESTAPattern{
 
     @JsonIgnore
     @Override
-    public List<String> getEventTypes(){
-        return this.events.stream().map(Event::getName).collect(Collectors.toList());
+    public Set<String> getEventTypes(){
+        return this.events.stream().map(Event::getName).collect(Collectors.toSet());
     }
 
     @JsonIgnore
@@ -111,11 +112,11 @@ public class SimplePattern extends SIESTAPattern{
             if(c.getPosB()==i && c instanceof GapConstraint){
                 GapConstraint gc = (GapConstraint) c;
                 if(gc.getMethod().equals("within")) response.add(String.format(" position <= $%d.position + %d ",c.getPosA()+1,gc.getConstraint()));
-                else response.add(String.format(" position >= $%d.position + %d ",c.getPosA(),gc.getConstraint())); //atleast
+                else response.add(String.format(" position >= $%d.position + %d ",c.getPosA()+1,gc.getConstraint())); //atleast
             }else if(c.getPosB()==i && c instanceof TimeConstraint){
                 TimeConstraint tc = (TimeConstraint) c;
                 if(tc.getMethod().equals("within")) response.add(String.format(" timestamp <= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint()));
-                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",c.getPosA(),tc.getConstraint())); //atleast
+                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint())); //atleast
             }
         }
         return response;

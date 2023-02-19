@@ -41,7 +41,7 @@ public class DBConnector {
         return db.patterDetectionTraceIds(logname,combined,metadata,minpairs);
     }
 
-    public Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes){
+    public Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes){
         return db.querySeqTable(logname,traceIds,eventTypes);
     }
 }
