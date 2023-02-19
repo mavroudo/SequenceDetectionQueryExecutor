@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
-import com.datalab.siesta.queryprocessor.model.Events.Serializations.EventBothSerializer;
+import com.datalab.siesta.queryprocessor.model.Serializations.EventBothSerializer;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.codehaus.jackson.annotate.JsonIgnore;
