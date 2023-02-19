@@ -28,4 +28,8 @@ public interface DatabaseRepository {
 
     IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata);
 
+    List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes);
+
+    Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes);
+
 }
