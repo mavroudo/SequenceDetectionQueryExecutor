@@ -35,10 +35,11 @@ public class WhyNotMatchSASE {
 
     public List<AlmostMatch> evaluate(SimplePattern sp, Map<Long, List<Event>> restEvents, int uncertaintyPerEvent, int step, int k) {
         NFA nfa = this.getNFA(sp,k);
-        Map<Long, List<Match>> matches = restEvents.entrySet().stream().parallel().map(entry -> {
+        EngineController ec = new EngineController();
+        ec.setNfa(nfa);
+        Map<Long, List<Match>> matches = restEvents.entrySet().stream()
+                .map(entry -> {
                     Stream s = this.getUnCertainStream(entry.getKey(), entry.getValue(), uncertaintyPerEvent, step);
-                    EngineController ec = new EngineController();
-                    ec.setNfa(nfa);
                     ec.initializeEngine();
                     ec.setInput(s);
                     try {
@@ -90,21 +91,35 @@ public class WhyNotMatchSASE {
         State[] states = new State[states_size];
         for (int i = 0; i < sp.getEvents().size(); i++) {
             State s = new State(i + 1, "", String.format("%s", sp.getEvents().get(i).getName()), "normal");
-            this.generatePredicates(i, sp.getConstraints()).forEach(s::addPredicate); // add the time-constraints/gap constraints here
+            // add the time-constraints/gap constraints here
+            this.generatePredicatesFromConstraints(i, sp.getConstraints()).forEach(s::addPredicate);
+            // add predicate for the maximum amount of total change
+            s.addPredicate(this.generateConstraintOfK(i,k));
             states[i] = s;
         }
-        List<String> changes = new ArrayList<>() {{ //add the limitation for the k here
-            for (int i = 0; i < states_size - 1; i++) {
-                add(String.format(" - $%d.change", i + 1));
-            }
-        }};
-        String pDescription = String.format("change <= %d ", k) + String.join(" ", changes);
-        states[states_size - 1].addPredicate(pDescription);
         NFAWrapper nfaWrapper = new NFAWrapper("skip-till-any-match");
         nfaWrapper.setSize(sp.getSize());
         nfaWrapper.setStates(states);
         return new NFA(nfaWrapper);
     }
+
+    /**
+     * Generates the predicate for the maximum k, until the state that we are in. This will help eliminate
+     * all the partial matches that cannot meet the maximum change constraint
+     * @param state_num the state that we are currently in (state_num is the State number -1 )
+     * @param k the maximum amount of changes
+     * @return the string that describes the predicate of the maximum change, for the i+1 State
+     */
+    private String generateConstraintOfK(int state_num, int k){
+        List<String> changes = new ArrayList<>() {{ //add the limitation for the k here
+            for (int i = 1; i <= state_num ; i++) {
+                add(String.format(" - $%d.change", i + 1));
+            }
+        }};
+        return String.format("change <= %d ", k) + String.join(" ", changes);
+
+    }
+
 
     /**
      * Generate the strings that dictates the predicates. i value is equal to state number -1, and that is because
@@ -113,7 +128,7 @@ public class WhyNotMatchSASE {
      * @param i equal to the number of state -1
      * @return a list of the preicates for this state
      */
-    private List<String> generatePredicates(int i, List<Constraint> constraints) {
+    private List<String> generatePredicatesFromConstraints(int i, List<Constraint> constraints) {
         List<String> response = new ArrayList<>();
         for (Constraint c : constraints) {
             if (c.getPosB() == i && c instanceof GapConstraint) {
