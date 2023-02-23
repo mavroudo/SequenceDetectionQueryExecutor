@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.CassandraRdd;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexRecords;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
@@ -61,6 +62,19 @@ class CassConnectorTest {
         Map<Long, List<EventBoth>>map = cassConnector.querySeqTable("test",traces,events);
         Assertions.assertEquals(2,map.size());
     }
+
+    @Test
+    void queryIndexTable(){
+        Set<EventPair> pairs = new HashSet<>();
+        pairs.add(new EventPair(new Event("A"),new Event("A")));
+        pairs.add(new EventPair(new Event("A"),new Event("B")));
+        Metadata m = cassConnector.getMetadata("test");
+        IndexRecords ir = cassConnector.queryIndexTable(pairs,"test",m);
+        Assertions.assertNotNull(ir);
+        Assertions.assertEquals(2,ir.getRecords().size());
+    }
+
+
 
 
 }

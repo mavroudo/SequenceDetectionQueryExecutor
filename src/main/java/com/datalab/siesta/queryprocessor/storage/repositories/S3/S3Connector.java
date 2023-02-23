@@ -168,26 +168,10 @@ public class S3Connector extends SparkDatabaseRepository {
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
-    @Override
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,int minPairs) {
-        Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
-        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
-        JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
-        indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
-        List<Long> traces = this.getCommonIds(indexPairs,minPairs);
-        IndexMiddleResult imr = this.addFilterIds(indexPairs,traces);
-        indexPairs.unpersist();
-        return imr;
-    }
 
 
-    @Override
-    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
-        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata)
-                .collect();
-        return new IndexRecords(results);
 
-    }
+
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
