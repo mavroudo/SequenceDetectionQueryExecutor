@@ -4,6 +4,8 @@ import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -50,56 +52,27 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return null;
     }
 
-    protected void
-    addTimeConstraintFilter(JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> pairs, List<TimeConstraintWE> tc) {
-        if(tc.isEmpty()) return;
-        Broadcast<List<TimeConstraintWE>> bc = javaSparkContext.broadcast(tc);
-        pairs.mapValues((Function<Iterable<IndexPair>, Iterable<IndexPair>>) groups -> {
-            List<IndexPair> indexPairs = (List<IndexPair>) groups;
-            ArrayList<IndexPair> response = new ArrayList<>();
-            IndexPair f = indexPairs.get(0);
-            boolean found = false;
-            for (TimeConstraintWE c : bc.getValue()) {
-                if (c.isForThisConstraint(f.getEventA(), f.getEventB())) {
-                    found = true;
-                    for (IndexPair i : indexPairs) {
-                        if (!c.isConstraintTrue(i)) response.add(i);
-                    }
-                    break;
-                }
-            }
-            if (found) {
-                return (Iterable<IndexPair>) response;
-            } else {
-                return groups;
-            }
-        });
+    @Override
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
+        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
+        return this.querySequenceTablePrivate(logname,bTraceIds)
+                .keyBy((Function<Trace, Long>) Trace::getTraceID)
+                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
+                .collectAsMap();
     }
 
-    protected void
-    addGapConstraintFilter(JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> pairs, List<GapConstraintWE> gc) {
-        if(gc.isEmpty()) return;
-        Broadcast<List<GapConstraintWE>> bc = javaSparkContext.broadcast(gc);
-        pairs.mapValues((Function<Iterable<IndexPair>, Iterable<IndexPair>>) groups -> {
-            List<IndexPair> indexPairs = (List<IndexPair>) groups;
-            ArrayList<IndexPair> response = new ArrayList<>();
-            IndexPair f = indexPairs.get(0);
-            boolean found = false;
-            for (GapConstraintWE c : bc.getValue()) {
-                if (c.isForThisConstraint(f.getEventA(), f.getEventB())) {
-                    found = true;
-                    for (IndexPair i : indexPairs) {
-                        if (!c.isConstraintTrue(i)) response.add(i);
-                    }
-                    break;
-                }
-            }
-            if (found) {
-                return (Iterable<IndexPair>) response;
-            } else {
-                return groups;
-            }
-        });
+    @Override
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes) {
+        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
+        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
+        JavaRDD<Trace> df = this.querySequenceTablePrivate(logname,bTraceIds);
+        return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
+                .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
+                .collectAsMap();
+    }
+
+    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
+        return null;
     }
 
     protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs) {

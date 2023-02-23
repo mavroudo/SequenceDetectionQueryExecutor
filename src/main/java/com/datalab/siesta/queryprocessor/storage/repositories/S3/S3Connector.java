@@ -145,26 +145,11 @@ public class S3Connector extends SparkDatabaseRepository {
                 .collect();
     }
 
-    @Override
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, List<String> eventTypes) {
-        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
-        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
-        JavaRDD<Trace> df = this.querySingleTablePrivate(logname,bTraceIds);
-        return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
-                .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
-                .collectAsMap();
-    }
+
+
 
     @Override
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
-        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
-        return this.querySingleTablePrivate(logname,bTraceIds)
-                .keyBy((Function<Trace, Long>) Trace::getTraceID)
-                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
-                .collectAsMap();
-    }
-
-    private JavaRDD<Trace> querySingleTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
+    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
         String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
         return sparkSession.read()
                 .parquet(path)
