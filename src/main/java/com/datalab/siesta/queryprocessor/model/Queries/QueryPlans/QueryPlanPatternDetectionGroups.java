@@ -10,6 +10,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryRespo
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseGroups;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+import com.datalab.siesta.queryprocessor.model.TimeStats;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,14 +36,22 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
 
     @Override
     public QueryResponse execute(QueryWrapper qw) {
+        long start = System.currentTimeMillis();
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
         this.getMiddleResults(qpdw, firstCheck);
+        long ts_trace = System.currentTimeMillis();
         if (!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponseGroups queryResponseGroups = new QueryResponseGroups();
         List<GroupOccurrences> occurrences = saseConnector.evaluateGroups(qpdw.getPattern(), middleResults);
         occurrences.forEach(x -> x.clearOccurrences(qpdw.isReturnAll()));
+        long ts_eval = System.currentTimeMillis();
         queryResponseGroups.setOccurrences(occurrences);
+        TimeStats timeStats = new TimeStats();
+        timeStats.setTimeForPrune(ts_trace-start);
+        timeStats.setTimeForValidation(ts_eval-ts_trace);
+        timeStats.setTotalTime(ts_eval-start);
+        queryResponseGroups.setTimeStats(timeStats);
         return queryResponseGroups;
     }
 

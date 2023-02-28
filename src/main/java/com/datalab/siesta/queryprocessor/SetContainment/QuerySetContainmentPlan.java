@@ -10,6 +10,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryRespo
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+import com.datalab.siesta.queryprocessor.model.TimeStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -35,15 +36,23 @@ public class QuerySetContainmentPlan implements QueryPlan {
 
     @Override
     public QueryResponse execute(QueryWrapper qw) {
+        long start = System.currentTimeMillis();
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         List<Long> possibleTraces = cassandraConnectionSetContainment.getPossibleTraceIds(qpdw.getPattern(),
                 qpdw.getLog_name());
         Map<Long,List<Event>> originalTraces = cassandraConnectionSetContainment.getOriginalTraces(possibleTraces,
                 qpdw.getLog_name());
+        long ts_trace = System.currentTimeMillis();
         List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(),originalTraces,false);
         occurrences.forEach(x->x.clearOccurrences(qpdw.isReturnAll()));
+        long ts_eval = System.currentTimeMillis();
         QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
         queryResponsePatternDetection.setOccurrences(occurrences);
+        TimeStats timeStats = new TimeStats();
+        timeStats.setTimeForPrune(ts_trace-start);
+        timeStats.setTimeForValidation(ts_eval-ts_trace);
+        timeStats.setTotalTime(ts_eval-start);
+        queryResponsePatternDetection.setTimeStats(timeStats);
         return queryResponsePatternDetection;
     }
 

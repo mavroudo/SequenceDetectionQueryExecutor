@@ -17,6 +17,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryRespo
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+import com.datalab.siesta.queryprocessor.model.TimeStats;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,15 +72,23 @@ public class QueryPlanPatternDetection implements QueryPlan {
 
     @Override
     public QueryResponse execute(QueryWrapper qw) {
+        long start = System.currentTimeMillis();
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
         this.getMiddleResults(qpdw,firstCheck);
         if(!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
         checkIfRequiresDataFromSequenceTable(qpdw); //check if data is required from the sequence table and gets them
+        long ts_trace = System.currentTimeMillis();
         List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         occurrences.forEach(x->x.clearOccurrences(qpdw.isReturnAll()));
+        long ts_eval = System.currentTimeMillis();
         queryResponsePatternDetection.setOccurrences(occurrences);
+        TimeStats timeStats = new TimeStats();
+        timeStats.setTimeForPrune(ts_trace-start);
+        timeStats.setTimeForValidation(ts_eval-ts_trace);
+        timeStats.setTotalTime(ts_eval-start);
+        queryResponsePatternDetection.setTimeStats(timeStats);
         return queryResponsePatternDetection;
     }
 

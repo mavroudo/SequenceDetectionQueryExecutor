@@ -2,6 +2,8 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
+import com.datalab.siesta.queryprocessor.model.TimeStats;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
@@ -9,6 +11,9 @@ import java.util.Map;
 public class QueryResponsePatternDetection implements QueryResponse {
 
     private List<Occurrences> occurrences;
+
+    @JsonProperty("performance statistics")
+    private TimeStats timeStats;
 
     public QueryResponsePatternDetection() {
     }
@@ -23,5 +28,13 @@ public class QueryResponsePatternDetection implements QueryResponse {
 
     public void setOccurrences(List<Occurrences> occurrences) {
         this.occurrences = occurrences;
+    }
+
+    public TimeStats getTimeStats() {
+        return timeStats;
+    }
+
+    public void setTimeStats(TimeStats timeStats) {
+        this.timeStats = timeStats;
     }
 }
