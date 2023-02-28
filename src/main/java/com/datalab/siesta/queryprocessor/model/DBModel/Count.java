@@ -28,6 +28,15 @@ public class Count implements Serializable {
         this.max_duration = max_duration;
     }
 
+    public Count(String eventA, String[] record) {
+        this.eventA = eventA;
+        this.eventB = record[0];
+        this.sum_duration = Long.parseLong(record[1]);
+        this.count = Integer.parseInt(record[2]);
+        this.min_duration = Long.parseLong(record[3]);
+        this.max_duration = Long.parseLong(record[4]);
+    }
+
     public String getEventA() {
         return eventA;
     }

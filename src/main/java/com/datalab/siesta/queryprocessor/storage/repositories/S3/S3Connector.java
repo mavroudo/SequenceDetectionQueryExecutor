@@ -1,6 +1,10 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
+import com.clearspring.analytics.util.Lists;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
+import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
@@ -141,26 +145,11 @@ public class S3Connector extends SparkDatabaseRepository {
                 .collect();
     }
 
-    @Override
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes) {
-        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
-        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(eventTypes);
-        JavaRDD<Trace> df = this.querySingleTablePrivate(logname,bTraceIds);
-        return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
-                .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
-                .collectAsMap();
-    }
+
+
 
     @Override
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
-        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
-        return this.querySingleTablePrivate(logname,bTraceIds)
-                .keyBy((Function<Trace, Long>) Trace::getTraceID)
-                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
-                .collectAsMap();
-    }
-
-    private JavaRDD<Trace> querySingleTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
+    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
         String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
         return sparkSession.read()
                 .parquet(path)
@@ -179,26 +168,10 @@ public class S3Connector extends SparkDatabaseRepository {
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
-    @Override
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,int minPairs) {
-        Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
-        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
-        JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
-        indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
-        List<Long> traces = this.getCommonIds(indexPairs,minPairs);
-        IndexMiddleResult imr = this.addFilterIds(indexPairs,traces);
-        indexPairs.unpersist();
-        return imr;
-    }
 
 
-    @Override
-    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
-        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata)
-                .collect();
-        return new IndexRecords(results);
 
-    }
+
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
