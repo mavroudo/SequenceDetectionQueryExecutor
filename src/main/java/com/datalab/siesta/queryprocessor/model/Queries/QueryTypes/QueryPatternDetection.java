@@ -25,13 +25,13 @@ public class QueryPatternDetection implements Query{
 
     @Override
     public QueryPlan createQueryPlan(QueryWrapper qw, Metadata m) {
-        //TODO: implement logic that will determine the different query plans
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         if(qpdw.isWhyNotMatchFlag()){
             planWhyNotMatch.setMetadata(m);
             int n = qpdw.getPattern().getSize();
             planWhyNotMatch.setEventTypesInLog(qpdw.getPattern().getEventTypes());
-            planWhyNotMatch.setMinPairs(((n-1)*(n-2))/2); //set min pairs
+//            planWhyNotMatch.setMinPairs(((n-1)*(n-2))/2); //set min pairs
+            planWhyNotMatch.setMinPairs(1); //set min pairs
             return planWhyNotMatch;
         }else {
             qppd.setMetadata(m);

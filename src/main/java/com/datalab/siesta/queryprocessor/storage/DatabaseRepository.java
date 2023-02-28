@@ -6,6 +6,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import scala.Tuple2;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,13 +21,14 @@ public interface DatabaseRepository {
 
     List<String> getEventNames(String logname);
 
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes);
+    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes,Timestamp from, Timestamp till);
 
     Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds);
 
-    IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata, int minPairs);
+    IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined,Metadata metadata, int minPairs, Timestamp from, Timestamp till);
 
     IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata);
+    IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata, Timestamp from, Timestamp till);
 
     List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes);
 

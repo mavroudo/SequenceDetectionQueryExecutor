@@ -12,12 +12,20 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import com.datalab.siesta.queryprocessor.model.TimeStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
+
+@Configuration
+@ConditionalOnProperty(
+        value = "database",
+        havingValue = "cassandra-rdd"
+)
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QuerySignaturePlan implements QueryPlan {

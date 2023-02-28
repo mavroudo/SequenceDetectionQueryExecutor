@@ -40,7 +40,6 @@ public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent>
         try {
             o = (UncertainTimeEvent)super.clone();
         } catch (CloneNotSupportedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return o;

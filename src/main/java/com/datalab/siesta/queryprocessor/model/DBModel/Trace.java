@@ -4,9 +4,11 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Trace implements Serializable {
 
@@ -20,6 +22,12 @@ public class Trace implements Serializable {
     public Trace(long traceID, List<EventBoth> events) {
         this.traceID = traceID;
         this.events = events;
+    }
+
+    public void filter(Timestamp from, Timestamp till){
+        events= events.stream().filter(x-> from==null ||  !x.getTimestamp().before(from))
+                .filter(x -> till==null || !x.getTimestamp().after(till))
+                .collect(Collectors.toList());
     }
 
     public long getTraceID() {

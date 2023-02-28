@@ -44,7 +44,7 @@ public class DatabaseTest {
         events.add("A_Concept");
         events.add("A_Submitted");
 
-        Map<Long,List<EventBoth>> results2 = s3Connector.querySeqTable("bpi_2017",trace_ids,new HashSet<>(events));
+        Map<Long,List<EventBoth>> results2 = s3Connector.querySeqTable("bpi_2017",trace_ids,new HashSet<>(events),null,null);
         Assertions.assertFalse(results.isEmpty());
         Assertions.assertEquals(results.size(),trace_ids.size());
         List<String> worked = results2.get(15L).stream()

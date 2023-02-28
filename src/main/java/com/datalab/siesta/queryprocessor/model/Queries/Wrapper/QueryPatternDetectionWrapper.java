@@ -6,6 +6,8 @@ import com.datalab.siesta.queryprocessor.model.WhyNotMatch.WhyNotMatchConfig;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import java.sql.Timestamp;
+
 
 public class QueryPatternDetectionWrapper extends QueryWrapper {
 
@@ -14,6 +16,10 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
     private boolean whyNotMatchFlag;
 
     private boolean hasGroups;
+
+    private Timestamp from;
+
+    private Timestamp till;
 
     @JsonProperty("wnm-config")
     private WhyNotMatchConfig whyNotMatchConfig;
@@ -27,6 +33,8 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
         this.returnAll=false;
         this.whyNotMatchFlag=false;
         this.hasGroups=false;
+        this.from=null;
+        this.till=null;
         this.groupConfig=new GroupConfig();
         this.whyNotMatchConfig = new WhyNotMatchConfig();
     }
@@ -93,5 +101,21 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     public void setGroupConfig(GroupConfig groupConfig) {
         this.groupConfig = groupConfig;
+    }
+
+    public Timestamp getFrom() {
+        return from;
+    }
+
+    public void setFrom(Timestamp from) {
+        this.from = from;
+    }
+
+    public Timestamp getTill() {
+        return till;
+    }
+
+    public void setTill(Timestamp till) {
+        this.till = till;
     }
 }

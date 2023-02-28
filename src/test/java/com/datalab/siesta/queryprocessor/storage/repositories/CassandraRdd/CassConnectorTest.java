@@ -59,7 +59,7 @@ class CassConnectorTest {
     void querySeqTable(){
         List<Long> traces = new ArrayList<>(){{add(1L);add(2L);}};
         Set<String> events = new HashSet<>(){{add("A");add("B");}};
-        Map<Long, List<EventBoth>>map = cassConnector.querySeqTable("test",traces,events);
+        Map<Long, List<EventBoth>>map = cassConnector.querySeqTable("test",traces,events,null,null);
         Assertions.assertEquals(2,map.size());
     }
 

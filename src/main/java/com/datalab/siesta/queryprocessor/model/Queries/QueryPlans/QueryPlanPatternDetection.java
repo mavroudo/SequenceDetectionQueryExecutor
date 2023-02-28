@@ -26,10 +26,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -99,29 +97,31 @@ public class QueryPlanPatternDetection implements QueryPlan {
         qr = this.firstParsing(qpdw, pairs._2, combined); // checks if all are correctly set before start querying
         if (!((QueryResponseBadRequestForDetection)qr).isEmpty()) return; //There was an original error
         minPairs = minPairs == -1 ? pairs._1 : minPairs; //set minPairs to the one returned from the extractPairsForPatternDetection
-        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs);
+        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs,qpdw.getFrom(),qpdw.getTill());
     }
 
 
-    protected boolean requiresQueryToDB(List<Constraint> constraints) {
-        Tuple2<List<TimeConstraint>, List<GapConstraint>> cl= utils.splitConstraints(constraints);
+    protected boolean requiresQueryToDB(QueryPatternDetectionWrapper qpdw) {
+        Tuple2<List<TimeConstraint>, List<GapConstraint>> cl= utils.splitConstraints(qpdw.getPattern().getConstraints());
         return (!cl._1.isEmpty() && !cl._2.isEmpty()) || (!cl._2.isEmpty() && metadata.getMode().equals("timestamps")) ||
-                (!cl._1.isEmpty() && metadata.getMode().equals("positions"));
+                (!cl._1.isEmpty() && metadata.getMode().equals("positions")) ||
+                (qpdw.getFrom()!=null && metadata.getMode().equals("positions")) || //considering also from and till info
+                (qpdw.getTill()!=null && metadata.getMode().equals("positions"));
     }
 
     protected void checkIfRequiresDataFromSequenceTable(QueryPatternDetectionWrapper qpdw){
-        if (this.requiresQueryToDB(qpdw.getPattern().getConstraints())) { // we need to get from SeqTable
+        if (this.requiresQueryToDB(qpdw)) { // we need to get from SeqTable
             //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
             List<Occurrences> ocs = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), true);
             List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-            Map<Long,List<Event>> e = this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name());
+            Map<Long,List<Event>> e = this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name(),qpdw.getFrom(),qpdw.getTill());
             imr.setEvents(e);
         }
     }
 
-    protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname) {
+    protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname, Timestamp from, Timestamp till){
         Set<String> eventTypes = pattern.getEventTypes();
-        Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes);
+        Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes,from,till);
         return fromDB.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)
                 .collect(Collectors.toList())));
     }
@@ -143,7 +143,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
      */
     protected List<Count> getStats(Set<EventPair> pairs, String logname) {
         List<Count> results = dbConnector.getStats(logname, pairs);
-        results.sort((Count c1, Count c2) -> Integer.compare(c1.getCount(), c1.getCount())); //TODO: separate this function in order to be easily changed
+        results.sort(Comparator.comparingInt(Count::getCount)); // can separate this function in order to be easily changed
         return results;
     }
 

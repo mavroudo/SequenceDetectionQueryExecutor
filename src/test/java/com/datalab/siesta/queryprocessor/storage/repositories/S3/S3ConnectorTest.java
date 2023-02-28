@@ -140,7 +140,7 @@ class S3ConnectorTest {
         l1.add(1L);
         l1.add(2L);
         Map<Long,List<EventBoth>> traces = s3Connector.querySeqTable("bpi_2017",l1);
-        Map<Long,List<EventBoth>> traces2 = s3Connector.querySeqTable("bpi_2017",l1,p.getEventTypes());
+        Map<Long,List<EventBoth>> traces2 = s3Connector.querySeqTable("bpi_2017",l1,p.getEventTypes(),null,null);
         System.out.println("hey");
 
 

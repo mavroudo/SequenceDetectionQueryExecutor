@@ -11,12 +11,16 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import scala.Tuple2;
 import scala.Tuple3;
+
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,7 +45,7 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
      * @param logname
      * @return
      */
-    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
+    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata, Timestamp from, Timestamp till) {
         return null;
     }
 
@@ -55,10 +59,16 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     @Override
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes) {
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes, Timestamp from, Timestamp till) {
         Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
         Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
-        JavaRDD<Trace> df = this.querySequenceTablePrivate(logname,bTraceIds);
+        Broadcast<Timestamp> bFrom = javaSparkContext.broadcast(from);
+        Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
+        JavaRDD<Trace> df = this.querySequenceTablePrivate(logname,bTraceIds)
+                .map((Function<Trace, Trace>) trace -> {
+                    trace.filter(bFrom.getValue(),bTill.getValue());
+                    return trace;
+                });
         return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
                 .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
                 .collectAsMap();
@@ -77,10 +87,16 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
     @Override
     public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
-        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata)
+        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata,null,null)
                 .collect();
         return new IndexRecords(results);
+    }
 
+    @Override
+    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata, Timestamp from, Timestamp till) {
+        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata,from,till)
+                .collect();
+        return new IndexRecords(results);
     }
 
     protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs) {
@@ -124,9 +140,10 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     @Override
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata, int minPairs) {
+    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,
+                                                     int minPairs, Timestamp from, Timestamp till) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
-        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
+        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata, from , till);
         JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
         indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
         List<Long> traces = this.getCommonIds(indexPairs,minPairs);

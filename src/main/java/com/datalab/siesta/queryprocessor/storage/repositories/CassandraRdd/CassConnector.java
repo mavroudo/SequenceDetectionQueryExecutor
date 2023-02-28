@@ -88,7 +88,7 @@ public class CassConnector extends SparkDatabaseRepository {
         Broadcast<Set<EventPair>> bEvents = javaSparkContext.broadcast(pairs);
         Broadcast<Set<String>> firstEvents = javaSparkContext.broadcast(pairs.stream()
                 .map(s -> s.getEventA().getName()).collect(Collectors.toSet()));
-        return sparkSession.read()
+        List<Count> l = sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
                 .load().toJavaRDD()
@@ -112,6 +112,7 @@ public class CassConnector extends SparkDatabaseRepository {
                     return false;
                 })
                 .collect();
+        return new ArrayList<>(l);
     }
 
     @Override
@@ -176,17 +177,23 @@ public class CassConnector extends SparkDatabaseRepository {
     }
 
     @Override
-    protected JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
+    protected JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
+                                                                                        String logname, Metadata metadata,
+                                                                                        Timestamp from, Timestamp till) {
         String path = String.format("%s_index", logname);
         Broadcast<Set<EventPair>> bPairs = javaSparkContext.broadcast(pairs);
         Broadcast<String> mode = javaSparkContext.broadcast(metadata.getMode());
+        Broadcast<Timestamp> bFrom = javaSparkContext.broadcast(from);
+        Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
         return sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
                 .load().toJavaRDD()
-                .filter((Function<Row, Boolean>) row -> { //TODO: add filtering here for the time-window (same position to S3)
+                .filter((Function<Row, Boolean>) row -> {
                     Timestamp start = row.getAs("start");
                     Timestamp end = row.getAs("end");
+                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
+                    if (bTill.value() != null && bTill.value().before(start)) return false;
                     return true;
                 })
                 .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
@@ -200,13 +207,27 @@ public class CassConnector extends SparkDatabaseRepository {
                         String[] p_split = split[1].split(",");
                         for (String p : p_split) {
                             String[] f = p.split("\\|");
-                            indexPairs.add(new IndexPair(trace_id, eventA, eventB, Timestamp.valueOf(f[0]),
-                                    Timestamp.valueOf(f[1])));
+                            if(mode.value().equals("timestamps")) {
+                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Timestamp.valueOf(f[0]),
+                                        Timestamp.valueOf(f[1])));
+                            }else{
+                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Integer.parseInt(f[0]),
+                                        Integer.parseInt(f[1])));
+                            }
+
                         }
                     }
                     return indexPairs.iterator();
                 })
                 .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
+                .filter((Function<IndexPair, Boolean>) p->{
+                    if(mode.value().equals("timestamps")) {
+                        if(bTill.value()!=null && p.getTimestampA().after(bTill.value())) return false;
+                        if(bFrom.value()!=null && p.getTimestampB().before(bFrom.value())) return false;
+                    }
+                    //If from and till has been set we cannot check it here
+                    return true;
+                })
                 .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
     }
 

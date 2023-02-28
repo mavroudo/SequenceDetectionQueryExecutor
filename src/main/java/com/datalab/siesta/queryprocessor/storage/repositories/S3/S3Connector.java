@@ -1,6 +1,9 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
-import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
@@ -29,11 +32,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Configuration
 @ConditionalOnProperty(
@@ -141,25 +146,23 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
 
-
-
     @Override
-    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
+    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
         String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
-                .map((Function<Row, Trace>) row->{
-                    long trace_id= row.getAs("trace_id");
+                .map((Function<Row, Trace>) row -> {
+                    long trace_id = row.getAs("trace_id");
                     List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
                     List<EventBoth> results = new ArrayList<>();
-                    for(int i=0;i< evs.size();i++){
+                    for (int i = 0; i < evs.size(); i++) {
                         String event_name = evs.get(i).getString(0);
                         Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
-                        results.add(new EventBoth(event_name,event_timestamp,i));
+                        results.add(new EventBoth(event_name, event_timestamp, i));
                     }
-                    return new Trace(trace_id,results);
-                } )
+                    return new Trace(trace_id, results);
+                })
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
@@ -193,13 +196,26 @@ public class S3Connector extends SparkDatabaseRepository {
 
 
     @Override
-    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {
+    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
+                                                                                                  String logname,
+                                                                                                  Metadata metadata,
+                                                                                                  Timestamp from,
+                                                                                                  Timestamp till) {
         String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
         Broadcast<Set<EventPair>> bPairs = javaSparkContext.broadcast(pairs);
         Broadcast<String> mode = javaSparkContext.broadcast(metadata.getMode());
+        Broadcast<Timestamp> bFrom = javaSparkContext.broadcast(from);
+        Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> df = sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
+                .filter((Function<Row, Boolean>) row -> {
+                    Timestamp start = row.getAs("start");
+                    Timestamp end = row.getAs("end");
+                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
+                    if (bTill.value() != null && bTill.value().before(start)) return false;
+                    return true;
+                })
                 .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
@@ -209,13 +225,13 @@ public class S3Connector extends SparkDatabaseRepository {
                         long tid = r2.getLong(0);
                         List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
                         if (mode.getValue().equals("positions")) {
-                            for(Row inner: innerList) {
+                            for (Row inner : innerList) {
                                 int posA = inner.getInt(0);
                                 int posB = inner.getInt(1);
                                 response.add(new IndexPair(tid, eventA, eventB, posA, posB));
                             }
                         } else {
-                            for(Row inner: innerList) {
+                            for (Row inner : innerList) {
                                 String tsA = inner.getString(0);
                                 String tsB = inner.getString(1);
                                 response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
@@ -224,8 +240,16 @@ public class S3Connector extends SparkDatabaseRepository {
                     }
                     return response.iterator();
                 })
-                .filter((Function<IndexPair, Boolean>) indexPairs ->indexPairs.validate(bPairs.getValue()))
-                .groupBy((Function<IndexPair, Tuple2<String,String>>) indexPair-> new Tuple2<>(indexPair.getEventA(),indexPair.getEventB()));
+                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
+                .filter((Function<IndexPair, Boolean>) p->{
+                    if(mode.value().equals("timestamps")) {
+                        if(bTill.value()!=null && p.getTimestampA().after(bTill.value())) return false;
+                        if(bFrom.value()!=null && p.getTimestampB().before(bFrom.value())) return false;
+                    }
+                    //If from and till has been set we cannot check it here
+                    return true;
+                })
+                .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
         return df;
     }
 }
