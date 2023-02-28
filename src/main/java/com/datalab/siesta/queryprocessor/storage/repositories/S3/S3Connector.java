@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 @ConditionalOnProperty(
@@ -50,7 +51,7 @@ public class S3Connector extends SparkDatabaseRepository {
     @Autowired
     public S3Connector(SparkSession sparkSession, JavaSparkContext javaSparkContext, Utils utils) {
         super(sparkSession, javaSparkContext);
-        this.utils=utils;
+        this.utils = utils;
     }
 
 
@@ -166,6 +167,70 @@ public class S3Connector extends SparkDatabaseRepository {
 
 
 
+
+    @Override
+    public List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+        return this.getFromSingle(logname, traceIds, eventTypes).collect();
+    }
+
+    private JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
+        Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains(x.getString(1)))
+                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
+                    String eventType = row.getString(1);
+                    List<EventBoth> events = new ArrayList<>();
+                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
+                    for (Row occurrence : occurrences) {
+                        long traceId = occurrence.getLong(0);
+                        if (bTraceIds.value().contains(traceId)) {
+                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
+                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+                            for (int i = 0; i < times.size(); i++) {
+                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
+                            }
+                        }
+                    }
+                    return events.iterator();
+                });
+    }
+
+    @Override
+    public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes) {
+        Set<Long> allTraces = groups.stream()
+                .flatMap((java.util.function.Function<Set<Long>, Stream<Long>>) Collection::stream)
+                .collect(Collectors.toSet());
+        Broadcast<List<Set<Long>>> bgroups = javaSparkContext.broadcast(groups);
+        Broadcast<Integer> bEventTypesSize= javaSparkContext.broadcast(eventTypes.size());
+        JavaRDD<EventBoth> eventRDD = this.getFromSingle(logname, allTraces, eventTypes);
+        Map<Integer, List<EventBoth>> response = eventRDD.map((Function<EventBoth, Tuple2<Integer, EventBoth>>) event -> {
+                    for (int g = 0; g < bgroups.value().size(); g++) {
+                        if (bgroups.value().get(g).contains(event.getTraceID())) return new Tuple2<>(g+1, event);
+                    }
+                    return new Tuple2<>(-1, event);
+                })
+                .filter((Function<Tuple2<Integer, EventBoth>, Boolean>) event -> event._1 != -1)
+                .groupBy((Function<Tuple2<Integer, EventBoth>, Integer>) event -> event._1)
+                //maintain only these groups that contain all of the event types in the query
+                .filter((Function<Tuple2<Integer, Iterable<Tuple2<Integer, EventBoth>>>, Boolean>) group->{
+                    Set<String> events = new HashSet<>();
+                    group._2.forEach(x->events.add(x._2.getName()));
+                    return events.size()==bEventTypesSize.value();
+                })
+                .mapValues((Function<Iterable<Tuple2<Integer, EventBoth>>, List<EventBoth>>) group->{
+                    List<EventBoth> eventBoth = new ArrayList<>();
+                    for(Tuple2<Integer,EventBoth> e : group){
+                        eventBoth.add(e._2);
+                    }
+                    return  eventBoth.stream().sorted().collect(Collectors.toList());
+                } ).collectAsMap();
+        return response;
+
+    }
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata) {

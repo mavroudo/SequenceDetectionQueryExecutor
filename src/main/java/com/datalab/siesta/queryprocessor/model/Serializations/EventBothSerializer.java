@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Events.Serializations;
+package com.datalab.siesta.queryprocessor.model.Serializations;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.fasterxml.jackson.core.JsonGenerator;

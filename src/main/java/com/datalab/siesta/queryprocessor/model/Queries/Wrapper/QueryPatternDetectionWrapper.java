@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
+import com.datalab.siesta.queryprocessor.model.GroupConfig;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.WhyNotMatchConfig;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -12,14 +13,21 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     private boolean whyNotMatchFlag;
 
+    private boolean hasGroups;
+
     @JsonProperty("wnm-config")
     private WhyNotMatchConfig whyNotMatchConfig;
+
+    @JsonProperty("groups-config")
+    private GroupConfig groupConfig;
 
     private boolean returnAll;
 
     public QueryPatternDetectionWrapper() {
         this.returnAll=false;
         this.whyNotMatchFlag=false;
+        this.hasGroups=false;
+        this.groupConfig=new GroupConfig();
         this.whyNotMatchConfig = new WhyNotMatchConfig();
     }
 
@@ -66,5 +74,21 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     public void setWhyNotMatchConfig(WhyNotMatchConfig whyNotMatchConfig) {
         this.whyNotMatchConfig = whyNotMatchConfig;
+    }
+
+    public boolean isHasGroups() {
+        return hasGroups;
+    }
+
+    public void setHasGroups(boolean hasGroups) {
+        this.hasGroups = hasGroups;
+    }
+
+    public GroupConfig getGroupConfig() {
+        return groupConfig;
+    }
+
+    public void setGroupConfig(GroupConfig groupConfig) {
+        this.groupConfig = groupConfig;
     }
 }

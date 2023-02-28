@@ -11,6 +11,7 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
+import com.datalab.siesta.queryprocessor.model.GroupConfig;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -141,6 +142,53 @@ class S3ConnectorTest {
         Map<Long,List<EventBoth>> traces = s3Connector.querySeqTable("bpi_2017",l1);
         Map<Long,List<EventBoth>> traces2 = s3Connector.querySeqTable("bpi_2017",l1,p.getEventTypes());
         System.out.println("hey");
+
+
+    }
+
+    @Test
+    void querySingleTable(){
+        Set<Long> traces = new HashSet<>();
+        traces.add(1L);
+        traces.add(2L);
+        Set<String> eventTypes = new HashSet<>();
+        eventTypes.add("A");
+        eventTypes.add("B");
+        List<EventBoth> events = s3Connector.querySingleTable("test",traces,eventTypes);
+        Assertions.assertTrue(events.size()>0);
+        List<Long> traceIds = events.stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(traceIds.containsAll(traces));
+        Assertions.assertTrue(events.stream().map(EventBoth::getName).collect(Collectors.toList()).containsAll(eventTypes));
+    }
+
+    @Test
+    void querySingleTableGroups(){
+        GroupConfig groupConfig = new GroupConfig("[(1-3),(4)]");
+        Set<String> eventTypes = new HashSet<>();
+        eventTypes.add("A");
+        eventTypes.add("B");
+        Map<Integer,List<EventBoth>> events = s3Connector.querySingleTableGroups("test",groupConfig.getGroups(),eventTypes);
+        assertEquals(1, events.size());
+        List<Long> traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(traceIds1.contains(1L));
+        Assertions.assertTrue(traceIds1.contains(2L));
+        Assertions.assertTrue(traceIds1.contains(3L));
+        Assertions.assertFalse(traceIds1.contains(4L));
+
+        groupConfig = new GroupConfig("[(1-2),(3)]");
+        eventTypes.clear();
+        eventTypes.add("A");
+        eventTypes.add("B");
+        events = s3Connector.querySingleTableGroups("test",groupConfig.getGroups(),eventTypes);
+
+        assertEquals(2, events.size());
+        traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        List<Long> traceIds2 = events.get(2).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(traceIds1.contains(1L));
+        Assertions.assertTrue(traceIds1.contains(2L));
+        Assertions.assertFalse(traceIds1.contains(3L));
+        Assertions.assertFalse(traceIds1.contains(4L));
+        Assertions.assertTrue(traceIds2.contains(3L));
 
 
     }

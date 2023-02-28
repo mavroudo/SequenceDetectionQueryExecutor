@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
-import com.datalab.siesta.queryprocessor.model.Events.Serializations.EventBothSerializer;
+import com.datalab.siesta.queryprocessor.model.Serializations.EventBothSerializer;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -11,7 +11,7 @@ import java.sql.Timestamp;
 import java.util.Objects;
 
 @JsonSerialize(using = EventBothSerializer.class)
-public class EventBoth extends EventTs{
+public class EventBoth extends EventTs implements Comparable{
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
     private int position;
@@ -23,6 +23,11 @@ public class EventBoth extends EventTs{
     public EventBoth(String name, Timestamp ts, int pos) {
         super(name, ts);
         this.position=pos;
+    }
+
+    public EventBoth(String name, long traceID, Timestamp timestamp, int position) {
+        super(name, traceID, timestamp);
+        this.position = position;
     }
 
     public int getPosition() {
@@ -43,7 +48,14 @@ public class EventBoth extends EventTs{
 
     @Override
     public int compareTo(Object o) {
-        return super.compareTo(o);
+        if(o instanceof EventBoth){
+            return this.timestamp.compareTo(((EventBoth)o).getTimestamp());
+        }else if(o instanceof EventTs){
+            return this.timestamp.compareTo(((EventTs)o).getTimestamp());
+        } else if( o instanceof EventPos){
+            return Integer.compare(this.position,((EventPos)o).getPosition());
+        }
+        return -1;
     }
 
     @Override
