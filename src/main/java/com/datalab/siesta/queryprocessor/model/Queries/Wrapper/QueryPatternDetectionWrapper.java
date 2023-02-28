@@ -55,14 +55,17 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
         this.returnAll = returnAll;
     }
 
+    @JsonIgnore
     public int getK() {
         return whyNotMatchConfig.getK();
     }
 
+    @JsonIgnore
     public int getUncertainty(){
         return whyNotMatchConfig.getUncertaintyPerEvent();
     }
 
+    @JsonIgnore
     public int getStepInSeconds(){
         return whyNotMatchConfig.getStepInSeconds();
     }

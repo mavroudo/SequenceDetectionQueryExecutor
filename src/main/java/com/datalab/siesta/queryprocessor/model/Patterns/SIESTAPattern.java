@@ -30,6 +30,12 @@ public abstract class SIESTAPattern {
 //        return eventPairs;
 //    }
 
+    /**
+     * Extract all the pairs that should are contained in the pattern
+     * @param events the events we to be detected
+     * @param constraints the constraints between two events
+     * @return all the event pairs with the constraints embedded in
+     */
     protected Tuple2<Integer,Set<EventPair>> extractPairsForPatternDetection(List<EventPos> events, List<Constraint> constraints){
         Set<EventPair> allEventPairs = new HashSet<>();
         Set<Integer> positionOfConstraints = constraints.stream().flatMap((Function<Constraint, Stream<Integer>>)  x->{

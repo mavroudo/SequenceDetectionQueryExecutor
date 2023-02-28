@@ -76,6 +76,7 @@ public class EventPos extends Event implements Serializable, Comparable, Cloneab
     }
 
     @Override
+    @JsonIgnore
     public long getPrimaryMetric() {
         return this.position;
     }

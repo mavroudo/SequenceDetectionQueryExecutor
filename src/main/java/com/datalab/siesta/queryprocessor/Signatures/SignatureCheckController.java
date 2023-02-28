@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/signature")
+@RequestMapping("/signatures")
 @ConditionalOnProperty(
         value = "database",
         havingValue = "cassandra-rdd"
@@ -40,7 +40,5 @@ public class SignatureCheckController {
         QueryPlan queryPlan = querySignatures.createQueryPlan(qpdw,null);
         QueryResponse queryResponse = queryPlan.execute(qpdw);
         return new ResponseEntity<>(objectMapper.writeValueAsString(queryResponse), HttpStatus.OK);
-
-
     }
 }

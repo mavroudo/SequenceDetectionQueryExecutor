@@ -38,10 +38,12 @@ public class GroupConfig implements Serializable {
         this.groups=groups;
     }
 
+    @org.codehaus.jackson.annotate.JsonIgnore
     public List<Set<Long>> getGroups() {
         return groups;
     }
 
+    @org.codehaus.jackson.annotate.JsonIgnore
     public String getGroupsString() {
         return groupsString;
     }
