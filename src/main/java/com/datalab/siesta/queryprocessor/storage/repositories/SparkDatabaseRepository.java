@@ -1,10 +1,9 @@
 package com.datalab.siesta.queryprocessor.storage.repositories;
 
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
-import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -14,11 +13,12 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import scala.Tuple2;
 import scala.Tuple3;
-
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
@@ -44,6 +44,43 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return null;
     }
 
+    @Override
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
+        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
+        return this.querySequenceTablePrivate(logname,bTraceIds)
+                .keyBy((Function<Trace, Long>) Trace::getTraceID)
+                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
+                .collectAsMap();
+    }
+
+    @Override
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes) {
+        Broadcast<Set<Long>> bTraceIds= javaSparkContext.broadcast(new HashSet<>(traceIds));
+        Broadcast<Set<String>> bevents = javaSparkContext.broadcast(new HashSet<>(eventTypes));
+        JavaRDD<Trace> df = this.querySequenceTablePrivate(logname,bTraceIds);
+        return df.keyBy((Function<Trace, Long>) Trace::getTraceID)
+                .mapValues((Function<Trace, List<EventBoth>>) trace -> trace.clearTrace(bevents.getValue()))
+                .collectAsMap();
+    }
+
+    /**
+     * This function reads data from the Sequence table into a JavaRDD, any database that utilizes spark should
+     * override it
+     * @param logname Name of the log
+     * @param bTraceIds broadcasted the values of the trace ids we are interested in
+     * @return a JavaRDD<Trace>
+     */
+    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds){
+        return null;
+    }
+
+    @Override
+    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
+        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs,logname,metadata)
+                .collect();
+        return new IndexRecords(results);
+
+    }
 
     protected JavaRDD<IndexPair> getPairs(JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> pairs) {
         return  pairs.flatMap((FlatMapFunction<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>, IndexPair>) g-> g._2.iterator());
@@ -82,6 +119,18 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
                 } )
                         .collectAsMap();
         imr.setEvents(events);
+        return imr;
+    }
+
+    @Override
+    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata, int minPairs) {
+        Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
+        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs =this.getAllEventPairs(pairs, logname, metadata);
+        JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
+        indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
+        List<Long> traces = this.getCommonIds(indexPairs,minPairs);
+        IndexMiddleResult imr = this.addFilterIds(indexPairs,traces);
+        indexPairs.unpersist();
         return imr;
     }
 
