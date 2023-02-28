@@ -1,29 +1,29 @@
-package com.datalab.siesta.queryprocessor.Signatures;
+package com.datalab.siesta.queryprocessor.SetContainment;
 
-import com.datalab.siesta.queryprocessor.model.DBModel.EventTypes;
+import com.datalab.siesta.queryprocessor.Signatures.Signature;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
-import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
+import scala.collection.Seq;
 
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.stream.Collectors;
-
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -32,64 +32,42 @@ import java.util.stream.Collectors;
         havingValue = "cassandra-rdd"
 )
 @Service
-public class CassandraConnectionSignature {
+public class CassandraConnectionSetContainment {
 
     private SparkSession sparkSession;
     private JavaSparkContext javaSparkContext;
 
     @Autowired
-    public CassandraConnectionSignature(SparkSession sparkSession, JavaSparkContext javaSparkContext) {
+    public CassandraConnectionSetContainment(SparkSession sparkSession, JavaSparkContext javaSparkContext) {
         this.sparkSession = sparkSession;
         this.javaSparkContext = javaSparkContext;
     }
 
-    public Signature getSignature(String logname) {
-        String path = String.format("%s_sign_meta", logname);
-        List<Row> rows = this.sparkSession.read()
+    public List<Long> getPossibleTraceIds(ComplexPattern pattern, String logname) {
+        String path = String.format("%s_set_idx", logname);
+        Broadcast<Set<String>> events = javaSparkContext.broadcast(pattern.getEventTypes());
+        List<Long> possibleTraces = this.sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
-                .load().toJavaRDD().collect();
-        Signature signature = new Signature();
-        for (Row r : rows) {
-            if (r.getString(0).equals("events")) {
-                List<String> events = JavaConverters.seqAsJavaList(r.getSeq(1));
-                signature.setEvents(events);
-            } else {
-                List<String> pairs = JavaConverters.seqAsJavaList(r.getSeq(1));
-                List<EventTypes> eventPairs = pairs.stream().map(x -> {
-                    String[] types = x.split(",");
-                    return new EventTypes(types[0], types[1]);
-                }).collect(Collectors.toList());
-                signature.setEventPairs(eventPairs);
-            }
-        }
-        return signature;
-
-    }
-
-    public List<Long> getPossibleTraceIds(ComplexPattern pattern, String logname, Signature s) {
-        String path = String.format("%s_sign_idx", logname);
-        Tuple2<Integer, Set<EventPair>> pairs = pattern.extractPairsForPatternDetection();
-        Set<Integer> positions1 = s.findPositionsWith1(pattern.getEventTypes(), pairs._2);
-        Iterator<Integer> iter = positions1.iterator();
-        List<String> conditions = new ArrayList<>();
-        while (iter.hasNext()) {
-            conditions.add(" signature[" + iter.next().toString() + "]=" + "'1' ");
-        }
-        return sparkSession.read()
-                .format("org.apache.spark.sql.cassandra")
-                .options(Map.of("table", path, "keyspace", "siesta"))
-                .load()
-                .where(String.join("and", conditions))
-                .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, Long>) row -> {
-                    List<String> traces = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    return traces.stream().map(Long::parseLong).collect(Collectors.toList()).iterator();
-                }).collect();
+                .load().toJavaRDD()
+                .filter((Function<Row, Boolean>) row-> events.value().contains((String) row.getAs("event_name")))
+                .flatMap((FlatMapFunction<Row, Tuple2<Long,Integer>>)row->{
+                    List<Tuple2<Long,Integer>> recs = new ArrayList<>();
+                    List<String> s = JavaConverters.seqAsJavaList(row.getAs("sequences"));
+                    s.forEach(x-> recs.add(new Tuple2<>(Long.parseLong(x),1)));
+                    return recs.iterator();
+                } )
+                .keyBy((Function<Tuple2<Long, Integer>, Long>) x -> x._1 )
+                .reduceByKey((Function2<Tuple2<Long, Integer>, Tuple2<Long, Integer>, Tuple2<Long, Integer>>)
+                        (a,b)-> new Tuple2<>(a._1,a._2+b._2))
+                .filter((Function<Tuple2<Long, Tuple2<Long, Integer>>, Boolean>) rec -> rec._2._2==events.value().size())
+                .map((Function<Tuple2<Long, Tuple2<Long, Integer>>, Long>) x->x._2._1 )
+                .collect();
+        return possibleTraces;
     }
 
     public Map<Long, List<Event>> getOriginalTraces(List<Long> traces, String logname) {
-        String path = String.format("%s_sign_seq", logname);
+        String path = String.format("%s_set_seq", logname);
         Broadcast<Set<Long>> bTraces = javaSparkContext.broadcast(new HashSet<>(traces));
         return sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
@@ -110,6 +88,5 @@ public class CassandraConnectionSignature {
                 .mapValues((Function<Tuple2<Long, List<Event>>, List<Event>>) x->x._2 )
                 .collectAsMap();
     }
-
 
 }
