@@ -1,10 +1,6 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
-import com.clearspring.analytics.util.Lists;
-import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraintWE;
-import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraintWE;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
@@ -22,13 +18,11 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
-import scala.Tuple3;
 import scala.collection.JavaConverters;
 
 import java.io.IOException;
