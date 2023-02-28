@@ -56,7 +56,7 @@ class CassConnectorTest {
     }
 
     @Test
-    void querySingleTable(){
+    void querySeqTable(){
         List<Long> traces = new ArrayList<>(){{add(1L);add(2L);}};
         Set<String> events = new HashSet<>(){{add("A");add("B");}};
         Map<Long, List<EventBoth>>map = cassConnector.querySeqTable("test",traces,events);
@@ -72,6 +72,17 @@ class CassConnectorTest {
         IndexRecords ir = cassConnector.queryIndexTable(pairs,"test",m);
         Assertions.assertNotNull(ir);
         Assertions.assertEquals(2,ir.getRecords().size());
+    }
+
+    @Test
+    void querySingleTable(){
+        Set<Long> traces = new HashSet<>();
+        traces.add(1L);
+        traces.add(2L);
+        Set<String> events = new HashSet<>();
+        events.add("A");
+        events.add("B");
+        cassConnector.getFromSingle("test",traces,events);
     }
 
 

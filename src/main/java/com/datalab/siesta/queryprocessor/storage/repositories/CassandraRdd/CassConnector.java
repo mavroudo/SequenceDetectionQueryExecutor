@@ -1,13 +1,13 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.CassandraRdd;
 
-import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
-import com.datalab.siesta.queryprocessor.model.Utils.Utils;
-import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import com.datastax.spark.connector.cql.CassandraConnector;
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -23,7 +23,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
 import java.sql.Timestamp;
 import java.util.*;
@@ -127,6 +126,30 @@ public class CassConnector extends SparkDatabaseRepository {
                 .collect();
     }
 
+    @Override
+    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+        String path = String.format("%s_single", logname);
+        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
+        Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
+        return sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD()
+                .filter((Function<Row, Boolean>) row -> bEventTypes.value().contains(row.getString(0)))
+                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
+                    String eventType = row.getString(0);
+                    List<EventBoth> events = new ArrayList<>();
+                    List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
+                    Long trace_id = row.getAs("trace_id");
+                    if (bTraceIds.value().contains(trace_id)) {
+                        for (String occ : occurrences) {
+                            String[] o = occ.split(",");
+                            events.add(new EventBoth(eventType, trace_id, Timestamp.valueOf(o[1]), Integer.parseInt(o[0])));
+                        }
+                    }
+                    return events.iterator();
+                });
+    }
 
     @Override
     protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {

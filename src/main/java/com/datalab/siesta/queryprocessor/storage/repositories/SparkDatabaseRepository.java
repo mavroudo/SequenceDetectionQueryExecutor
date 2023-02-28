@@ -19,6 +19,7 @@ import scala.Tuple2;
 import scala.Tuple3;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
@@ -132,6 +133,55 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         IndexMiddleResult imr = this.addFilterIds(indexPairs,traces);
         indexPairs.unpersist();
         return imr;
+    }
+
+    /**
+     * Should be override by any storage that uses spark
+     * @param logname The name of the Log
+     * @param traceIds The traces we want to detect
+     * @param eventTypes The event types to be collected
+     * @return a JavaRDD<EventBoth> that will be used in querySingleTable and querySingleTableGroups
+     */
+    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+        return null;
+    }
+
+    @Override
+    public List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+        return this.getFromSingle(logname, traceIds, eventTypes).collect();
+    }
+
+    @Override
+    public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes) {
+        Set<Long> allTraces = groups.stream()
+                .flatMap((java.util.function.Function<Set<Long>, Stream<Long>>) Collection::stream)
+                .collect(Collectors.toSet());
+        Broadcast<List<Set<Long>>> bgroups = javaSparkContext.broadcast(groups);
+        Broadcast<Integer> bEventTypesSize= javaSparkContext.broadcast(eventTypes.size());
+        JavaRDD<EventBoth> eventRDD = this.getFromSingle(logname, allTraces, eventTypes);
+        Map<Integer, List<EventBoth>> response = eventRDD.map((Function<EventBoth, Tuple2<Integer, EventBoth>>) event -> {
+                    for (int g = 0; g < bgroups.value().size(); g++) {
+                        if (bgroups.value().get(g).contains(event.getTraceID())) return new Tuple2<>(g+1, event);
+                    }
+                    return new Tuple2<>(-1, event);
+                })
+                .filter((Function<Tuple2<Integer, EventBoth>, Boolean>) event -> event._1 != -1)
+                .groupBy((Function<Tuple2<Integer, EventBoth>, Integer>) event -> event._1)
+                //maintain only these groups that contain all of the event types in the query
+                .filter((Function<Tuple2<Integer, Iterable<Tuple2<Integer, EventBoth>>>, Boolean>) group->{
+                    Set<String> events = new HashSet<>();
+                    group._2.forEach(x->events.add(x._2.getName()));
+                    return events.size()==bEventTypesSize.value();
+                })
+                .mapValues((Function<Iterable<Tuple2<Integer, EventBoth>>, List<EventBoth>>) group->{
+                    List<EventBoth> eventBoth = new ArrayList<>();
+                    for(Tuple2<Integer,EventBoth> e : group){
+                        eventBoth.add(e._2);
+                    }
+                    return  eventBoth.stream().sorted().collect(Collectors.toList());
+                } ).collectAsMap();
+        return response;
+
     }
 
 
