@@ -31,7 +31,7 @@ class QueryResponseBadRequestForDetectionTest {
         events.add(ep4);
         SimplePattern p = new SimplePattern();
         p.setEvents(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
         QueryResponseBadRequestForDetection qrbd = new QueryResponseBadRequestForDetection();
         qrbd.setNonExistingPairs(new ArrayList<>(pairs._2));
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrbd);

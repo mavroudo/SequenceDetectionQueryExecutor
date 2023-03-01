@@ -69,7 +69,7 @@ public class CassandraConnectionSignature {
 
     public List<Long> getPossibleTraceIds(ComplexPattern pattern, String logname, Signature s) {
         String path = String.format("%s_sign_idx", logname);
-        Tuple2<Integer, Set<EventPair>> pairs = pattern.extractPairsForPatternDetection();
+        Tuple2<Integer, Set<EventPair>> pairs = pattern.extractPairsForPatternDetection(false);
         Set<Integer> positions1 = s.findPositionsWith1(pattern.getEventTypes(), pairs._2);
         Iterator<Integer> iter = positions1.iterator();
         List<String> conditions = new ArrayList<>();

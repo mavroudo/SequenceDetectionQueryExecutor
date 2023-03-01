@@ -5,14 +5,17 @@ import com.datalab.siesta.queryprocessor.model.Constraints.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventTs;
+import org.apache.spark.broadcast.Broadcast;
 import org.springframework.stereotype.Component;
 import scala.Tuple2;
 
+import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class Utils {
+public class Utils implements Serializable {
 
 
     public Tuple2<List<TimeConstraint>, List<GapConstraint>> splitConstraints(List<Constraint> constraints){
@@ -45,5 +48,19 @@ public class Utils {
             }
         }
         return  ses;
+    }
+
+    public boolean evaluateEvent(Event e, Broadcast<Timestamp> bFrom, Broadcast<Timestamp> bTill) {
+        if (e instanceof EventPos) return true;
+        else {
+            EventTs et = (EventTs) e;
+            if (bFrom.value() != null & bTill.value() != null)
+                return !et.getTimestamp().before(bFrom.value()) && !et.getTimestamp().after(bTill.value());
+            else if (bFrom.value() != null)
+                return !et.getTimestamp().before(bFrom.value());
+            else if (bTill.value()!=null)
+                return !et.getTimestamp().after(bTill.value());
+            else return true;
+        }
     }
 }

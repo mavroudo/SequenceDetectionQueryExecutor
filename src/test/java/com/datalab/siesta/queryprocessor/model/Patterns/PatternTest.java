@@ -24,7 +24,7 @@ class PatternTest {
         events.add(es3);
         ComplexPattern p = new ComplexPattern(events);
 
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
         Assertions.assertEquals(3,pairs._2.size());
     }
     @Test
@@ -40,7 +40,7 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5,pairs._2.size());
     }
 
@@ -57,7 +57,7 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
         Assertions.assertEquals(3,pairs._2.size());
     }
 
@@ -74,7 +74,7 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
         Assertions.assertEquals(3,pairs._2.size());
     }
 }

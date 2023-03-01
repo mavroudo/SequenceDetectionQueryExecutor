@@ -144,7 +144,7 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
@@ -194,7 +194,7 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
@@ -245,7 +245,7 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
@@ -281,7 +281,7 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5,pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
@@ -331,7 +331,7 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
@@ -383,7 +383,7 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection();
+        Tuple2<Integer,Set<EventPair>> pairs = cp.extractPairsForPatternDetection(false);
         Assertions.assertEquals(5, pairs._2.size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
@@ -416,4 +416,139 @@ public class PatternDetectionQueryTest {
         Assertions.assertEquals(6, eventsMatch.get(1).getPosition());
         Assertions.assertEquals(7, eventsMatch.get(2).getPosition());
     }
+
+    @Test
+    public void simplePatternTSTimeWindow() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPattern();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test");
+        qpdw.setFrom(Timestamp.valueOf("2020-08-15 12:02:42.0"));
+        qpdw.setTill(Timestamp.valueOf("2020-08-15 17:56:42.0"));
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("timestamps", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(1, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertFalse(detectedInTraces.contains(2L));
+        Assertions.assertFalse(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
+    @Test
+    public void simplePatternTSTimeWindowOnlyFrom() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPattern();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test");
+        qpdw.setFrom(Timestamp.valueOf("2020-08-15 12:02:42.0"));
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("timestamps", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(3, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertTrue(detectedInTraces.contains(2L));
+        Assertions.assertTrue(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
+    @Test
+    public void simplePatternTSTimeWindowOnlyTill() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPattern();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test");
+        qpdw.setTill(Timestamp.valueOf("2020-08-15 18:02:42.0"));
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("timestamps", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(1, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertFalse(detectedInTraces.contains(2L));
+        Assertions.assertFalse(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
+    @Test
+    public void simplePatternPosTimeWindow() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPattern();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test_pos");
+        qpdw.setFrom(Timestamp.valueOf("2020-08-15 12:02:42.0"));
+        qpdw.setTill(Timestamp.valueOf("2020-08-15 17:56:42.0"));
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("positions", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(1, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertFalse(detectedInTraces.contains(2L));
+        Assertions.assertFalse(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
+    @Test
+    public void simplePatternPosTimeWindowOnlyFrom() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPattern();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test_pos");
+        qpdw.setFrom(Timestamp.valueOf("2020-08-15 12:02:42.0"));
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("positions", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(3, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertTrue(detectedInTraces.contains(2L));
+        Assertions.assertTrue(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
+    @Test
+    public void simplePatternPosTimeWindowOnlyTill() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPattern();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test_pos");
+        qpdw.setTill(Timestamp.valueOf("2020-08-15 18:02:42.0"));
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("positions", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(1, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertFalse(detectedInTraces.contains(2L));
+        Assertions.assertFalse(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
 }

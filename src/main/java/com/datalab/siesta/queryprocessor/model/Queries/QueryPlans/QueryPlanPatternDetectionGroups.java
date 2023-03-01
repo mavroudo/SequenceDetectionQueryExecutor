@@ -57,7 +57,8 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
 
     @Override
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponse qr) {
-        Tuple2<Integer, Set<EventPair>> pairs = qpdw.getPattern().extractPairsForPatternDetection();
+        boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
+        Tuple2<Integer, Set<EventPair>> pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
         List<Count> sortedPairs = this.getStats(pairs._2, qpdw.getLog_name());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
         qr = this.firstParsing(qpdw, pairs._2, combined); // checks if all are correctly set before start querying

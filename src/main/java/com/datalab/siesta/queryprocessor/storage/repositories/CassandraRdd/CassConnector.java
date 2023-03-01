@@ -6,6 +6,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import com.datastax.spark.connector.cql.CassandraConnector;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -24,6 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,16 +34,15 @@ import java.util.stream.Collectors;
 @Configuration
 @ConditionalOnProperty(
         value = "database",
-        havingValue = "cassandra-rdd",
-        matchIfMissing = true
+        havingValue = "cassandra-rdd"
 )
 @ComponentScan
-public class CassConnector extends SparkDatabaseRepository {
+public class CassConnector extends SparkDatabaseRepository{
 
 
     @Autowired
-    public CassConnector(SparkSession sparkSession, JavaSparkContext javaSparkContext) {
-        super(sparkSession, javaSparkContext);
+    public CassConnector(SparkSession sparkSession, JavaSparkContext javaSparkContext, Utils utils) {
+        super(sparkSession, javaSparkContext, utils);
     }
 
     @Override

@@ -50,13 +50,11 @@ import java.util.stream.Collectors;
 public class S3Connector extends SparkDatabaseRepository {
 
 
-    private Utils utils;
     private String bucket = "s3a://siesta/";
 
     @Autowired
     public S3Connector(SparkSession sparkSession, JavaSparkContext javaSparkContext, Utils utils) {
-        super(sparkSession, javaSparkContext);
-        this.utils = utils;
+        super(sparkSession, javaSparkContext,utils);
     }
 
 
