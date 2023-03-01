@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SimplePattern extends SIESTAPattern{
+public class SimplePattern extends SIESTAPattern implements Cloneable{
 
     private List<EventPos> events;
 
@@ -126,5 +126,22 @@ public class SimplePattern extends SIESTAPattern{
     @JsonIgnore
     public int getSize() {
         return this.events.size();
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Object clone = super.clone();
+        SimplePattern s = new SimplePattern();
+        List<EventPos> ep = new ArrayList<>();
+        for(EventPos e : this.events){
+            ep.add(e.clone());
+        }
+        s.setEvents(ep);
+        List<Constraint> cs = new ArrayList<>();
+        for(Constraint c: this.constraints){
+            cs.add(c.clone());
+        }
+        s.setConstraints(cs);
+        return s;
     }
 }

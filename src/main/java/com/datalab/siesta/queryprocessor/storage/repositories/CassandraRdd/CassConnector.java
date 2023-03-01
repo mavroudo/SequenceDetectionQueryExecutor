@@ -84,6 +84,28 @@ public class CassConnector extends SparkDatabaseRepository{
     }
 
     @Override
+    public List<Count> getCountForExploration(String logname, String event) {
+        String path = String.format("%s_count", logname);
+        Broadcast<String> bEventName = javaSparkContext.broadcast(event);
+        List<Count> l = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD()
+                .filter((Function<Row, Boolean>) row -> bEventName.value().equals(row.getString(0)))
+                .flatMap((FlatMapFunction<Row, Count>) r -> {
+                    String evA = r.getString(0);
+                    List<Count> cs = new ArrayList<>();
+                    List<String> rec = JavaConverters.seqAsJavaList(r.getSeq(1));
+                    for (String record : rec) {
+                        String[] c = record.split(",");
+                        cs.add(new Count(evA, c));
+                    }
+                    return cs.iterator();
+                }).collect();
+        return new ArrayList<>(l);
+    }
+
+    @Override
     public List<Count> getCounts(String logname, Set<EventPair> pairs) {
         String path = String.format("%s_count", logname);
         Broadcast<Set<EventPair>> bEvents = javaSparkContext.broadcast(pairs);
