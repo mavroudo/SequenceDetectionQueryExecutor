@@ -3,10 +3,7 @@ package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
-import com.datalab.siesta.queryprocessor.model.DBModel.EventTypes;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexRecords;
-import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
@@ -191,5 +188,11 @@ class S3ConnectorTest {
         Assertions.assertTrue(traceIds2.contains(3L));
 
 
+    }
+
+    @Test
+    void queryCountsForExploration() {
+        List<Count> counts =s3Connector.getCountForExploration("test","A");
+        Assertions.assertEquals(4,counts.size());
     }
 }

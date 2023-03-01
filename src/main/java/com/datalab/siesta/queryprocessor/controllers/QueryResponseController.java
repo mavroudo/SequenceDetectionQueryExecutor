@@ -3,8 +3,10 @@ package com.datalab.siesta.queryprocessor.controllers;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryExploration;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryStats;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryExploreWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryMetadataWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
@@ -37,6 +39,9 @@ public class QueryResponseController {
 
     @Autowired
     private QueryPatternDetection qpd;
+
+    @Autowired
+    private QueryExploration queryExploration;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -84,7 +89,24 @@ public class QueryResponseController {
         } else {
             QueryPlan qp = qpd.createQueryPlan(qpdw, m);
             QueryResponse qrs = qp.execute(qpdw);
-//            MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
+            return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.OK);
+        }
+    }
+
+    @RequestMapping(path="/explore", method = RequestMethod.GET)
+    public ResponseEntity<String> exploration(@RequestBody String json) throws IOException{
+        QueryExploreWrapper queryExploreWrapper;
+        try{
+            queryExploreWrapper = objectMapper.readValue(json, QueryExploreWrapper.class);
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Metadata m = allMetadata.getMetadata(queryExploreWrapper.getLog_name());
+        if (m == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            QueryPlan qp = queryExploration.createQueryPlan(queryExploreWrapper,m);
+            QueryResponse qrs = qp.execute(queryExploreWrapper);
             return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.OK);
         }
     }

@@ -86,6 +86,29 @@ public class S3Connector extends SparkDatabaseRepository {
         }
     }
 
+    @Override
+    public List<Count> getCountForExploration(String logname, String event) {
+        String path = String.format("%s%s%s", bucket, logname, "/count.parquet/");
+        List<Count> counts = sparkSession.read()
+                .parquet(path)
+                .where(String.format("eventA = '%s'",event))
+                .toJavaRDD()
+                .flatMap((FlatMapFunction<Row, Count>) row -> {
+                    String eventA = row.getString(1);
+                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
+                    List<Count> c = new ArrayList<>();
+                    for (Row v1 : countRecords) {
+                        String eventB = v1.getString(0);
+                        long sum_duration = v1.getLong(1);
+                        int count = v1.getInt(2);
+                        long min_duration = v1.getLong(3);
+                        long max_daration = v1.getLong(4);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_daration));
+                    }
+                    return c.iterator();
+                }).collect();
+        return new ArrayList<>(counts);
+    }
 
     @Override
     public List<Count> getCounts(String logname, Set<EventPair> pairs) {

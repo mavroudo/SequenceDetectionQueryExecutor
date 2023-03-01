@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.model;
 
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.util.List;
 
@@ -35,5 +36,14 @@ public class Occurrence {
                     this.occurrence.get(0).getTimestamp().after(lEvent.getTimestamp());
         }
         return !notOverlaps;
+    }
+
+    @JsonIgnore
+    public double getDuration(){
+        int s = occurrence.size();
+        if(occurrence.get(0).getTimestamp()!=null){
+            return ((double) occurrence.get(s-1).getTimestamp().getTime()-occurrence.get(0).getTimestamp().getTime())/1000;
+        }
+        return 0;
     }
 }

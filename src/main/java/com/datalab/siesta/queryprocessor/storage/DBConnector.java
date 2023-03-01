@@ -40,6 +40,10 @@ public class DBConnector {
         return db.getCounts(logname, eventPairs);
     }
 
+    public List<Count> getCountForExploration(String logname, String event){
+        return db.getCountForExploration(logname,event);
+    }
+
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata, int minpairs, Timestamp from, Timestamp till) {
         return db.patterDetectionTraceIds(logname, combined, metadata, minpairs, from, till);
     }

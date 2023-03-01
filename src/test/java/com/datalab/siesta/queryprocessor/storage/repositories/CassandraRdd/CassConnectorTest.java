@@ -85,6 +85,12 @@ class CassConnectorTest {
         cassConnector.getFromSingle("test",traces,events);
     }
 
+    @Test
+    void queryCountsForExploration() {
+        List<Count> counts =cassConnector.getCountForExploration("test","A");
+        Assertions.assertEquals(4,counts.size());
+    }
+
 
 
 

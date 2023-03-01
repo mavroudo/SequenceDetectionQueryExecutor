@@ -34,4 +34,6 @@ public interface DatabaseRepository {
 
     Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes);
 
+    List<Count> getCountForExploration(String logname, String event);
+
 }
