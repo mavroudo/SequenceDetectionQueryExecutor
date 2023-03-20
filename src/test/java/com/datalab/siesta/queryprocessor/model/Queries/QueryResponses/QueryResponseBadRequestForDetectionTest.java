@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,15 +32,15 @@ class QueryResponseBadRequestForDetectionTest {
         events.add(ep4);
         SimplePattern p = new SimplePattern();
         p.setEvents(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
+        ExtractedPairsForPatternDetection pairs = p.extractPairsForPatternDetection(false);
         QueryResponseBadRequestForDetection qrbd = new QueryResponseBadRequestForDetection();
-        qrbd.setNonExistingPairs(new ArrayList<>(pairs._2));
+        qrbd.setNonExistingPairs(new ArrayList<>(pairs.getAllPairs()));
         MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrbd);
         String s1 = mapper.writeValueAsString(mappingJacksonValue.getValue());
 
 
         qrbd = new QueryResponseBadRequestForDetection();
-        qrbd.setConstraintsNotFulfilled(new ArrayList<>(pairs._2));
+        qrbd.setConstraintsNotFulfilled(new ArrayList<>(pairs.getAllPairs()));
         mappingJacksonValue = new MappingJacksonValue(qrbd);
 
         String s2 = mapper.writeValueAsString(mappingJacksonValue.getValue());

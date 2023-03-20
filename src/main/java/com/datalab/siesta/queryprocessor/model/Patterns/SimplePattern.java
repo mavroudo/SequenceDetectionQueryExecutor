@@ -6,6 +6,7 @@ import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import edu.umass.cs.sase.query.State;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import scala.Tuple2;
@@ -59,7 +60,7 @@ public class SimplePattern extends SIESTAPattern implements Cloneable{
 
 
     @JsonIgnore
-    public Tuple2<Integer,Set<EventPair>> extractPairsForPatternDetection(boolean fromOrTillSet){
+    public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet){
         return  super.extractPairsForPatternDetection(this.events,this.getConstraints(),fromOrTillSet);
 
     }

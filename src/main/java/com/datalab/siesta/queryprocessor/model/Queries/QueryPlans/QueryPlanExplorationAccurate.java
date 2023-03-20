@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
@@ -70,9 +71,9 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
         List<EventPos> events = pattern.getEvents();
         events.add(new EventPos(next, events.size()));
         pattern.setEvents(events); //create the pattern
-        Tuple2<Integer, Set<EventPair>> pairs = pattern.extractPairsForPatternDetection(false);
-        List<Count> sortedPairs = this.getStats(pairs._2, metadata.getLogname());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
+        ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
+        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), metadata.getLogname());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
         imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, minPairs, null, null); //TODO:change min pairs here also
         List<Occurrences> occurrences = saseConnector.evaluate(pattern, imr.getEvents(), false);
         occurrences.forEach(x -> x.clearOccurrences(true));

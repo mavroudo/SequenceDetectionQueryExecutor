@@ -3,6 +3,7 @@ package com.datalab.siesta.queryprocessor.model.Patterns;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import edu.umass.cs.sase.query.State;
 import scala.Tuple2;
 
@@ -36,8 +37,8 @@ public abstract class SIESTAPattern {
      * @param constraints the constraints between two events
      * @return all the event pairs with the constraints embedded in
      */
-    protected Tuple2<Integer, Set<EventPair>> extractPairsForPatternDetection(List<EventPos> events, List<Constraint> constraints, boolean fromOrTillSet) {
-        Set<EventPair> allEventPairs = new HashSet<>();
+    protected ExtractedPairsForPatternDetection extractPairsForPatternDetection(List<EventPos> events, List<Constraint> constraints, boolean fromOrTillSet) {
+        ExtractedPairsForPatternDetection pairs = new ExtractedPairsForPatternDetection();
         Set<Integer> positionOfConstraints = constraints.stream().flatMap((Function<Constraint, Stream<Integer>>) x -> {
             List<Integer> l = new ArrayList<>();
             l.add(x.getPosA());
@@ -45,22 +46,21 @@ public abstract class SIESTAPattern {
             return l.stream();
         }).collect(Collectors.toSet());
 
-        Set<EventPair> trueEventPairs = new HashSet<>();
+//        Set<EventPair> trueEventPairs = new HashSet<>();
         for (int i = 0; i < events.size() - 1; i++) {
             if (positionOfConstraints.contains(i))
-                allEventPairs.add(new EventPair(events.get(i), events.get(i))); //get double pairs
+                pairs.addPair(new EventPair(events.get(i), events.get(i))); //get double pairs
             for (int j = i + 1; j < events.size(); j++) { //get the rest of the pairs
-                EventPair p = new EventPair(events.get(i), events.get(j));
-                trueEventPairs.add(p);
+                pairs.addTruePair(new EventPair(events.get(i), events.get(j)));
             }
         }
         if (fromOrTillSet) {
             for (EventPos e : events) {
-                allEventPairs.add(new EventPair(e, e));
+                pairs.addPair(new EventPair(e, e));
             }
         }
-        allEventPairs.addAll(trueEventPairs);
-        return new Tuple2<>(trueEventPairs.size(), allEventPairs);
+        pairs.addPairs(pairs.getTruePairs());
+        return pairs;
     }
 
     protected Constraint searchForConstraint(int posA, int posB, List<Constraint> constraints) {
