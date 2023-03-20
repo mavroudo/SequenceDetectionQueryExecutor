@@ -72,15 +72,78 @@ public class ComplexPattern extends SIESTAPattern{
      */
 
 
+//    @JsonIgnore
+//    public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet){
+//        ExtractedPairsForPatternDetection pairs = new ExtractedPairsForPatternDetection();
+//        for(List<EventPos> events : this.splitIntoSimples()){
+//            ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(events,this.getConstraints(),fromOrTillSet);
+//            pairs.addPairs(s.getAllPairs());
+//            pairs.addTruePairs(s.getTruePairs());
+//        }
+//        return pairs;
+//    }
+
     @JsonIgnore
     public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet){
-        ExtractedPairsForPatternDetection pairs = new ExtractedPairsForPatternDetection();
-        for(List<EventPos> events : this.splitIntoSimples()){
-            ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(events,this.getConstraints(),fromOrTillSet);
-            pairs.addPairs(s.getAllPairs());
-            pairs.addTruePairs(s.getTruePairs());
+        List<ExtractedPairsForPatternDetection> elist = new ArrayList<>();
+        for(List<EventSymbol> events:this.splitWithOr()){
+            List<EventPos> l = new ArrayList<>();
+            List<EventPair> allPairs = new ArrayList<>();
+            for(int i=0;i<events.size();i++){
+                EventSymbol es = events.get(i);
+                switch (es.getSymbol()) {
+                    case "_":
+                    case "":
+                        l.add(new EventPos(es.getName(), i));
+                        break;
+                    case "+":
+                        l.add(new EventPos(es.getName(), i));
+                        allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
+                        break;
+                    case "*":
+                    case "!":
+                        allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
+                        break;
+                }
+            }
+            ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(l,this.getConstraints(),fromOrTillSet);
+            s.addPairs(allPairs);
+            elist.add(s);
         }
-        return pairs;
+        ExtractedPairsForPatternDetection all = elist.get(0);
+        if(elist.size()>1){
+            for(int i=1;i<elist.size();i++){
+                all.addPairs(elist.get(i).getAllPairs());
+                all.getTruePairs().retainAll(elist.get(i).getTruePairs());
+            }
+        }
+        return all;
+    }
+
+    private Set<List<EventSymbol>> splitWithOr(){
+        Set<List<EventSymbol>> l = new HashSet<>();
+        l.add(new ArrayList<>());
+        int last_pos = -1;
+        for (EventSymbol e : eventsWithSymbols) {
+            if (e.getPosition() == last_pos) { //That means it uses or
+                for (List<EventSymbol> sl : l) {
+                    List<EventSymbol> slnew = new ArrayList<>(sl);
+                    try {
+                        e.setSymbol("_");
+                        slnew.set(last_pos, e);
+                    } catch (IndexOutOfBoundsException exe) {
+                        slnew.add(e);
+                    }
+                    l.add(slnew);
+                }
+            }else {
+                last_pos = e.getPosition();
+                for (List<EventSymbol> sl : l) {
+                    sl.add(e);
+                }
+            }
+        }
+        return l;
     }
 
     private Set<List<EventPos>> splitIntoSimples() {

@@ -33,6 +33,10 @@ public class ExtractedPairsForPatternDetection {
         this.truePairs.add(pair);
     }
 
+    public void setTruePairs(Set<EventPair> pairs){
+        this.truePairs=pairs;
+    }
+
     public Set<EventPair> getTruePairs() {
         return truePairs;
     }
