@@ -80,7 +80,6 @@ public class ComplexPattern extends SIESTAPattern{
             eventPairs.addAll(s._2);
             n=Math.min(n,s._1);
         }
-
         return new Tuple2<>(n,eventPairs);
     }
 
