@@ -174,7 +174,7 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs = this.getAllEventPairs(pairs, logname, metadata, from, till);
         JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
         indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
-        List<Long> traces = this.getCommonIds(indexPairs, expairs.getTruePairs()); //TODO: here needs to change when fixing minPairs
+        List<Long> traces = this.getCommonIds(indexPairs, expairs.getTruePairs());
         IndexMiddleResult imr = this.addFilterIds(indexPairs, traces, from, till);
         indexPairs.unpersist();
         return imr;
