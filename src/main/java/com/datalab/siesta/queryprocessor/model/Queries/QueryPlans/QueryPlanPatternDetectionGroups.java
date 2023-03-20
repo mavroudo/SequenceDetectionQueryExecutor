@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;
@@ -58,10 +59,10 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
     @Override
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
         boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
-        Tuple2<Integer, Set<EventPair>> pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-        List<Count> sortedPairs = this.getStats(pairs._2, qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
-        this.firstParsing(qpdw, pairs._2, combined,qr); // checks if all are correctly set before start querying
+        ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
+        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
+        this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
         if (!qr.isEmpty()) {//There was an original error
             return;
         }

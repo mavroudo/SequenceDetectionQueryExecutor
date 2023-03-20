@@ -74,7 +74,7 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
         ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
         List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), metadata.getLogname());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
-        imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, minPairs, null, null); //TODO:change min pairs here also
+        imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, pairs, null, null); //TODO:change min pairs here also
         List<Occurrences> occurrences = saseConnector.evaluate(pattern, imr.getEvents(), false);
         occurrences.forEach(x -> x.clearOccurrences(true));
         List<Occurrence> ocs = occurrences.stream().parallel().flatMap(x -> x.getOccurrences().stream()).collect(Collectors.toList());

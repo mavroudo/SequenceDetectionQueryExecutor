@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.storage.repositories;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.*;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -9,7 +10,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
@@ -19,6 +19,7 @@ import scala.Tuple3;
 
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,17 +104,23 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return pairs.flatMap((FlatMapFunction<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>, IndexPair>) g -> g._2.iterator());
     }
 
-    protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs, int minPairs) {
-        Broadcast<Integer> bminPairs = javaSparkContext.broadcast(minPairs);
+    protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs, Set<EventPair> trueEventPairs) {
+        Broadcast<Set<EventPair>> truePairs = javaSparkContext.broadcast(trueEventPairs);
         return pairs.map((Function<IndexPair, Tuple3<String, String, Long>>) pair ->
                         new Tuple3<>(pair.getEventA(), pair.getEventB(), pair.getTraceId()))
                 .distinct() //remove all the duplicate event pairs that refer to the same trace
-                .map((Function<Tuple3<String, String, Long>, Tuple2<Long, Long>>) p -> new Tuple2<>(p._3(), 1L))
-                .keyBy((Function<Tuple2<Long, Long>, Long>) p -> p._1)
-                .reduceByKey((Function2<Tuple2<Long, Long>, Tuple2<Long, Long>, Tuple2<Long, Long>>) (p1, p2) ->
-                        new Tuple2<>(p1._1, p1._2 + p2._2))
-                .filter((Function<Tuple2<Long, Tuple2<Long, Long>>, Boolean>) p -> p._2._2 >= bminPairs.getValue())
-                .map((Function<Tuple2<Long, Tuple2<Long, Long>>, Long>) p -> p._1)
+                .groupBy((Function<Tuple3<String, String, Long>, Long>) Tuple3::_3)
+                .map((Function<Tuple2<Long, Iterable<Tuple3<String, String, Long>>>, Tuple2<Long,Integer>>)x->{
+                    AtomicInteger acc = new AtomicInteger(0);
+                    x._2.forEach(pair-> {
+                        Optional<EventPair> op =truePairs.getValue().stream().filter(y->y.getEventA().getName().equals(pair._1())&&
+                                y.getEventB().getName().equals(pair._2())).findFirst();
+                        if(op.isPresent()) acc.incrementAndGet();
+                    });
+                    return new Tuple2<>(x._1, acc.get());
+                } )
+                .filter((Function<Tuple2<Long, Integer>, Boolean>) p -> p._2 == truePairs.getValue().size())
+                .map((Function<Tuple2<Long, Integer>, Long>) p -> p._1)
                 .collect();
     }
 
@@ -162,12 +169,12 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
     @Override
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,
-                                                     int minPairs, Timestamp from, Timestamp till) {
+                                                     ExtractedPairsForPatternDetection expairs, Timestamp from, Timestamp till) {
         Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs = this.getAllEventPairs(pairs, logname, metadata, from, till);
         JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
         indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
-        List<Long> traces = this.getCommonIds(indexPairs, minPairs); //TODO: here needs to change when fixing minPairs
+        List<Long> traces = this.getCommonIds(indexPairs, expairs.getTruePairs()); //TODO: here needs to change when fixing minPairs
         IndexMiddleResult imr = this.addFilterIds(indexPairs, traces, from, till);
         indexPairs.unpersist();
         return imr;

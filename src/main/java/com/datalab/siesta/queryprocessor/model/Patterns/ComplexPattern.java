@@ -73,15 +73,14 @@ public class ComplexPattern extends SIESTAPattern{
 
 
     @JsonIgnore
-    public Tuple2<Integer,Set<EventPair> > extractPairsForPatternDetection(boolean fromOrTillSet){
-        Set<EventPair> eventPairs = new HashSet<>();
-        int n = Integer.MAX_VALUE;
+    public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet){
+        ExtractedPairsForPatternDetection pairs = new ExtractedPairsForPatternDetection();
         for(List<EventPos> events : this.splitIntoSimples()){
             ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(events,this.getConstraints(),fromOrTillSet);
-            eventPairs.addAll(s.getAllPairs());
-            n=Math.min(n,s.getTruePairs().size());
+            pairs.addPairs(s.getAllPairs());
+            pairs.addTruePairs(s.getTruePairs());
         }
-        return new Tuple2<>(n,eventPairs);
+        return pairs;
     }
 
     private Set<List<EventPos>> splitIntoSimples() {

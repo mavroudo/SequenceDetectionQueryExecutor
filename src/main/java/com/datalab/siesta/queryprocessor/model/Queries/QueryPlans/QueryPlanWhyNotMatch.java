@@ -47,7 +47,8 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
         //set minPairs before the getMiddleResults
         boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
-        minPairs=qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet)._1 - qpdw.getPattern().getSize() +1;
+        //TODO: check this to work as intented with minPairs
+        minPairs=qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet).getTruePairs().size() - qpdw.getPattern().getSize() +1;
         minPairs = Math.max(minPairs, 1); //if the minPair goes below 0 we will have to evaluate all the traces gathered
         super.getMiddleResults(qpdw, firstCheck);
         if (!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
