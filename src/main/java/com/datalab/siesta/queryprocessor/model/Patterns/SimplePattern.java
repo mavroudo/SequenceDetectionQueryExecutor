@@ -95,33 +95,13 @@ public class SimplePattern extends SIESTAPattern implements Cloneable{
         State[] states = new State[this.events.size()];
         for(int i = 0; i<this.events.size();i++){
             State s = new State(i+1,"a",String.format("%s",this.events.get(i).getName()),"normal");
-            this.generatePredicates(i).forEach(s::addPredicate);
+            this.generatePredicates(i, this.constraints).forEach(s::addPredicate);
             states[i] = s;
         }
         return states;
     }
 
-    /**
-     * Generate the strings that dictates the predicates. i value is equal to state number -1, and that is because
-     * states starts from 1 and states[] startrs from 0
-     * @param i equal to the number of state -1
-     * @return a list of the preicates for this state
-     */
-    private List<String> generatePredicates(int i){
-        List<String> response = new ArrayList<>();
-        for(Constraint c: this.constraints){
-            if(c.getPosB()==i && c instanceof GapConstraint){
-                GapConstraint gc = (GapConstraint) c;
-                if(gc.getMethod().equals("within")) response.add(String.format(" position <= $%d.position + %d ",c.getPosA()+1,gc.getConstraint()));
-                else response.add(String.format(" position >= $%d.position + %d ",c.getPosA()+1,gc.getConstraint())); //atleast
-            }else if(c.getPosB()==i && c instanceof TimeConstraint){
-                TimeConstraint tc = (TimeConstraint) c;
-                if(tc.getMethod().equals("within")) response.add(String.format(" timestamp <= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint()));
-                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint())); //atleast
-            }
-        }
-        return response;
-    }
+
 
     @Override
     @JsonIgnore

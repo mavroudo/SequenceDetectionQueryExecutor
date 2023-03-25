@@ -49,6 +49,17 @@ public class PatternDetectionQueryTest {
         return new ComplexPattern(events);
     }
 
+    private ComplexPattern getPatternPlus() {
+        EventSymbol ep1 = new EventSymbol("A", 0, "+");
+        EventSymbol ep2 = new EventSymbol("B", 1, "_");
+//        EventSymbol ep3 = new EventSymbol("A", 2, "_");
+        List<EventSymbol> events = new ArrayList<>();
+        events.add(ep1);
+        events.add(ep2);
+//        events.add(ep3);
+        return new ComplexPattern(events);
+    }
+
     @Test
     public void simplePatternTS() throws Exception {
         QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
@@ -549,6 +560,27 @@ public class PatternDetectionQueryTest {
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertFalse(detectedInTraces.contains(2L));
         Assertions.assertFalse(detectedInTraces.contains(3L));
+        Assertions.assertFalse(detectedInTraces.contains(4L));
+    }
+
+    @Test
+    public void patternPlus() throws Exception {
+        QueryPatternDetectionWrapper qpdw = new QueryPatternDetectionWrapper();
+        ComplexPattern cp = this.getPatternPlus();
+        qpdw.setPattern(cp);
+        qpdw.setLog_name("test");
+        Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
+        Assertions.assertEquals("timestamps", m.getMode());
+        Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
+        QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
+        plan.setEventTypesInLog(events);
+        QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
+        List<Occurrences> ocs = queryResponse.getOccurrences();
+        Assertions.assertEquals(3, ocs.size());
+        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains(1L));
+        Assertions.assertTrue(detectedInTraces.contains(2L));
+        Assertions.assertTrue(detectedInTraces.contains(3L));
         Assertions.assertFalse(detectedInTraces.contains(4L));
     }
 

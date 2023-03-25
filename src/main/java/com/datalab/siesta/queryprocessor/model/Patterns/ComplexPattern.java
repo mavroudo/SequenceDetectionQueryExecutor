@@ -42,7 +42,6 @@ public class ComplexPattern extends SIESTAPattern{
         this.constraints = constraints;
     }
 
-    public List<Constraint> getConsecutiveConstraints(){ return this.fixConstraints(this.constraints);}
 
     public ComplexPattern(List<EventSymbol> eventsWithSymbols, List<Constraint> constraints) {
         this.eventsWithSymbols = eventsWithSymbols;
@@ -97,13 +96,16 @@ public class ComplexPattern extends SIESTAPattern{
                         l.add(new EventPos(es.getName(), i));
                         break;
                     case "+":
+                    case "!":
                         l.add(new EventPos(es.getName(), i));
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
                     case "*":
-                    case "!":
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
+//                    case "!":
+//                        allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
+//                        break;
                 }
             }
             ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(l,this.getConstraints(),fromOrTillSet);
@@ -146,32 +148,32 @@ public class ComplexPattern extends SIESTAPattern{
         return l;
     }
 
-    private Set<List<EventPos>> splitIntoSimples() {
-        Set<List<EventPos>> l = new HashSet<>();
-        l.add(new ArrayList<>());
-        int last_pos = -1;
-        for (EventSymbol e : eventsWithSymbols) {
-            if (e.getPosition() == last_pos) {
-                for (List<EventPos> sl : l) {
-                    List<EventPos> slnew = new ArrayList<>(sl);
-                    try {
-                        slnew.set(last_pos, e);
-                    }catch (IndexOutOfBoundsException exe){
-                        slnew.add(e);
-                    }
-                    l.add(slnew);
-                }
-            } else if (e.getSymbol().equals("+") || e.getSymbol().equals("")) {
-                last_pos = e.getPosition();
-                for (List<EventPos> sl : l) {
-                    sl.add(e);
-                }
-            } else if (e.getSymbol().equals("not") || e.getSymbol().equals("*")) {
-                last_pos = e.getPosition();
-            }
-        }
-        return l;
-    }
+//    private Set<List<EventPos>> splitIntoSimples() {
+//        Set<List<EventPos>> l = new HashSet<>();
+//        l.add(new ArrayList<>());
+//        int last_pos = -1;
+//        for (EventSymbol e : eventsWithSymbols) {
+//            if (e.getPosition() == last_pos) {
+//                for (List<EventPos> sl : l) {
+//                    List<EventPos> slnew = new ArrayList<>(sl);
+//                    try {
+//                        slnew.set(last_pos, e);
+//                    }catch (IndexOutOfBoundsException exe){
+//                        slnew.add(e);
+//                    }
+//                    l.add(slnew);
+//                }
+//            } else if (e.getSymbol().equals("+") || e.getSymbol().equals("")) {
+//                last_pos = e.getPosition();
+//                for (List<EventPos> sl : l) {
+//                    sl.add(e);
+//                }
+//            } else if (e.getSymbol().equals("not") || e.getSymbol().equals("*")) {
+//                last_pos = e.getPosition();
+//            }
+//        }
+//        return l;
+//    }
 
     @JsonIgnore
     @Override
@@ -198,7 +200,22 @@ public class ComplexPattern extends SIESTAPattern{
         if (sp!=null) {
             return sp.getNfa();
         }else{
-            return super.getNfa(); //TODO: implement it
+            State[] states = new State[this.eventsWithSymbols.size()];
+            for(int i = 0; i<this.eventsWithSymbols.size();i++){
+                EventSymbol es = this.eventsWithSymbols.get(i);
+                switch (es.getSymbol()){
+                    case "_":
+                        State s = new State(i+1,"a",String.format("%s",es.getName()),"normal");
+                        states[i] = s;
+                        break;
+                    case "+":
+                        State s2 = new State(i+1,"a",String.format("%s",es.getName()),"kleeneClosure");
+                        states[i] = s2;
+                        break;
+                }
+                //TODO: implement it
+            }
+            return states;
         }
     }
 
