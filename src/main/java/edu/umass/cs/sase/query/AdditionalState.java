@@ -1,6 +1,7 @@
 package edu.umass.cs.sase.query;
 
 import edu.umass.cs.sase.stream.Event;
+import net.sourceforge.jeval.EvaluationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +25,19 @@ public class AdditionalState extends State{
         initialize();
     }
 
-    private void initialize(){
+    private void initialize() {
         if (this.stateType.equalsIgnoreCase("or") || this.stateType.equalsIgnoreCase("negative")) {
             this.isKleeneClosure = false;
             this.isNegation = false;
             this.edges = new Edge[1];
             this.edges[0] = new Edge(0);
+        } else if (this.stateType.equalsIgnoreCase("kleeneClosure*")) {
+            this.isKleeneClosure = true;
+            this.isNegation = false;
+            this.edges = new Edge[3];
+            for (int i = 0; i < 3; i++) {
+                this.edges[i] = new Edge(i);
+            }
         }
     }
 
@@ -42,4 +50,5 @@ public class AdditionalState extends State{
         }
         return false;
     }
+
 }

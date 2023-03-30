@@ -34,6 +34,7 @@ public class EvaluateNewQueries {
         el.add(new EventPos("D", 4));
         el.add(new EventPos("A", 5));
         el.add(new EventPos("B", 6));
+        el.add(new EventPos("E", 7));
         Stream s = new Stream(el.size());
         List<SaseEvent> saseEvents = utils.transformToSaseEvents(el);
         s.setEvents(saseEvents.toArray(new SaseEvent[el.size()]));
@@ -57,6 +58,14 @@ public class EvaluateNewQueries {
         states[0] = new State( 1, "a", "A", "normal");
         states[1] = new AdditionalState( 2, "a", "C", "negative");
         states[2] = new State( 3, "a", "B", "normal");
+        return  states;
+    }
+
+    State[] getKleeneStarStates() {
+        State[] states = new State[3];
+        states[0] = new State( 1, "a", "A", "normal");
+        states[1] = new AdditionalState( 2, "a", "B", "kleeneClosure*");
+        states[2] = new State( 3, "a", "E", "normal");
         return  states;
     }
 
@@ -95,5 +104,24 @@ public class EvaluateNewQueries {
 
         List<Match> matches = ec.getMatches();
         Assertions.assertEquals(2,matches.size());
+    }
+
+    @Test
+    void testKleeneStarState(){
+        EngineController ec = new EngineController();
+        NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
+        nfaWrapper.setSize(3);
+        nfaWrapper.setStates(this.getKleeneStarStates());
+        ec.setNfa(new NFA(nfaWrapper));
+        ec.initializeEngine();
+        ec.setInput(this.getStream());
+        try {
+            ec.runEngine();
+        } catch (CloneNotSupportedException | EvaluationException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<Match> matches = ec.getMatches();
+        Assertions.assertEquals(7,matches.size());
     }
 }

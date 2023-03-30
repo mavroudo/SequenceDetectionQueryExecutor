@@ -147,6 +147,12 @@ public class Run  implements Cloneable{
 				this.state[i]=2;
 			}
 		}
+		for(int i=0;i<this.size;i++){
+			if(this.nfa.getStates(i).getStateType().equalsIgnoreCase("kleeneClosure*")){
+				this.state[i]=3;
+			}
+		}
+
 		
 	}
 	/**
@@ -190,21 +196,19 @@ public class Run  implements Cloneable{
 		String stateType = this.nfa.getStates()[currentState].getStateType();
 		if(stateType.equalsIgnoreCase("normal")|| stateType.equalsIgnoreCase("or")) {
 			addEventToNormalorOr(e);
-		}else if(stateType.equalsIgnoreCase("negative")){
-			if(this.nfa.getStates(currentState).checkEventType(e)){// this event belong to the negative state
-				this.containsNegative=true; // this flag will determine that this run will be removed
+		}else if(stateType.equalsIgnoreCase("negative")) {
+			if (this.nfa.getStates(currentState).checkEventType(e)) {// this event belong to the negative state
+				this.containsNegative = true; // this flag will determine that this run will be removed
 				this.currentState++;
-			}else{ // the event belongs to the next event
-				State nextState= this.nfa.getStates(currentState+1);
-				String nextStateType = nextState.getStateType(); // predicates have already been checked
-				if(nextStateType.equalsIgnoreCase("normal")|| nextStateType.equalsIgnoreCase("or")) {
-					addEventToNormalorOrNegative(e);
-				}else if(nextStateType.equalsIgnoreCase("kleeneClosure")){
-					addEventToKleeneNegative(e);
-				}else if(nextStateType.equalsIgnoreCase("negative")){
-					this.containsNegative=true;
-					this.currentState++;
-				}
+			} else { // the event belongs to the next event
+
+				this.addEventToNextState(e);
+			}
+		}else if(stateType.equalsIgnoreCase("kleeneClosure*")){
+			if (this.nfa.getStates(currentState).checkEventType(e)) {// this event belong to the kleene* state
+				addEventToKleene(e);
+			}else{// the event belongs to the next event
+				this.addEventToNextState(e);
 			}
 		}else if(stateType.equalsIgnoreCase("kleeneClosure")){
 			addEventToKleene(e);
@@ -216,6 +220,25 @@ public class Run  implements Cloneable{
 			}
 		}// if this is the first event of this run, initialize the start timestamp;
 
+
+	}
+
+
+	private void addEventToNextState(Event e){
+		State nextState = this.nfa.getStates(currentState + 1);
+		String nextStateType = nextState.getStateType(); // predicates have already been checked
+		if (nextStateType.equalsIgnoreCase("normal") || nextStateType.equalsIgnoreCase("or")) {
+			this.currentState++;
+			addEventToNormalorOr(e);
+
+		} else if (nextStateType.equalsIgnoreCase("kleeneClosure") || nextStateType.equalsIgnoreCase("kleeneClosure*")) {
+			this.currentState++;
+			addEventToKleene(e);
+
+		} else if (nextStateType.equalsIgnoreCase("negative")) {
+			this.containsNegative = true;
+			this.currentState++;
+		}
 
 	}
 
@@ -235,42 +258,8 @@ public class Run  implements Cloneable{
 		}
 	}
 
-	private void addEventToNormalorOrNegative(Event e){
-		this.eventIds.add(e.getId());
-		this.currentState++;
-		state[currentState] = 2;
-		this.count++;
-		if (currentState == this.nfa.getSize() - 1) {
-			this.setFull(true);
-		} else {
-			if (this.nfa.isNeedValueVector()) {
-				if (this.nfa.getHasValueVector()[this.currentState]) {
-					this.initializeValueVector(e);
-				}
-			}
-			this.currentState++;
-		}
-	}
-
 	private void addEventToKleene(Event e){
 		this.eventIds.add(e.getId());
-		if(this.nfa.isNeedValueVector()){
-			if(this.nfa.getHasValueVector()[this.currentState]){
-				if(this.kleeneClosureInitialized){
-					this.updateValueVector(e);
-				}else{
-					this.initializeValueVector(e);
-				}
-			}
-		}
-		this.kleeneClosureInitialized = true;
-		state[currentState] = 3;
-		this.count ++;
-	}
-
-	private void addEventToKleeneNegative(Event e){
-		this.eventIds.add(e.getId());
-		this.currentState++;
 		if(this.nfa.isNeedValueVector()){
 			if(this.nfa.getHasValueVector()[this.currentState]){
 				if(this.kleeneClosureInitialized){
