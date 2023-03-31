@@ -25,6 +25,7 @@
 package edu.umass.cs.sase.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.umass.cs.sase.query.NFA;
 import edu.umass.cs.sase.query.State;
@@ -228,6 +229,7 @@ public class Run  implements Cloneable{
 		State nextState = this.nfa.getStates(currentState + 1);
 		String nextStateType = nextState.getStateType(); // predicates have already been checked
 		if (nextStateType.equalsIgnoreCase("normal") || nextStateType.equalsIgnoreCase("or")) {
+			this.state[currentState]=2; // we are done with that one if we want to add it to the next one
 			this.currentState++;
 			addEventToNormalorOr(e);
 
@@ -246,7 +248,8 @@ public class Run  implements Cloneable{
 		this.eventIds.add(e.getId());
 		state[currentState] = 2;
 		this.count++;
-		if (currentState == this.nfa.getSize() - 1) {
+		long c = Arrays.stream(state).filter(x->x==2).count();
+		if (currentState == this.nfa.getSize() - 1 || c==this.size) {
 			this.setFull(true);
 		} else {
 			if (this.nfa.isNeedValueVector()) {

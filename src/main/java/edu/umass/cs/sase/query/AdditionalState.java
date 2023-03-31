@@ -51,4 +51,15 @@ public class AdditionalState extends State{
         return false;
     }
 
+    @Override
+    public boolean canStartWithEvent(Event e) throws EvaluationException{
+        long c = this.eventList.stream().filter(x->x.equalsIgnoreCase(e.getEventType())).count();
+        if(c==0) return false;
+        if(this.edges[0].evaluatePredicate(e,e)){
+            return true;
+        }
+        return false;
+
+    }
+
 }

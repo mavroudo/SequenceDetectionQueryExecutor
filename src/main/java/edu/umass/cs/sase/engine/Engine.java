@@ -654,32 +654,29 @@ public class Engine {
     public void evaluateEventForSkipTillNext(Event e, Run r) throws CloneNotSupportedException {
         boolean checkResult = true;
         State tempS = this.nfa.getStates(r.getCurrentState());
-        checkResult = tempS.getStateType().equalsIgnoreCase("kleeneClosure*");
         // do it when no events has been added yet and in this iteration it will add a new event
-        if (checkResult && !r.isKleeneClosureInitialized() && this.checkProceed(r)
+        if (tempS.getStateType().equalsIgnoreCase("kleeneClosure*")
+                && !r.isKleeneClosureInitialized()
+                && this.checkProceed(r)
                 && tempS.getEventType().equalsIgnoreCase(e.getEventType())) {
             Run newRun = this.cloneRun(r);
             newRun.proceed();
-            if (newRun.isComplete()) {
+            if (newRun.checkMatch()) {
                 this.outputMatch(new Match(r, this.nfa, this.buffer));
                 Profiling.totalRunLifeTime += (System.nanoTime() - r.getLifeTimeBegin());
-
-            }else {
+            } else {
                 this.activeRuns.add(newRun);
                 this.addRunByPartition(newRun);
             }
         }
+
 
         checkResult = this.checkPredicate(e, r);// check predicate
         if (checkResult) { // the predicate if ok.
             checkResult = this.checkTimeWindow(e, r); // the time window is ok
             if (checkResult) {// predicate and time window are ok
                 this.buffer.bufferEvent(e);// add the event to buffer
-                int oldState = 0;
-                int newState = 0;
-                oldState = r.getCurrentState();
                 r.addEvent(e);
-                newState = r.getCurrentState();
                 if (r.isContainsNegative()) { //negative
                     this.toDeleteRuns.add(r);
                 }
@@ -691,7 +688,9 @@ public class Engine {
                         this.toDeleteRuns.add(r);
                     }
                 }
-                if (oldState == newState && !r.isFull) { //kleene closure
+                tempS = this.nfa.getStates(r.getCurrentState());
+                if (tempS.getStateType().equalsIgnoreCase("kleeneClosure*") || tempS.getStateType().equalsIgnoreCase("kleeneClosure")) {
+//                if ((oldState == newState && !r.isFull))||  ) { //kleene closure
 //                    if (r.isFull) {
 //                        //check match and output match
 //                        if (r.checkMatch()) {
@@ -703,11 +702,12 @@ public class Engine {
                     //check proceed
                     if (this.checkProceed(r)) {
                         Run newRun = this.cloneRun(r);
-
+                        newRun.setKleeneClosureInitialized(true);
                         this.activeRuns.add(newRun);
                         this.addRunByPartition(newRun);
                         r.proceed();
-                        if (r.isComplete()) {
+//                        if (r.isComplete()) {
+                        if (r.checkMatch()) {
                             this.outputMatch(new Match(r, this.nfa, this.buffer));
                             Profiling.totalRunLifeTime += (System.nanoTime() - r.getLifeTimeBegin());
                             this.toDeleteRuns.add(r);
@@ -932,6 +932,18 @@ public class Engine {
 
     public void createNewRun(Event e) throws EvaluationException {
         if (this.nfa.getStates()[0].canStartWithEvent(e)) {
+            if (this.nfa.getStates(0).getStateType().equalsIgnoreCase("kleeneClosure*") ||
+                    this.nfa.getStates(0).getStateType().equalsIgnoreCase("kleeneClosure")) {
+                this.buffer.bufferEvent(e);
+                Run newRun = this.engineRunController.getRun();
+                newRun.initializeRun(this.nfa);
+                newRun.addEvent(e);
+                if (this.checkProceed(newRun)) {
+                    newRun.proceed();
+                    Profiling.numberOfRuns++;
+                    this.activeRuns.add(newRun);
+                }
+            }
             this.buffer.bufferEvent(e);
             Run newRun = this.engineRunController.getRun();
             newRun.initializeRun(this.nfa);
@@ -942,17 +954,24 @@ public class Engine {
 
         } else if (this.nfa.getStates(0).getStateType().equalsIgnoreCase("kleeneClosure*") ||
                 this.nfa.getStates(0).getStateType().equalsIgnoreCase("negative")) {
-            //check the next one
-            if (this.nfa.getSize() > 1) {
+            if (this.nfa.getSize() > 1) { //check the next one
                 if (this.nfa.getStates()[1].canStartWithEvent(e)) {
                     this.buffer.bufferEvent(e);
                     Run newRun = this.engineRunController.getRun();
                     newRun.initializeRun(this.nfa);
                     newRun.addEvent(e);
-                    newRun.setCurrentState(1);
-                    //this.numberOfRuns.update(1);
+                    if (this.nfa.getStates(newRun.getCurrentState()).getStateType().equalsIgnoreCase("kleeneClosure*") && this.checkProceed(newRun)) {
+                        newRun.proceed();
+                    }
+                    if (newRun.checkMatch()) {
+                        this.outputMatch(new Match(newRun, this.nfa, this.buffer));
+                    } else {
+//                    newRun.setCurrentState(1);
+                        //this.numberOfRuns.update(1);
+
+                        this.activeRuns.add(newRun);
+                    }
                     Profiling.numberOfRuns++;
-                    this.activeRuns.add(newRun);
                 }
             }
         }
@@ -1067,7 +1086,7 @@ public class Engine {
         if (s.getStateType().equalsIgnoreCase("negative")) {
             if (s.checkEventType(e)) { // this belongs to the negative
                 return s.getEdges(0).evaluatePredicate(e, r, buffer); // return if this event meets the predicates
-            } else if (nfa.getSize() > currentState) {//there is next event
+            } else if (nfa.getSize() > currentState + 1) {//there is next event
                 return checkPredicatesForNextState(currentState, e, r, s);
             }
         }
@@ -1169,7 +1188,9 @@ public class Engine {
 
         Event previousEvent = this.buffer.getEvent(previousEventId);
         State s = this.nfa.getStates(currentState);
-
+        if(r.getState()[currentState]==0 && this.nfa.getStates(currentState).getStateType().equalsIgnoreCase("kleeneClosure")){
+            return false; // not event there in order to proceed
+        }
 
         Edge proceedEdge = s.getEdges(2);
         boolean result;
