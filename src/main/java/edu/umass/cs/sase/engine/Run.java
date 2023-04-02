@@ -370,14 +370,16 @@ public class Run  implements Cloneable{
 	 * @return the current value of the value vector
 	 */
 	public int getNeededValueVector(int stateNumber, String attribute, String operation){
-		for(int i = 0; i < this.valueVector[stateNumber].length; i ++){
-			String att = this.valueVector[stateNumber][i].getAttribute();
-			if(this.valueVector[stateNumber][i].getAttribute().equals(attribute) && 
-					this.valueVector[stateNumber][i].getType().equalsIgnoreCase(operation)){
-				return this.valueVector[stateNumber][i].getValue();
+
+			for (int i = 0; i < this.valueVector[stateNumber].length; i++) {
+				String att = this.valueVector[stateNumber][i].getAttribute();
+				if (this.valueVector[stateNumber][i].getAttribute().equals(attribute) &&
+						this.valueVector[stateNumber][i].getType().equalsIgnoreCase(operation)) {
+					return this.valueVector[stateNumber][i].getValue();
+				}
 			}
-		}
-		return 0;
+			return 0;
+
 	}
 	
 	/**

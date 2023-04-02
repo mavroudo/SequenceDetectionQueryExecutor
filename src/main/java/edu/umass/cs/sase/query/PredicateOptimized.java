@@ -350,7 +350,11 @@ public class PredicateOptimized {
 				if(stateNumber - 1 == r.getCurrentState()){
 					return true;
 				}
-				evl.putVariable(tempOperand.getOriginalRepresentation(), ""+r.getNeededValueVector(stateNumber - 1, tempAttributeName, tempOperand.getAggregation()));
+				try {
+					evl.putVariable(tempOperand.getOriginalRepresentation(), "" + r.getNeededValueVector(stateNumber - 1, tempAttributeName, tempOperand.getAggregation()));
+				}catch (NullPointerException e){
+					return false;
+				}
 			}
 			}
 		

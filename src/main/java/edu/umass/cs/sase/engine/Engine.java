@@ -1146,12 +1146,12 @@ public class Engine {
         State s2 = this.nfa.getStates(currentState + 1);
         if (s2.checkEventType(e)) { //belongs to the next state
             if (!s.isKleeneClosure()) { // evaluate the predicates for the next state before returning
-                return s.getEdges(0).evaluatePredicate(e, r, buffer);
+                return s2.getEdges(0).evaluatePredicate(e, r, buffer);
             } else {
                 if (r.isKleeneClosureInitialized()) {
-                    return s.getEdges(1).evaluatePredicate(e, r, buffer);
+                    return s2.getEdges(1).evaluatePredicate(e, r, buffer);
                 } else {
-                    return s.getEdges(0).evaluatePredicate(e, r, buffer);
+                    return s2.getEdges(0).evaluatePredicate(e, r, buffer);
                 }
             }
         } else {

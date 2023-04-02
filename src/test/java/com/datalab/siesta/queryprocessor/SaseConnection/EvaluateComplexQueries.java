@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.SaseConnection;
 
+import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
+import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
@@ -313,5 +315,91 @@ public class EvaluateComplexQueries {
 
         List<Match> matches = ec.getMatches();
         Assertions.assertEquals(9,matches.size());
+    }
+
+    @Test
+    void testWithGapConstraints(){
+        ComplexPattern cp = new ComplexPattern();
+        List<EventSymbol> es = new ArrayList<>();
+        es.add(new EventSymbol("A",0,"_"));
+        es.add(new EventSymbol("C",1,"||"));
+        es.add(new EventSymbol("D",1,"_"));
+        es.add(new EventSymbol("B",2,"_"));
+        cp.setEventsWithSymbols(es);
+        List<Constraint> clist = new ArrayList<>();
+        clist.add(new GapConstraint(0,1,2));
+        cp.setConstraints(clist);
+        EngineController ec = new EngineController();
+        NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
+        nfaWrapper.setSize(3);
+        nfaWrapper.setStates(cp.getNfa());
+        ec.setNfa(new NFA(nfaWrapper));
+        ec.initializeEngine();
+        ec.setInput(this.getStream());
+        try {
+            ec.runEngine();
+        } catch (CloneNotSupportedException | EvaluationException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<Match> matches = ec.getMatches();
+        Assertions.assertEquals(1,matches.size());
+    }
+
+    @Test
+    void testNegativeGapConstraint(){
+        EngineController ec = new EngineController();
+        NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
+        nfaWrapper.setSize(3);
+        ComplexPattern cp = new ComplexPattern();
+        List<EventSymbol> es = new ArrayList<>();
+        es.add(new EventSymbol("A",0,"_"));
+        es.add(new EventSymbol("D",1,"!"));
+        es.add(new EventSymbol("E",2,"_"));
+        cp.setEventsWithSymbols(es);
+        List<Constraint> clist = new ArrayList<>();
+        clist.add(new GapConstraint(0,1,2));
+        cp.setConstraints(clist);
+        nfaWrapper.setStates(cp.getNfa());
+        ec.setNfa(new NFA(nfaWrapper));
+        ec.initializeEngine();
+        ec.setInput(this.getStream());
+        try {
+            ec.runEngine();
+        } catch (CloneNotSupportedException | EvaluationException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<Match> matches = ec.getMatches();
+        Assertions.assertEquals(2,matches.size());
+    }
+
+    @Test
+    void testKleeneStarWithGapConstraint(){
+        EngineController ec = new EngineController();
+        NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
+        nfaWrapper.setSize(3);
+        ComplexPattern cp = new ComplexPattern();
+        List<EventSymbol> es = new ArrayList<>();
+        es.add(new EventSymbol("A",0,"_"));
+        es.add(new EventSymbol("B",1,"*"));
+        es.add(new EventSymbol("E",1,"_"));
+        cp.setEventsWithSymbols(es);
+        List<Constraint> clist = new ArrayList<>();
+        clist.add(new GapConstraint(0,1,1));
+        clist.add(new GapConstraint(1,2,1));
+        cp.setConstraints(clist);
+        nfaWrapper.setStates(cp.getNfa());
+        ec.setNfa(new NFA(nfaWrapper));
+        ec.initializeEngine();
+        ec.setInput(this.getStream());
+        try {
+            ec.runEngine();
+        } catch (CloneNotSupportedException | EvaluationException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<Match> matches = ec.getMatches();
+        Assertions.assertEquals(2,matches.size());
     }
 }

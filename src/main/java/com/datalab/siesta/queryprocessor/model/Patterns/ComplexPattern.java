@@ -198,7 +198,16 @@ public class ComplexPattern extends SIESTAPattern {
         } else {
             State[] states = this.getStatesWithoutConstraints();
             for(int m = 0;m< states.length;m++){ //adding constraints
-                this.generatePredicates(m, this.constraints).forEach(states[m]::addPredicate);
+                List<String> predicates = this.generatePredicates(m, this.constraints);
+                State s = states[m];
+                for(String predicate : predicates) {
+                    if (s.getStateType().contains("kleeneClosure")) {
+                        s.getEdges(1).addPredicate(predicate);
+                    }
+                    s.getEdges(0).addPredicate(predicate);
+                }
+//                s.getEdges(0).addPredicate();
+//                this.generatePredicates(m, this.constraints).forEach(states[m]::addPredicate);
             }
             return states;
         }
@@ -213,7 +222,6 @@ public class ComplexPattern extends SIESTAPattern {
             switch (es.getSymbol()) {
                 case "_":
                     State s = new State(order, "a", String.format("%s", es.getName()), "normal");
-                    this.generatePredicates(i, this.constraints).forEach(s::addPredicate);
                     states[order-1] = s;
                     i++;
                     break;
