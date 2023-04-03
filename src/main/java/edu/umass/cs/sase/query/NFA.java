@@ -141,6 +141,7 @@ public class NFA {
 			states[0].setStart(true);
 			states[size - 1].setEnding(true);
 		}
+		this.testNegation();
 		this.compileValueVectorOptimized();
 
 	}

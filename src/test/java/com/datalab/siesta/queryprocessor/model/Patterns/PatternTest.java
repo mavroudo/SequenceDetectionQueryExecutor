@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
@@ -24,8 +25,8 @@ class PatternTest {
         events.add(es3);
         ComplexPattern p = new ComplexPattern(events);
 
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(3,pairs._2.size());
+        ExtractedPairsForPatternDetection pairs = p.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(3,pairs.getAllPairs().size());
     }
     @Test
     void extractPairsOr(){
@@ -40,8 +41,8 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5,pairs._2.size());
+        ExtractedPairsForPatternDetection pairs = p.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(5,pairs.getAllPairs().size());
     }
 
     @Test
@@ -57,8 +58,8 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(3,pairs._2.size());
+        ExtractedPairsForPatternDetection pairs = p.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(3,pairs.getAllPairs().size());
     }
 
     @Test
@@ -74,7 +75,7 @@ class PatternTest {
         events.add(es4);
         ComplexPattern p = new ComplexPattern();
         p.setEventsWithSymbols(events);
-        Tuple2<Integer,Set<EventPair>> pairs = p.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(3,pairs._2.size());
+        ExtractedPairsForPatternDetection pairs = p.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(3,pairs.getAllPairs().size());
     }
 }

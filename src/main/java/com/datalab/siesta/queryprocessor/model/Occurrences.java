@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,15 @@ public class Occurrences {
     public void clearOccurrences(boolean returnAll) { //here we can determine different selection policies
         List<Occurrence> response = new ArrayList<>() {
             {
-                add(occurrences.get(0));
+                Occurrence e = occurrences.get(0);
+                if (occurrences.size()>1){
+                    for (int i=1;i<occurrences.size();i++){ //add the occurrence with the largest size
+                        if(occurrences.get(i).getOccurrence().size()>e.getOccurrence().size()){
+                            e=occurrences.get(i);
+                        }
+                    }
+                }
+                add(e);
             }
         };
         if (!returnAll) {

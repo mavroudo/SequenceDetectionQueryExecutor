@@ -10,6 +10,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
@@ -90,15 +91,15 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return queryResponsePatternDetection;
     }
 
-    protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponse qr){
+    protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr){
         boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
-        Tuple2<Integer,Set<EventPair>> pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-        List<Count> sortedPairs = this.getStats(pairs._2, qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
-        qr = this.firstParsing(qpdw, pairs._2, combined); // checks if all are correctly set before start querying
-        if (!((QueryResponseBadRequestForDetection)qr).isEmpty()) return; //There was an original error
-        minPairs = minPairs == -1 ? pairs._1 : minPairs; //set minPairs to the one returned from the extractPairsForPatternDetection
-        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, minPairs,qpdw.getFrom(),qpdw.getTill());
+        ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
+        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
+        qr = this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
+        if (!qr.isEmpty()) return; //There was an original error
+//        minPairs = minPairs == -1 ? pairs._1 : minPairs; //set minPairs to the one returned from the extractPairsForPatternDetection
+        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, pairs,qpdw.getFrom(),qpdw.getTill());
     }
 
 
@@ -162,8 +163,9 @@ public class QueryPlanPatternDetection implements QueryPlan {
 
     protected QueryResponseBadRequestForDetection firstParsing(QueryPatternDetectionWrapper queryPatternDetectionWrapper,
                                                                Set<EventPair> pairs,
-                                                               List<Tuple2<EventPair, Count>> combined) {
-        QueryResponseBadRequestForDetection qr = new QueryResponseBadRequestForDetection();
+                                                               List<Tuple2<EventPair, Count>> combined,
+                                                               QueryResponseBadRequestForDetection qr) {
+//        QueryResponseBadRequestForDetection qr = new QueryResponseBadRequestForDetection();
         List<String> nonExistingEvents = new ArrayList<>();
         for (String eventType : queryPatternDetectionWrapper.getPattern().getEventTypes()) {
             if (!this.eventTypesInLog.contains(eventType)) {
@@ -183,10 +185,11 @@ public class QueryPlanPatternDetection implements QueryPlan {
 
 
         List<EventPair> inPairs = new ArrayList<>();
+        List<EventPair> fromCombined = combined.stream().map(x->x._1).collect(Collectors.toList());
         if (pairs.size() != combined.size()) { //find non-existing event pairs
-            for (Tuple2<EventPair, Count> c : combined) {
-                if (!pairs.contains(c._1)) {
-                    inPairs.add(c._1);
+            for (EventPair pair : pairs) {
+                if (!fromCombined.contains(pair)) {
+                    inPairs.add(pair);
                 }
             }
             if (inPairs.size() > 0) {

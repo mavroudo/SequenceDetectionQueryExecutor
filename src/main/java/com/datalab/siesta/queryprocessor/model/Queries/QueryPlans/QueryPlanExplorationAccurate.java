@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
@@ -63,17 +64,17 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
      * this pattern in the dataset
      *
      * @param pattern the original pattern we want to explore future events
-     * @param c       a count pair that contains the last event of the pattern and one possible extension
+     * @param next    a count pair that contains the last event of the pattern and one possible extension
      * @return a proposition
      */
     protected Proposition patternDetection(SimplePattern pattern, String next) {
         List<EventPos> events = pattern.getEvents();
         events.add(new EventPos(next, events.size()));
         pattern.setEvents(events); //create the pattern
-        Tuple2<Integer, Set<EventPair>> pairs = pattern.extractPairsForPatternDetection(false);
-        List<Count> sortedPairs = this.getStats(pairs._2, metadata.getLogname());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
-        imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, minPairs, null, null); //TODO:change min pairs here also
+        ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
+        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), metadata.getLogname());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
+        imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, pairs, null, null);
         List<Occurrences> occurrences = saseConnector.evaluate(pattern, imr.getEvents(), false);
         occurrences.forEach(x -> x.clearOccurrences(true));
         List<Occurrence> ocs = occurrences.stream().parallel().flatMap(x -> x.getOccurrences().stream()).collect(Collectors.toList());

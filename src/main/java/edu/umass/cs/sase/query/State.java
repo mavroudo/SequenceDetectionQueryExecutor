@@ -131,6 +131,12 @@ public class State {
 		}
 		
 	}
+
+	public boolean checkEventType(Event e){
+		return this.eventType.equalsIgnoreCase(e.getEventType());
+	}
+
+
 	/**
 	 * Adds a predicate to this state based on the given description.
 	 * @param pDescription

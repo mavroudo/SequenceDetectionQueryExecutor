@@ -174,8 +174,10 @@ public class S3Connector extends SparkDatabaseRepository {
                 .parquet(path)
                 .toJavaRDD()
                 .map((Function<Row, Trace>) row -> {
-                    long trace_id = row.getAs("trace_id");
+//                    int trace_id = row.getAs("trace_id");
+                    int trace_id = (int)(long)row.getAs("trace_id");
                     List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
+//                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(0));
                     List<EventBoth> results = new ArrayList<>();
                     for (int i = 0; i < evs.size(); i++) {
                         String event_name = evs.get(i).getString(0);

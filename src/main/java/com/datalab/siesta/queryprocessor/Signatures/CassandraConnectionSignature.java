@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.EventTypes;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -69,8 +70,8 @@ public class CassandraConnectionSignature {
 
     public List<Long> getPossibleTraceIds(ComplexPattern pattern, String logname, Signature s) {
         String path = String.format("%s_sign_idx", logname);
-        Tuple2<Integer, Set<EventPair>> pairs = pattern.extractPairsForPatternDetection(false);
-        Set<Integer> positions1 = s.findPositionsWith1(pattern.getEventTypes(), pairs._2);
+        ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
+        Set<Integer> positions1 = s.findPositionsWith1(pattern.getEventTypes(), pairs.getAllPairs());
         Iterator<Integer> iter = positions1.iterator();
         List<String> conditions = new ArrayList<>();
         while (iter.hasNext()) {

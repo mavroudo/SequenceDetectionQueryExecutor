@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;
@@ -48,21 +49,21 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
         long ts_eval = System.currentTimeMillis();
         queryResponseGroups.setOccurrences(occurrences);
         TimeStats timeStats = new TimeStats();
-        timeStats.setTimeForPrune(ts_trace-start);
-        timeStats.setTimeForValidation(ts_eval-ts_trace);
-        timeStats.setTotalTime(ts_eval-start);
+        timeStats.setTimeForPrune(ts_trace - start);
+        timeStats.setTimeForValidation(ts_eval - ts_trace);
+        timeStats.setTotalTime(ts_eval - start);
         queryResponseGroups.setTimeStats(timeStats);
         return queryResponseGroups;
     }
 
     @Override
-    protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponse qr) {
-        boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
-        Tuple2<Integer, Set<EventPair>> pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-        List<Count> sortedPairs = this.getStats(pairs._2, qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs._2, sortedPairs);
-        qr = this.firstParsing(qpdw, pairs._2, combined); // checks if all are correctly set before start querying
-        if (!((QueryResponseBadRequestForDetection) qr).isEmpty()) {//There was an original error
+    protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
+        boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
+        ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
+        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
+        this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
+        if (!qr.isEmpty()) {//There was an original error
             return;
         }
         middleResults = dbConnector.querySingleTableGroups(qpdw.getLog_name(), qpdw.getGroupConfig()
