@@ -25,8 +25,10 @@
 package edu.umass.cs.sase.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.umass.cs.sase.query.NFA;
+import edu.umass.cs.sase.query.State;
 import edu.umass.cs.sase.query.ValueVectorTemplate;
 import edu.umass.cs.sase.stream.Event;
 
@@ -104,6 +106,9 @@ public class Run  implements Cloneable{
 	
 	int beforeNegationTimestamp;
 	int afterNegationTimestamp;
+
+
+	boolean containsNegative;
 	/**
 	 * Default constructor.
 	 */
@@ -134,9 +139,21 @@ public class Run  implements Cloneable{
 		this.isComplete = false;
 		this.count = 0;
 		this.kleeneClosureInitialized = false;
+		this.containsNegative = false;
 		if(this.nfa.isNeedValueVector()){
 			this.valueVector = new ValueVectorElement[this.size][];
 		}
+		for(int i =0 ; i<this.size;i++){
+			if(this.nfa.getStates(i).getStateType().equalsIgnoreCase("negative")){
+				this.state[i]=2;
+			}
+		}
+		for(int i=0;i<this.size;i++){
+			if(this.nfa.getStates(i).getStateType().equalsIgnoreCase("kleeneClosure*")){
+				this.state[i]=3;
+			}
+		}
+
 		
 	}
 	/**
@@ -155,7 +172,7 @@ public class Run  implements Cloneable{
 		this.isFull = false;
 		this.count = 0;
 		this.kleeneClosureInitialized = false;
-		
+		this.containsNegative = false;
 	}
 	/**
 	 * Checks whether the match is ready to make a match
@@ -178,35 +195,24 @@ public class Run  implements Cloneable{
 	 */
 	public void addEvent(Event e){//1 incomplete, 2 complete ,3 kleene closure
 		String stateType = this.nfa.getStates()[currentState].getStateType();
-		if(stateType.equalsIgnoreCase("normal")){
-			this.eventIds.add(e.getId());
-			state[currentState] = 2;
-			this.count ++;
-			if(currentState == this.nfa.getSize() - 1){
-				this.setFull(true);
-			}else
-				{	
-					if(this.nfa.isNeedValueVector()	){
-						if(this.nfa.getHasValueVector()[this.currentState]){
-							this.initializeValueVector(e);
-						}
-					}
-					this.currentState ++;					
-				}
-		}else if(stateType.equalsIgnoreCase("kleeneClosure")){
-			this.eventIds.add(e.getId());
-			if(this.nfa.isNeedValueVector()){
-				if(this.nfa.getHasValueVector()[this.currentState]){
-					if(this.kleeneClosureInitialized){
-						this.updateValueVector(e);
-					}else{
-						this.initializeValueVector(e);
-					}
-				}
+		if(stateType.equalsIgnoreCase("normal")|| stateType.equalsIgnoreCase("or")) {
+			addEventToNormalorOr(e);
+		}else if(stateType.equalsIgnoreCase("negative")) {
+			if (this.nfa.getStates(currentState).checkEventType(e)) {// this event belong to the negative state
+				this.containsNegative = true; // this flag will determine that this run will be removed
+				this.currentState++;
+			} else { // the event belongs to the next event
+
+				this.addEventToNextState(e);
 			}
-			this.kleeneClosureInitialized = true;
-			state[currentState] = 3;
-			this.count ++;			
+		}else if(stateType.equalsIgnoreCase("kleeneClosure*")){
+			if (this.nfa.getStates(currentState).checkEventType(e)) {// this event belong to the kleene* state
+				addEventToKleene(e);
+			}else{// the event belongs to the next event
+				this.addEventToNextState(e);
+			}
+		}else if(stateType.equalsIgnoreCase("kleeneClosure")){
+			addEventToKleene(e);
 		}		
 		if(this.count == 1){
 			this.startTimeStamp = e.getTimestamp();
@@ -214,7 +220,63 @@ public class Run  implements Cloneable{
 				this.partitonId = e.getAttributeByName(this.nfa.getPartitionAttribute());
 			}
 		}// if this is the first event of this run, initialize the start timestamp;
+
+
 	}
+
+
+	private void addEventToNextState(Event e){
+		State nextState = this.nfa.getStates(currentState + 1);
+		String nextStateType = nextState.getStateType(); // predicates have already been checked
+		if (nextStateType.equalsIgnoreCase("normal") || nextStateType.equalsIgnoreCase("or")) {
+			this.state[currentState]=2; // we are done with that one if we want to add it to the next one
+			this.currentState++;
+			addEventToNormalorOr(e);
+
+		} else if (nextStateType.equalsIgnoreCase("kleeneClosure") || nextStateType.equalsIgnoreCase("kleeneClosure*")) {
+			this.currentState++;
+			addEventToKleene(e);
+
+		} else if (nextStateType.equalsIgnoreCase("negative")) {
+			this.containsNegative = true;
+			this.currentState++;
+		}
+
+	}
+
+	private void addEventToNormalorOr(Event e){
+		this.eventIds.add(e.getId());
+		state[currentState] = 2;
+		this.count++;
+		long c = Arrays.stream(state).filter(x->x==2).count();
+		if (currentState == this.nfa.getSize() - 1 || c==this.size) {
+			this.setFull(true);
+		} else {
+			if (this.nfa.isNeedValueVector()) {
+				if (this.nfa.getHasValueVector()[this.currentState]) {
+					this.initializeValueVector(e);
+				}
+			}
+			this.currentState++;
+		}
+	}
+
+	private void addEventToKleene(Event e){
+		this.eventIds.add(e.getId());
+		if(this.nfa.isNeedValueVector()){
+			if(this.nfa.getHasValueVector()[this.currentState]){
+				if(this.kleeneClosureInitialized){
+					this.updateValueVector(e);
+				}else{
+					this.initializeValueVector(e);
+				}
+			}
+		}
+		this.kleeneClosureInitialized = true;
+		state[currentState] = 3;
+		this.count ++;
+	}
+
 /**
  * 
  * @return the id of last selected event
@@ -308,14 +370,16 @@ public class Run  implements Cloneable{
 	 * @return the current value of the value vector
 	 */
 	public int getNeededValueVector(int stateNumber, String attribute, String operation){
-		for(int i = 0; i < this.valueVector[stateNumber].length; i ++){
-			String att = this.valueVector[stateNumber][i].getAttribute();
-			if(this.valueVector[stateNumber][i].getAttribute().equals(attribute) && 
-					this.valueVector[stateNumber][i].getType().equalsIgnoreCase(operation)){
-				return this.valueVector[stateNumber][i].getValue();
+
+			for (int i = 0; i < this.valueVector[stateNumber].length; i++) {
+				String att = this.valueVector[stateNumber][i].getAttribute();
+				if (this.valueVector[stateNumber][i].getAttribute().equals(attribute) &&
+						this.valueVector[stateNumber][i].getType().equalsIgnoreCase(operation)) {
+					return this.valueVector[stateNumber][i].getValue();
+				}
 			}
-		}
-		return 0;
+			return 0;
+
 	}
 	
 	/**
@@ -532,6 +596,12 @@ public class Run  implements Cloneable{
 	public void setAfterNegationTimestamp(int afterNegationTimestamp) {
 		this.afterNegationTimestamp = afterNegationTimestamp;
 	}
-	
 
+	public boolean isContainsNegative() {
+		return containsNegative;
+	}
+
+	public void setContainsNegative(boolean containsNegative) {
+		this.containsNegative = containsNegative;
+	}
 }
