@@ -46,4 +46,24 @@ public class StatsQueryTest {
         MvcResult results = trial.andExpect(status().isOk()).andReturn();
         String response = results.getResponse().getContentAsString();
     }
+
+    @Test
+    public void getStatsTest() throws Exception{
+        String url = "http://localhost:8080/stats";
+        SimplePattern p = new SimplePattern();
+        EventPos e = new EventPos("A",0);
+        EventPos e2 = new EventPos("B",1);
+        List<EventPos> events = new ArrayList<>();
+        events.add(e);
+        events.add(e2);
+        p.setEvents(events);
+        QueryStatsWrapper qsw = new QueryStatsWrapper();
+        qsw.setPattern(p);
+        qsw.setLog_name("test");
+        ObjectMapper Obj = new ObjectMapper();
+        String s = Obj.writeValueAsString(qsw);
+        ResultActions trial = mockMvc.perform(get(url).content(s).contentType(MediaType.APPLICATION_JSON));
+        MvcResult results = trial.andExpect(status().isOk()).andReturn();
+        String response = results.getResponse().getContentAsString();
+    }
 }
