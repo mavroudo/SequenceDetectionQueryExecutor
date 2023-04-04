@@ -140,13 +140,15 @@ public class CassConnector extends SparkDatabaseRepository{
 
     @Override
     public List<String> getEventNames(String logname) {
-        String path = String.format("%s_single", logname);
+        String path = String.format("%s_count", logname);
         return sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
-                .load().toJavaRDD()
-                .map((Function<Row, String>) r -> r.getString(0))
+                .load()
+                .select("event_a")
                 .distinct()
+                .toJavaRDD()
+                .map((Function<Row, String>) r -> r.getString(0))
                 .collect();
     }
 
