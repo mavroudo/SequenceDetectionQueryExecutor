@@ -1,4 +1,9 @@
-FROM openjdk:8-jdk-alpine
+FROM alpine:latest
+
+ENV JAVA_HOME="/usr/lib/jvm/default-jvm/"
+RUN apk add openjdk11
+
+ENV PATH=$PATH:${JAVA_HOME}/bin
 
 
 # Install maven
@@ -12,6 +17,6 @@ RUN mvn dependency:resolve
 
 # Adding source, compile and package into a fat jar
 ADD src /code/src
-RUN mvn package
+RUN mvn package -DskipTests
 
-CMD ["java", "-jar", "target/sd-delab-dev-funnel-pairs-0.1.jar"]
+CMD ["java", "-jar", "target/siesta-query-processor-2.0.jar"]
