@@ -7,7 +7,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import edu.umass.cs.sase.query.State;
-import scala.Tuple2;
+
 
 import java.util.ArrayList;
 import java.util.HashSet;

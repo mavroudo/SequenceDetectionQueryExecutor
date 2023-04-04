@@ -75,7 +75,7 @@ public class QueryResponseController {
         }
     }
 
-    @RequestMapping(path = "/detection", method = RequestMethod.GET)
+    @RequestMapping(path = "/detection", method = RequestMethod.POST)
     public ResponseEntity<String> patternDetection(@RequestBody QueryPatternDetectionWrapper qpdw) throws IOException {
 //        QueryPatternDetectionWrapper qpdw = null;
 //        try {
