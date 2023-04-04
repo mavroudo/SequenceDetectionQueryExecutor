@@ -1,7 +1,9 @@
 package com.datalab.siesta.queryprocessor.model;
 
-import net.minidev.json.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,12 +40,12 @@ public class GroupConfig implements Serializable {
         this.groups=groups;
     }
 
-    @org.codehaus.jackson.annotate.JsonIgnore
+    @JsonIgnore
     public List<Set<Long>> getGroups() {
         return groups;
     }
 
-    @org.codehaus.jackson.annotate.JsonIgnore
+    @JsonIgnore
     public String getGroupsString() {
         return groupsString;
     }

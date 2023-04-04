@@ -1,14 +1,12 @@
 package com.datalab.siesta.queryprocessor.model.Patterns;
 
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
-import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
-import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import edu.umass.cs.sase.query.State;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import scala.Tuple2;
 
 import java.util.ArrayList;

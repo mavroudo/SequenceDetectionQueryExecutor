@@ -8,7 +8,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventSymbol;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import edu.umass.cs.sase.query.AdditionalState;
 import edu.umass.cs.sase.query.State;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -3,8 +3,8 @@ package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 import com.datalab.siesta.queryprocessor.model.GroupConfig;
 import com.datalab.siesta.queryprocessor.model.Patterns.ComplexPattern;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.WhyNotMatchConfig;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.sql.Timestamp;
 

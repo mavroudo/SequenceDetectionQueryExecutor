@@ -75,14 +75,14 @@ public class QueryResponseController {
         }
     }
 
-    @RequestMapping(path = "/detection", method = RequestMethod.GET)
-    public ResponseEntity<String> patternDetection(@RequestBody String json) throws IOException {
-        QueryPatternDetectionWrapper qpdw = null;
-        try {
-            qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @RequestMapping(path = "/detection", method = RequestMethod.POST)
+    public ResponseEntity<String> patternDetection(@RequestBody QueryPatternDetectionWrapper qpdw) throws IOException {
+//        QueryPatternDetectionWrapper qpdw = null;
+//        try {
+//            qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         Metadata m = allMetadata.getMetadata(qpdw.getLog_name());
         if (m == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -94,13 +94,13 @@ public class QueryResponseController {
     }
 
     @RequestMapping(path="/explore", method = RequestMethod.GET)
-    public ResponseEntity<String> exploration(@RequestBody String json) throws IOException{
-        QueryExploreWrapper queryExploreWrapper;
-        try{
-            queryExploreWrapper = objectMapper.readValue(json, QueryExploreWrapper.class);
-        }catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public ResponseEntity<String> exploration(@RequestBody  QueryExploreWrapper queryExploreWrapper) throws IOException{
+//        QueryExploreWrapper queryExploreWrapper;
+//        try{
+//            queryExploreWrapper = objectMapper.readValue(json, QueryExploreWrapper.class);
+//        }catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         Metadata m = allMetadata.getMetadata(queryExploreWrapper.getLog_name());
         if (m == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

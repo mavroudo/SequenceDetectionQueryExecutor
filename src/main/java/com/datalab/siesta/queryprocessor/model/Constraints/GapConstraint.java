@@ -9,7 +9,7 @@ public class GapConstraint extends Constraint implements Cloneable, Serializable
     private int constraint;
 
     public GapConstraint() {
-        super();
+        super("within");
     }
 
     public GapConstraint(int posA, int posB, int constraint) {
