@@ -3,6 +3,7 @@ package com.datalab.siesta.queryprocessor.controllers;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryExploration;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryStats;
@@ -113,7 +114,11 @@ public class QueryResponseController {
         } else {
             QueryPlan qp = qpd.createQueryPlan(qpdw, m);
             QueryResponse qrs = qp.execute(qpdw);
-            return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.OK);
+            if(qrs instanceof QueryResponsePatternDetection) {
+                return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.OK);
+            }else{
+                return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.BAD_REQUEST);
+            }
         }
     }
 

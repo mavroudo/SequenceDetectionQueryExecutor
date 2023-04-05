@@ -129,9 +129,14 @@
         </dependency>
 
         <!--        Cassandra dependencies-->
+<!--        <dependency>-->
+<!--            <groupId>com.datastax.spark</groupId>-->
+<!--            <artifactId>spark-cassandra-connector_2.12</artifactId>-->
+<!--            <version>3.2.0</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.datastax.spark</groupId>
-            <artifactId>spark-cassandra-connector_2.12</artifactId>
+            <artifactId>spark-cassandra-connector-assembly_2.12</artifactId>
             <version>3.2.0</version>
         </dependency>
         <dependency>
@@ -159,6 +164,8 @@
         </dependency>
 
         <!-- S3 dependencies     -->
+
+        <!--        swagger-->
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger2</artifactId>
