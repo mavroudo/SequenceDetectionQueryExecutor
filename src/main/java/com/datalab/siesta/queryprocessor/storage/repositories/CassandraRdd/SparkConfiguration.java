@@ -60,19 +60,36 @@ public class SparkConfiguration {
 
     @Bean
     public SparkSession sparkSession() {
-        SparkSession spark = SparkSession
-                .builder()
-                .appName(appName)
-                .config("spark.cassandra.connection.host", cassandra_host)
-                .config("spark.cassandra.connection.port", cassandra_port)
-                .config("spark.cassandra.auth.username", cassandra_user)
-                .config("spark.cassandra.auth.password", cassandra_pass)
-                .config("spark.cassandra.connection.timeoutMS", "60000")
-                .config("spark.cassandra.connection.keepAliveMS", "60000")
-//                .config("spark.cassandra.input.split.sizeInMB","100")
-//                .config("spark.cassandra.connection.heartbeat.timeout_ms", "60000")
-                .master(masterUri)
-                .getOrCreate();
+        String[] jars = new String[1];
+        jars[0]="/resources/spark-cassandra-connector_2.12-3.2.0.jar";
+        SparkConf sf = new SparkConf()
+                .setAppName(appName)
+                .setMaster(masterUri)
+                .set("spark.cassandra.connection.host", cassandra_host)
+                .set("spark.cassandra.connection.port", cassandra_port)
+                .set("spark.cassandra.auth.username", cassandra_user)
+                .set("spark.cassandra.auth.password", cassandra_pass)
+                .set("spark.cassandra.connection.timeoutMS", "60000")
+                .set("spark.cassandra.connection.keepAliveMS", "60000")
+                .setJars(jars);
+
+        SparkSession spark = SparkSession.builder().config(sf).getOrCreate();
+
+//        SparkSession spark = SparkSession
+//                .builder()
+//                .appName(appName)
+//                .config("spark.cassandra.connection.host", cassandra_host)
+//                .config("spark.cassandra.connection.port", cassandra_port)
+//                .config("spark.cassandra.auth.username", cassandra_user)
+//                .config("spark.cassandra.auth.password", cassandra_pass)
+//                .config("spark.cassandra.connection.timeoutMS", "60000")
+//                .config("spark.cassandra.connection.keepAliveMS", "60000")
+////                .config("spark.cassandra.input.split.sizeInMB","100")
+////                .config("spark.cassandra.connection.heartbeat.timeout_ms", "60000")
+//                .master(masterUri)
+//                .getOrCreate();
+//
+//        spark.sparkContext().addJar("resources/spark-cassandra-connector_2.12-3.2.0.jar");
 
 
 //        SparkSession spark = SparkSession
