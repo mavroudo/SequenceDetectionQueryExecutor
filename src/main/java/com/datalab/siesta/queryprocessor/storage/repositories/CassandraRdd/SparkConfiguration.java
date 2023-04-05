@@ -60,8 +60,9 @@ public class SparkConfiguration {
 
     @Bean
     public SparkSession sparkSession() {
-        String[] jars = new String[1];
+        String[] jars = new String[2];
         jars[0]="./src/main/resources/spark-cassandra-connector_2.12-3.2.0.jar";
+        jars[1]="./src/main/resources/java-driver-core-4.12.1.jar";
         SparkConf sf = new SparkConf()
                 .setAppName(appName)
                 .setMaster(masterUri)
