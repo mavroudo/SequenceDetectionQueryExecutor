@@ -69,7 +69,7 @@ public class SparkConfiguration {
                 .config("spark.cassandra.auth.password", cassandra_pass)
                 .config("spark.cassandra.connection.timeoutMS", "60000")
                 .config("spark.cassandra.connection.keepAliveMS", "60000")
-                .config("spark.cassandra.input.split.sizeInMB","100")
+//                .config("spark.cassandra.input.split.sizeInMB","100")
 //                .config("spark.cassandra.connection.heartbeat.timeout_ms", "60000")
                 .master(masterUri)
                 .getOrCreate();
