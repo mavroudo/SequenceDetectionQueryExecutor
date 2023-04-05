@@ -17,6 +17,6 @@ RUN mvn dependency:resolve
 
 # Adding source, compile and package into a fat jar
 ADD src /code/src
-RUN mvn package -DskipTests
+RUN mvn clean compile assembly:single -f pom.xml -DskipTests
 
-CMD ["java", "-jar", "target/siesta-query-processor-2.0.jar"]
+CMD ["java", "-jar", "target/siesta-query-processor-2.0-jar-with-dependencies.jar"]
