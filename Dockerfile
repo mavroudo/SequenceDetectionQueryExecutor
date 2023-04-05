@@ -21,4 +21,4 @@ RUN mvn clean compile package -f pom.xml -DskipTests
 RUN    wget  https://repo1.maven.org/maven2/com/datastax/spark/spark-cassandra-connector_2.12/3.2.0/spark-cassandra-connector_2.12-3.2.0.jar \
     mv spark-cassandra-connector_2.12-3.2.0.jar /code/src/main/resources
 CMD ["java", "-jar", "target/siesta-query-processor-2.0.jar"]
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+#ENTRYPOINT ["tail", "-f", "/dev/null"]
