@@ -160,7 +160,7 @@ public class S3Connector extends SparkDatabaseRepository {
     public List<String> getEventNames(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/count.parquet/");
         return sparkSession.read().parquet(path)
-                .select("event_a")
+                .select("eventA")
                 .distinct()
                 .toJavaRDD()
                 .map((Function<Row, String>) row -> row.getString(0))
