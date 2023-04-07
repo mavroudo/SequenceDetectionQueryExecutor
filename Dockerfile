@@ -10,7 +10,7 @@ ENV PATH=$PATH:${JAVA_HOME}/bin
 
 
 # Install maven
-RUN apk add --no-cache maven
+RUN #apk add --no-cache maven
 
 WORKDIR /code
 
