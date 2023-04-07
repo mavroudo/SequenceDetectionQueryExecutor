@@ -20,5 +20,5 @@ ADD src /code/src
 RUN mvn clean compile package -f pom.xml -DskipTests
 
 
-CMD ["java", "-jar", "target/siesta-query-processor-2.0.jar"]
+CMD ["java", "-Xmx30g ","-jar", "target/siesta-query-processor-2.0.jar"]
 #ENTRYPOINT ["tail", "-f", "/dev/null"]
