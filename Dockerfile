@@ -1,9 +1,10 @@
-FROM alpine:latest
+FROM ubuntu:20.10
 
 ENV JAVA_HOME="/usr/lib/jvm/default-jvm/"
 RUN apk add openjdk11
 
 ENV PATH=$PATH:${JAVA_HOME}/bin
+
 
 
 # Install maven
