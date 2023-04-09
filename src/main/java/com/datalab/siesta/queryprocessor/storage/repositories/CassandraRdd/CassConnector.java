@@ -232,11 +232,16 @@ public class CassConnector extends SparkDatabaseRepository{
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
 
 
+//        String eventPairsQuery = pairs.stream()
+//                .map(pair -> String.format("(event_a = '%s' AND event_b = '%s')", pair.getEventA().getName(), pair.getEventB().getName()))
+//                .collect(Collectors.joining(" OR "));
+
         CassandraConnector connector = CassandraConnector.apply(sparkSession.sparkContext().getConf());
 
         return javaFunctions(this.sparkSession.sparkContext())
                 .cassandraTable("siesta", path, mapRowTo(IndexRow.class))
                 .withConnector(connector)
+//                .where("("+eventPairsQuery+")")
                 .filter((Function<IndexRow, Boolean>) r->r.validate(pairs))
                 .filter((Function<IndexRow, Boolean>) row -> {
                     if (bFrom.value() != null && bFrom.value().after(row.getEnd())) return false;
