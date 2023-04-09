@@ -230,51 +230,68 @@ public class CassConnector extends SparkDatabaseRepository{
         Broadcast<String> mode = javaSparkContext.broadcast(metadata.getMode());
         Broadcast<Timestamp> bFrom = javaSparkContext.broadcast(from);
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
-        return sparkSession.read()
-                .format("org.apache.spark.sql.cassandra")
-                .options(Map.of("table", path, "keyspace", "siesta"))
-//                .option("spark.cassandra.connection.connections_per_executor_max_local","2")
-                .load().toJavaRDD()
-                .filter((Function<Row, Boolean>) row -> {
-                    Timestamp start = row.getAs("start");
-                    Timestamp end = row.getAs("end");
-                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
-                    if (bTill.value() != null && bTill.value().before(start)) return false;
-                    return true;
-                })
-                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
-                    String eventA = row.getAs("event_a");
-                    String eventB = row.getAs("event_b");
-                    List<String> ocs = JavaConverters.seqAsJavaList(row.getSeq(4));
-                    List<IndexPair> indexPairs = new ArrayList<>();
-                    for (String trace : ocs) {
-                        String[] split = trace.split("\\|\\|");
-                        long trace_id = Long.parseLong(split[0]);
-                        String[] p_split = split[1].split(",");
-                        for (String p : p_split) {
-                            String[] f = p.split("\\|");
-                            if(mode.value().equals("timestamps")) {
-                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Timestamp.valueOf(f[0]),
-                                        Timestamp.valueOf(f[1])));
-                            }else{
-                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Integer.parseInt(f[0]),
-                                        Integer.parseInt(f[1])));
-                            }
 
-                        }
-                    }
-                    return indexPairs.iterator();
-                })
-                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
-                .filter((Function<IndexPair, Boolean>) p->{
-                    if(mode.value().equals("timestamps")) {
-                        if(bTill.value()!=null && p.getTimestampA().after(bTill.value())) return false;
-                        if(bFrom.value()!=null && p.getTimestampB().before(bFrom.value())) return false;
-                    }
-                    //If from and till has been set we cannot check it here
+
+        CassandraConnector connector = CassandraConnector.apply(sparkSession.sparkContext().getConf());
+
+        return javaFunctions(this.sparkSession.sparkContext())
+                .cassandraTable("siesta", path, mapRowTo(IndexRow.class))
+                .withConnector(connector)
+                .filter((Function<IndexRow, Boolean>) r->r.validate(pairs))
+                .filter((Function<IndexRow, Boolean>) row -> {
+                    if (bFrom.value() != null && bFrom.value().after(row.getEnd())) return false;
+                    if (bTill.value() != null && bTill.value().before(row.getStart())) return false;
                     return true;
                 })
+                .flatMap((FlatMapFunction<IndexRow, IndexPair>) row-> row.extractOccurrences(mode,bFrom,bTill).iterator())
                 .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
+
+
+
+//        return sparkSession.read()
+//                .format("org.apache.spark.sql.cassandra")
+//                .options(Map.of("table", path, "keyspace", "siesta"))
+//                .load().toJavaRDD()
+//                .filter((Function<Row, Boolean>) row -> {
+//                    Timestamp start = row.getAs("start");
+//                    Timestamp end = row.getAs("end");
+//                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
+//                    if (bTill.value() != null && bTill.value().before(start)) return false;
+//                    return true;
+//                })
+//                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
+//                    String eventA = row.getAs("event_a");
+//                    String eventB = row.getAs("event_b");
+//                    List<String> ocs = JavaConverters.seqAsJavaList(row.getSeq(4));
+//                    List<IndexPair> indexPairs = new ArrayList<>();
+//                    for (String trace : ocs) {
+//                        String[] split = trace.split("\\|\\|");
+//                        long trace_id = Long.parseLong(split[0]);
+//                        String[] p_split = split[1].split(",");
+//                        for (String p : p_split) {
+//                            String[] f = p.split("\\|");
+//                            if(mode.value().equals("timestamps")) {
+//                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Timestamp.valueOf(f[0]),
+//                                        Timestamp.valueOf(f[1])));
+//                            }else{
+//                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Integer.parseInt(f[0]),
+//                                        Integer.parseInt(f[1])));
+//                            }
+//
+//                        }
+//                    }
+//                    return indexPairs.iterator();
+//                })
+//                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
+//                .filter((Function<IndexPair, Boolean>) p->{
+//                    if(mode.value().equals("timestamps")) {
+//                        if(bTill.value()!=null && p.getTimestampA().after(bTill.value())) return false;
+//                        if(bFrom.value()!=null && p.getTimestampB().before(bFrom.value())) return false;
+//                    }
+//                    //If from and till has been set we cannot check it here
+//                    return true;
+//                })
+//                .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
     }
 
 //    @Override
