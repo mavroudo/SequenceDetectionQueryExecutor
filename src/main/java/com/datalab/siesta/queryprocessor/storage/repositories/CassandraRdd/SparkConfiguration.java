@@ -69,7 +69,9 @@ public class SparkConfiguration {
                 .set("spark.cassandra.auth.password", cassandra_pass)
                 .set("spark.cassandra.connection.timeoutMS", "60000")
                 .set("spark.cassandra.connection.keepAliveMS", "60000")
-                .set("spark.driver.memory", "30g");
+                .set("spark.cassandra.read.timeoutMS", "120000");
+
+//                .set("spark.driver.memory", "30g");
 
         SparkSession spark = SparkSession.builder().config(sf).getOrCreate();
 
