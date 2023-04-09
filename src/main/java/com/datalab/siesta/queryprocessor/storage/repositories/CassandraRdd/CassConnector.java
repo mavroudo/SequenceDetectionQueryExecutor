@@ -233,7 +233,7 @@ public class CassConnector extends SparkDatabaseRepository{
         return sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
-                .option("spark.cassandra.connection.connections_per_executor_max_local","2")
+//                .option("spark.cassandra.connection.connections_per_executor_max_local","2")
                 .load().toJavaRDD()
                 .filter((Function<Row, Boolean>) row -> {
                     Timestamp start = row.getAs("start");
