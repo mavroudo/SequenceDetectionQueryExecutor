@@ -9,6 +9,8 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
 import com.datastax.spark.connector.cql.CassandraConnector;
 import com.datastax.spark.connector.japi.CassandraRow;
 import com.datastax.spark.connector.rdd.ReadConf;
@@ -43,7 +45,7 @@ import static com.datastax.spark.connector.japi.CassandraJavaUtil.*;
         havingValue = "cassandra-rdd"
 )
 @ComponentScan
-public class CassConnector extends SparkDatabaseRepository{
+public class CassConnector extends SparkDatabaseRepository {
 
 
     @Autowired
@@ -98,7 +100,7 @@ public class CassConnector extends SparkDatabaseRepository{
         List<Count> l = sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
-                .option("spark.cassandra.read.timeoutMS","120000")
+                .option("spark.cassandra.read.timeoutMS", "120000")
                 .load().toJavaRDD()
                 .filter((Function<Row, Boolean>) row -> bEventName.value().equals(row.getString(0)))
                 .flatMap((FlatMapFunction<Row, Count>) r -> {
@@ -162,12 +164,12 @@ public class CassConnector extends SparkDatabaseRepository{
 //    }
 
     @Override
-    public List<String> getEventNames(String logname){
+    public List<String> getEventNames(String logname) {
         String path = String.format("%s_count", logname);
         JavaRDD<String> cassandraRowsRDD = javaFunctions(this.sparkSession.sparkContext())
                 .cassandraTable("siesta", path)
                 .select("event_a")
-                .map((Function<CassandraRow, String>) row-> row.getString(0));
+                .map((Function<CassandraRow, String>) row -> row.getString(0));
         List<String> s = cassandraRowsRDD.collect();
         return s;
     }
@@ -232,71 +234,39 @@ public class CassConnector extends SparkDatabaseRepository{
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
 
 
-//        String eventPairsQuery = pairs.stream()
-//                .map(pair -> String.format("(event_a = '%s' AND event_b = '%s')", pair.getEventA().getName(), pair.getEventB().getName()))
-//                .collect(Collectors.joining(" OR "));
+        String eventPairsQuery = pairs.stream()
+                .map(pair -> String.format("token(\"event_a\",\"event_b\")=token('%s','%s')", pair.getEventA().getName(), pair.getEventB().getName()))
+                .collect(Collectors.joining(" or "));
+
 
         CassandraConnector connector = CassandraConnector.apply(sparkSession.sparkContext().getConf());
+        List<String> queries = pairs.stream().map(p -> {
+            return String.format("select * from siesta.%s where token(\"event_a\",\"event_b\")=token('%s','%s');",
+                    path, p.getEventA().getName(), p.getEventB().getName());
+        }).collect(Collectors.toList());
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT;
 
-        return javaFunctions(this.sparkSession.sparkContext())
-                .cassandraTable("siesta", path, mapRowTo(IndexRow.class))
-                .withConnector(connector)
-//                .where("("+eventPairsQuery+")")
-                .filter((Function<IndexRow, Boolean>) r->r.validate(pairs))
-                .filter((Function<IndexRow, Boolean>) row -> {
+        List<IndexRow> indexRows = new ArrayList<>();
+        for (String query : queries) {
+            connector.withSessionDo(session -> session.execute(query)).all().stream().map(row -> {
+                Timestamp tStart = Timestamp.from(row.getInstant("start"));
+                Timestamp tEnd = Timestamp.from(row.getInstant("end"));
+                return new IndexRow(row.getString("event_a"), row.getString("event_b"),
+                        tStart, tEnd,
+                        row.getList("occurrences", String.class));
+            }).forEach(indexRows::add);
+        }
+
+        JavaRDD<IndexRow> rddIndexRow = javaSparkContext.parallelize(indexRows);
+
+        return rddIndexRow.filter((Function<IndexRow, Boolean>) row -> {
                     if (bFrom.value() != null && bFrom.value().after(row.getEnd())) return false;
                     if (bTill.value() != null && bTill.value().before(row.getStart())) return false;
                     return true;
                 })
-                .flatMap((FlatMapFunction<IndexRow, IndexPair>) row-> row.extractOccurrences(mode,bFrom,bTill).iterator())
+                .flatMap((FlatMapFunction<IndexRow, IndexPair>) row -> row.extractOccurrences(mode, bFrom, bTill).iterator())
                 .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
 
-
-
-//        return sparkSession.read()
-//                .format("org.apache.spark.sql.cassandra")
-//                .options(Map.of("table", path, "keyspace", "siesta"))
-//                .load().toJavaRDD()
-//                .filter((Function<Row, Boolean>) row -> {
-//                    Timestamp start = row.getAs("start");
-//                    Timestamp end = row.getAs("end");
-//                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
-//                    if (bTill.value() != null && bTill.value().before(start)) return false;
-//                    return true;
-//                })
-//                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
-//                    String eventA = row.getAs("event_a");
-//                    String eventB = row.getAs("event_b");
-//                    List<String> ocs = JavaConverters.seqAsJavaList(row.getSeq(4));
-//                    List<IndexPair> indexPairs = new ArrayList<>();
-//                    for (String trace : ocs) {
-//                        String[] split = trace.split("\\|\\|");
-//                        long trace_id = Long.parseLong(split[0]);
-//                        String[] p_split = split[1].split(",");
-//                        for (String p : p_split) {
-//                            String[] f = p.split("\\|");
-//                            if(mode.value().equals("timestamps")) {
-//                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Timestamp.valueOf(f[0]),
-//                                        Timestamp.valueOf(f[1])));
-//                            }else{
-//                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Integer.parseInt(f[0]),
-//                                        Integer.parseInt(f[1])));
-//                            }
-//
-//                        }
-//                    }
-//                    return indexPairs.iterator();
-//                })
-//                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
-//                .filter((Function<IndexPair, Boolean>) p->{
-//                    if(mode.value().equals("timestamps")) {
-//                        if(bTill.value()!=null && p.getTimestampA().after(bTill.value())) return false;
-//                        if(bFrom.value()!=null && p.getTimestampB().before(bFrom.value())) return false;
-//                    }
-//                    //If from and till has been set we cannot check it here
-//                    return true;
-//                })
-//                .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
     }
 
 //    @Override
