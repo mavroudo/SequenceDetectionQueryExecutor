@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
+import com.datalab.siesta.queryprocessor.Application;
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
@@ -21,6 +22,8 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import com.datalab.siesta.queryprocessor.model.TimeStats;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -75,6 +78,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
         this.getMiddleResults(qpdw,firstCheck);
+        Logger logger = LoggerFactory.getLogger(Application.class);
+        logger.info(String.format("Retrieve event pairs: %d ms",System.currentTimeMillis()-start));
         if(!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
         checkIfRequiresDataFromSequenceTable(qpdw); //check if data is required from the sequence table and gets them
@@ -112,12 +117,15 @@ public class QueryPlanPatternDetection implements QueryPlan {
     }
 
     protected void checkIfRequiresDataFromSequenceTable(QueryPatternDetectionWrapper qpdw){
+        long start = System.currentTimeMillis();
         if (this.requiresQueryToDB(qpdw)) { // we need to get from SeqTable
             //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
             List<Occurrences> ocs = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), true);
             List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
             Map<Long,List<Event>> e = this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name(),qpdw.getFrom(),qpdw.getTill());
             imr.setEvents(e);
+            Logger logger = LoggerFactory.getLogger(Application.class);
+            logger.info(String.format("Retrieve traces: %d ms",System.currentTimeMillis()-start));
         }
     }
 

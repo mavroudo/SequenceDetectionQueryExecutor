@@ -30,7 +30,7 @@ public class SetContainmentController {
     private QuerySetContainment querySetContainment;
 
 
-    @RequestMapping(path = "detect", method = RequestMethod.GET)
+    @RequestMapping(path = "detect", method = RequestMethod.POST)
     public ResponseEntity<String> detect(@RequestBody QueryPatternDetectionWrapper qpdw ) throws IOException {
 //        QueryPatternDetectionWrapper qpdw = null;
 //        try {
