@@ -15,10 +15,10 @@ services:
         cassandra.max_queue_size: 1024
         cassandra.connection_timeout: 30000
         cassandra.read_timeout: 30000
-        cassandra.contactpoints: anaconda.csd.auth.gr
-        cassandra.port: 9042
-        cassandra.user: cassandra
-        cassandra.password: cassandra
+        cassandra.contactpoints: 
+        cassandra.port: 
+        cassandra.user: 
+        cassandra.password: 
         server.port: 8080
     volumes:
       - ./build:/root/.m2
