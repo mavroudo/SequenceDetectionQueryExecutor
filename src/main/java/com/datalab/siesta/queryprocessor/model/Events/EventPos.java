@@ -16,6 +16,7 @@ public class EventPos extends Event implements Serializable, Comparable, Cloneab
 
     public EventPos() {
         this.position=-1;
+        this.traceID=-1;
     }
 
     public EventPos(String name, int pos) {

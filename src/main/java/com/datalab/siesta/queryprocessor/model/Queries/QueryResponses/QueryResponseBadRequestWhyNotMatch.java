@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class QueryResponseBadRequestWhyNotMatch extends QueryResponseBadRequestForDetection{
 

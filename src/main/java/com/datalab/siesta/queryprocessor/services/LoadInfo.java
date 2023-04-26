@@ -33,13 +33,13 @@ public class LoadInfo {
         }
         return new LoadedMetadata(m);
     }
-//
-//    @Bean
-//    public LoadedEventTypes getAllEventTypes(){
-//        Map<String, List<String>> response = new HashMap<>();
-//        for (String l : dbConnector.findAllLongNames()){
-//            response.put(l,dbConnector.getEventNames(l));
-//        }
-//        return new LoadedEventTypes(response);
-//    }
+
+    @Bean
+    public LoadedEventTypes getAllEventTypes(){
+        Map<String, List<String>> response = new HashMap<>();
+        for (String l : dbConnector.findAllLongNames()){
+            response.put(l,dbConnector.getEventNames(l));
+        }
+        return new LoadedEventTypes(response);
+    }
 }

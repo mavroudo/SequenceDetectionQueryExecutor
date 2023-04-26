@@ -39,8 +39,10 @@ class QueryExplorationTest {
 
     @Test
     void testExplorationFast() {
-        QueryExploreWrapper queryExploreWrapper = new QueryExploreWrapper("test",this.getPattern());
-        Metadata m = dbConnector.getMetadata(queryExploreWrapper.getLogname());
+        QueryExploreWrapper queryExploreWrapper = new QueryExploreWrapper();
+        queryExploreWrapper.setLog_name("test");
+        queryExploreWrapper.setPattern(this.getPattern());
+        Metadata m = dbConnector.getMetadata(queryExploreWrapper.getLog_name());
         QueryPlan queryPlan = queryExploration.createQueryPlan(queryExploreWrapper,m);
         QueryResponseExploration queryResponse = (QueryResponseExploration) queryPlan.execute(queryExploreWrapper);
         assertEquals(4, queryResponse.getPropositions().size());
@@ -48,9 +50,11 @@ class QueryExplorationTest {
 
     @Test
     void testExplorationAccurate() {
-        QueryExploreWrapper queryExploreWrapper = new QueryExploreWrapper("test",this.getPattern());
+        QueryExploreWrapper queryExploreWrapper = new QueryExploreWrapper();
+        queryExploreWrapper.setLog_name("test");
+        queryExploreWrapper.setPattern(this.getPattern());
         queryExploreWrapper.setMode("accurate");
-        Metadata m = dbConnector.getMetadata(queryExploreWrapper.getLogname());
+        Metadata m = dbConnector.getMetadata(queryExploreWrapper.getLog_name());
         QueryPlan queryPlan = queryExploration.createQueryPlan(queryExploreWrapper,m);
         QueryResponseExploration queryResponse = (QueryResponseExploration) queryPlan.execute(queryExploreWrapper);
         assertEquals(3, queryResponse.getPropositions().size());
@@ -58,10 +62,12 @@ class QueryExplorationTest {
 
     @Test
     void testExplorationHybrid() {
-        QueryExploreWrapper queryExploreWrapper = new QueryExploreWrapper("test",this.getPattern());
+        QueryExploreWrapper queryExploreWrapper = new QueryExploreWrapper();
+        queryExploreWrapper.setLog_name("test");
+        queryExploreWrapper.setPattern(this.getPattern());
         queryExploreWrapper.setMode("hybrid");
         queryExploreWrapper.setK(3);
-        Metadata m = dbConnector.getMetadata(queryExploreWrapper.getLogname());
+        Metadata m = dbConnector.getMetadata(queryExploreWrapper.getLog_name());
         QueryPlan queryPlan = queryExploration.createQueryPlan(queryExploreWrapper,m);
         QueryResponseExploration queryResponse = (QueryResponseExploration) queryPlan.execute(queryExploreWrapper);
         assertEquals(2, queryResponse.getPropositions().size());

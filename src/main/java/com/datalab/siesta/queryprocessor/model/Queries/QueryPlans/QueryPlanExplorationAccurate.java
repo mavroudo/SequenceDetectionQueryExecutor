@@ -43,7 +43,7 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
         QueryExploreWrapper queryExploreWrapper = (QueryExploreWrapper) qw;
         List<EventPos> events = queryExploreWrapper.getPattern().getEvents();
         String lastEvent = events.get(events.size() - 1).getName();
-        List<Count> freqs = dbConnector.getCountForExploration(queryExploreWrapper.getLogname(), lastEvent);
+        List<Count> freqs = dbConnector.getCountForExploration(queryExploreWrapper.getLog_name(), lastEvent);
         List<Proposition> props = new ArrayList<>();
         for (Count freq : freqs) {
             try {

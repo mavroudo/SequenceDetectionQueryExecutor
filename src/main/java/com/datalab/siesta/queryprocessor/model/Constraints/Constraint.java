@@ -1,10 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Constraints;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonSubTypes;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 import java.io.Serializable;
 
@@ -28,14 +25,35 @@ public abstract class Constraint implements Cloneable, Serializable {
     @JsonProperty("type")
     protected String method; //It will be set to atleast or within
 
-    public Constraint() {
-        method="within";
+//    public Constraint() {
+//        System.out.println("invoke constructor 1");
+//        method="within";
+//    }
+    public Constraint(String method){
+        this.method=method;
     }
 
     public Constraint(int posA, int posB) {
         this.posA = posA;
         this.posB = posB;
         method="within";
+    }
+
+    @JsonCreator
+    public static Constraint create(
+            @JsonProperty("type") String method,
+            @JsonProperty("posA") int posA,
+            @JsonProperty("posB") int posB,
+            @JsonProperty("constraint_type") String constraintType,
+            @JsonProperty("constraint") long constraint) {
+        System.out.println("invoke constructor 2");
+        if ("timeConstraint".equals(constraintType)) {
+            return new TimeConstraint(posA, posB,constraint);
+        } else if ("gapConstraint".equals(constraintType)) {
+            return new GapConstraint(posA, posB, (int) constraint);
+        } else {
+            throw new IllegalArgumentException("Unknown constraint type: " + method);
+        }
     }
 
     public int getPosA() {

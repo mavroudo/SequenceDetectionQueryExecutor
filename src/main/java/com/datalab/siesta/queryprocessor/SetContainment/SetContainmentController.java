@@ -30,14 +30,14 @@ public class SetContainmentController {
     private QuerySetContainment querySetContainment;
 
 
-    @RequestMapping(path = "detect", method = RequestMethod.GET)
-    public ResponseEntity<String> detect(@RequestBody String json) throws IOException {
-        QueryPatternDetectionWrapper qpdw = null;
-        try {
-            qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @RequestMapping(path = "detect", method = RequestMethod.POST)
+    public ResponseEntity<String> detect(@RequestBody QueryPatternDetectionWrapper qpdw ) throws IOException {
+//        QueryPatternDetectionWrapper qpdw = null;
+//        try {
+//            qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         QueryPlan queryPlan = querySetContainment.createQueryPlan(qpdw,null);
         QueryResponse queryResponse = queryPlan.execute(qpdw);
         return new ResponseEntity<>(objectMapper.writeValueAsString(queryResponse), HttpStatus.OK);

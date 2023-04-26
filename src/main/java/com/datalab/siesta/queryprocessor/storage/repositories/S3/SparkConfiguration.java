@@ -65,6 +65,7 @@ public class SparkConfiguration {
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.connection.ssl.enabled", "true");
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.bucket.create.enabled", "true");
         spark.conf().set("spark.sql.sources.partitionOverwriteMode", "dynamic");
+//        spark.conf().set("spark.executor.memory", "30g");
         return spark;
     }
 

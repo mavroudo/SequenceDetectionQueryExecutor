@@ -2,3 +2,4 @@
 target/classes/*
 target/test-classes/*
 target/*
+src/main/resources/lib/*.jar

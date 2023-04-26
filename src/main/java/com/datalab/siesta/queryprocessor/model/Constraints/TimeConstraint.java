@@ -15,7 +15,8 @@ public class TimeConstraint extends Constraint implements Cloneable, Serializabl
     private String granularity;
 
     public TimeConstraint() {
-        super();
+        super("within");
+        granularity="seconds";
     }
 
     public TimeConstraint(int posA, int posB, long constraint) {
