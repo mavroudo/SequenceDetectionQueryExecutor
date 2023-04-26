@@ -4,25 +4,19 @@ import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 
 public class QueryExploreWrapper extends QueryWrapper {
 
-    private String logname;
     private SimplePattern pattern;
     private String mode;
     private int k;
 
-    public QueryExploreWrapper(String logname, SimplePattern simplePattern) {
+    public QueryExploreWrapper() {
+    }
+
+    public QueryExploreWrapper(SimplePattern simplePattern) {
         k = 1;
         mode = "fast";
         this.pattern = simplePattern;
-        this.logname = logname;
     }
 
-    public String getLogname() {
-        return logname;
-    }
-
-    public void setLogname(String logname) {
-        this.logname = logname;
-    }
 
     public SimplePattern getPattern() {
         return pattern;
