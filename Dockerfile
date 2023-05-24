@@ -1,8 +1,6 @@
 FROM ubuntu:20.04
 
 #ENV JAVA_HOME="/usr/lib/jvm/default-jvm/"
-RUN #apk add openjdk11
-
 
 RUN apt-get update && apt-get install -y openjdk-11-jdk maven
 ENV PATH=$PATH:${JAVA_HOME}/bin
