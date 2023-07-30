@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
+import org.apache.spark.api.java.JavaRDD;
 import scala.Tuple2;
 
 import java.sql.Timestamp;
@@ -36,5 +37,8 @@ public interface DatabaseRepository {
     Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes);
 
     List<Count> getCountForExploration(String logname, String event);
+
+    // Below are for Declare //
+    JavaRDD<Trace> querySequenceTable(String logname);
 
 }
