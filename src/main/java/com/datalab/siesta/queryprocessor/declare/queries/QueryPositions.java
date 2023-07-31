@@ -1,4 +1,8 @@
-package com.datalab.siesta.queryprocessor.declare.queryPlans;
+package com.datalab.siesta.queryprocessor.declare.queries;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanBoth;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanFirst;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanLast;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPosition;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

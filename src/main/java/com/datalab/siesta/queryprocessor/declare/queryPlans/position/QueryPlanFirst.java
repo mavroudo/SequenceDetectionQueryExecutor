@@ -1,20 +1,16 @@
-package com.datalab.siesta.queryprocessor.declare.queryPlans;
+package com.datalab.siesta.queryprocessor.declare.queryPlans.position;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponsePosition;
-import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.broadcast.Broadcast;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import scala.Tuple2;
-
-import java.util.List;
 
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)

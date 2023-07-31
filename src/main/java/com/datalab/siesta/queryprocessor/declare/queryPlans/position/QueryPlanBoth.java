@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.declare.queryPlans;
+package com.datalab.siesta.queryprocessor.declare.queryPlans.position;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponsePosition;
@@ -37,7 +37,7 @@ public class QueryPlanBoth extends QueryPlanPosition {
         Broadcast<Double> bSupport = this.javaSparkContext.broadcast(support);
         Broadcast<Long> bTraces = this.javaSparkContext.broadcast(totalTraces);
         //get all sequences from the sequence table
-        JavaRDD<Trace> traces = dbConnector.querySequenceTable(log_database);
+        JavaRDD<Trace> traces = dbConnector.querySequenceTableDeclare(log_database);
 
         JavaRDD<Tuple2<String, String>> events = traces.map(x -> new Tuple2<>(x.getEvents().get(0).getName(), x.getEvents().get(x.getEvents().size() - 1).getName()));
         events.persist(StorageLevel.MEMORY_AND_DISK());

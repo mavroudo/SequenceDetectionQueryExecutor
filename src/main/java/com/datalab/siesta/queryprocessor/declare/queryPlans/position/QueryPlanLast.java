@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.declare.queryPlans;
+package com.datalab.siesta.queryprocessor.declare.queryPlans.position;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponsePosition;
