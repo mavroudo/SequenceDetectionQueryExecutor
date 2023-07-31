@@ -2,7 +2,9 @@ package com.datalab.siesta.queryprocessor.declare.model;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class EventPairSupport {
+import java.io.Serializable;
+
+public class EventPairSupport implements Serializable {
 
     @JsonProperty("evA")
     private String eventA;

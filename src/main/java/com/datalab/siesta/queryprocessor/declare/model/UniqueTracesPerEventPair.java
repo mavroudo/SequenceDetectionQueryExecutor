@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.declare.model;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.List;
@@ -39,5 +40,13 @@ public class UniqueTracesPerEventPair implements Serializable {
 
     public void setUniqueTraces(List<Long> uniqueTraces) {
         this.uniqueTraces = uniqueTraces;
+    }
+
+    public Tuple2<String,String> getKey(){
+        return new Tuple2<>(this.eventA,this.eventB);
+    }
+
+    public Tuple2<String,String> getKeyReverse(){
+        return new Tuple2<>(this.eventB,this.eventA);
     }
 }

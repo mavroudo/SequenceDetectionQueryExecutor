@@ -72,8 +72,12 @@ public class DeclareController {
             return new ResponseEntity<>("{\"message\":\"Log database is not found! If it is recently indexed " +
                     "consider executing endpoint /refresh \"", HttpStatus.NOT_FOUND);
         } else {
-            //TODO: Evaluate modes that are correct before proceeding
             QueryPlanExistences queryPlanExistences = queryExistence.getQueryPlan(m);
+            List<String> faultyModes = queryPlanExistences.evaluateModes(modes);
+            if(!faultyModes.isEmpty()){
+                return new ResponseEntity<>("Modes "+String.join(",",faultyModes)+" are incorrect",
+                        HttpStatus.NOT_FOUND);
+            }
             QueryResponse qr = queryPlanExistences.execute(log_database,modes,support);
             return new ResponseEntity<>(objectMapper.writeValueAsString(qr),HttpStatus.OK);
         }
