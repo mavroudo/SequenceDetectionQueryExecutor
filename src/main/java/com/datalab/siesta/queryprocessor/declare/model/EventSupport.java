@@ -5,13 +5,16 @@ import org.codehaus.jackson.annotate.JsonProperty;
 public class EventSupport {
 
     @JsonProperty("ev")
-    private String event;
+    protected String event;
     @JsonProperty("support")
-    private Double support;
+    protected Double support;
 
     public EventSupport(String event, double support) {
         this.event = event;
         this.support = support;
+    }
+
+    public EventSupport() {
     }
 
     public String getEvent() {

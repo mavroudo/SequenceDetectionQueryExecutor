@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -296,8 +298,20 @@ public class S3Connector extends SparkDatabaseRepository {
     //Below are for declare//
 
     @Override
-    public JavaRDD<Trace> querySequenceTable(String logname) {
+    public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
         //TODO: implement this. Can also be helpful to rewrite querySeqPrivate with this
-        return super.querySequenceTable(logname);
+        return null;
+    }
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname) {
+        //TODO: implement this
+        return null;
+    }
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
+        //TODO: implement this
+        return null;
     }
 }

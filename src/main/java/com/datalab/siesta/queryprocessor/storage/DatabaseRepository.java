@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage;
 
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
@@ -39,6 +41,10 @@ public interface DatabaseRepository {
     List<Count> getCountForExploration(String logname, String event);
 
     // Below are for Declare //
-    JavaRDD<Trace> querySequenceTable(String logname);
+    JavaRDD<Trace> querySequenceTableDeclare(String logname);
+
+    JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname);
+
+    JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname);
 
 }

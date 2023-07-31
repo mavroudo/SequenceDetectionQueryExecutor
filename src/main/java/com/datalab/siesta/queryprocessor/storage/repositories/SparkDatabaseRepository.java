@@ -233,8 +233,6 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     //Below are for Declare//
 
 
-    @Override
-    public JavaRDD<Trace> querySequenceTable(String logname) {
-        return null;
-    }
+
+
 }

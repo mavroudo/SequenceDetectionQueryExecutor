@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.CassandraRdd;
 
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -29,6 +31,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.JavaConverters;
 
 import java.io.Serializable;
@@ -201,7 +204,7 @@ public class CassConnector extends SparkDatabaseRepository {
 
     @Override
     protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
-        return this.querySequenceTable(logname)
+        return this.querySequenceTableDeclare(logname)
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
@@ -252,7 +255,7 @@ public class CassConnector extends SparkDatabaseRepository {
     }
 
     @Override
-    public JavaRDD<Trace> querySequenceTable(String logname) {
+    public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
         String path = String.format("%s_seq", logname);
         return sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
@@ -272,5 +275,47 @@ public class CassConnector extends SparkDatabaseRepository {
                     }
                     return new Trace(trace_id, results);
                 });
+    }
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname) {
+        String path = String.format("%s_single", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+
+        return rows.map(row -> {
+                    String eventType = row.getString(0);
+                    Long trace_id = row.getAs("trace_id");
+                    List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
+                    return new Tuple3<>(eventType, trace_id, occurrences.size());
+                })
+                .groupBy(Tuple3::_1)
+                .map(x->{
+                    List<Tuple2<Long,Integer>> occs = new ArrayList<>();
+                    x._2.forEach(y->occs.add(new Tuple2<>(y._2(),y._3())));
+                    return new UniqueTracesPerEventType(x._1,occs);
+                });
+    }
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
+        String path = String.format("%s_index", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+        return rows.map(row->{
+            String evA = row.getString(0);
+            String evB = row.getString(1);
+            List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
+            List<Long> uniqueTraces = new ArrayList<>();
+            occurrences.forEach(x->{
+                Long t = Long.valueOf(x.split("\\|\\|")[0]);
+                uniqueTraces.add(t);
+            });
+            return new UniqueTracesPerEventPair(evA,evB,uniqueTraces);
+        });
     }
 }
