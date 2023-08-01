@@ -314,4 +314,10 @@ public class S3Connector extends SparkDatabaseRepository {
         //TODO: implement this
         return null;
     }
+
+    @Override
+    public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname) {
+        //TODO: implement this
+        return null;
+    }
 }

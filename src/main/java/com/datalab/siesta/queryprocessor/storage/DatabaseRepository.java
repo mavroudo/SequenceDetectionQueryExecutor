@@ -46,5 +46,7 @@ public interface DatabaseRepository {
     JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname);
 
     JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname);
+    JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname);
+
 
 }

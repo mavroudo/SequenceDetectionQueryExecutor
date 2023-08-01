@@ -292,10 +292,10 @@ public class CassConnector extends SparkDatabaseRepository {
                     return new Tuple3<>(eventType, trace_id, occurrences.size());
                 })
                 .groupBy(Tuple3::_1)
-                .map(x->{
-                    List<Tuple2<Long,Integer>> occs = new ArrayList<>();
-                    x._2.forEach(y->occs.add(new Tuple2<>(y._2(),y._3())));
-                    return new UniqueTracesPerEventType(x._1,occs);
+                .map(x -> {
+                    List<Tuple2<Long, Integer>> occs = new ArrayList<>();
+                    x._2.forEach(y -> occs.add(new Tuple2<>(y._2(), y._3())));
+                    return new UniqueTracesPerEventType(x._1, occs);
                 });
     }
 
@@ -306,16 +306,41 @@ public class CassConnector extends SparkDatabaseRepository {
                 .format("org.apache.spark.sql.cassandra")
                 .options(Map.of("table", path, "keyspace", "siesta"))
                 .load().toJavaRDD();
-        return rows.map(row->{
+        return rows.map(row -> {
             String evA = row.getString(0);
             String evB = row.getString(1);
             List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
             List<Long> uniqueTraces = new ArrayList<>();
-            occurrences.forEach(x->{
+            occurrences.forEach(x -> {
                 Long t = Long.valueOf(x.split("\\|\\|")[0]);
                 uniqueTraces.add(t);
             });
-            return new UniqueTracesPerEventPair(evA,evB,uniqueTraces);
+            return new UniqueTracesPerEventPair(evA, evB, uniqueTraces);
         });
+    }
+
+    @Override
+    public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname) {
+        String path = String.format("%s_index", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+        JavaRDD<IndexPair> indexPairsRDD = rows.flatMap(row -> {
+            String evA = row.getString(0);
+            String evB = row.getString(1);
+            List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
+            List<IndexPair> indexPairs = new ArrayList<>();
+            occurrences.forEach(x -> {
+                Long t = Long.valueOf(x.split("\\|\\|")[0]);
+                String[] ocs = x.split("\\|\\|")[1].split(",");
+                for (int i = 0; i < ocs.length; i++) {
+                    String[] spl = ocs[i].split("\\|");
+                    indexPairs.add(new IndexPair(t, evA, evB, Integer.parseInt(spl[0]), Integer.parseInt(spl[1])));
+                }
+            });
+            return indexPairs.iterator();
+        });
+        return indexPairsRDD;
     }
 }

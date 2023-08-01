@@ -2,7 +2,9 @@ package com.datalab.siesta.queryprocessor.controllers;
 
 
 import com.datalab.siesta.queryprocessor.declare.queries.QueryExistence;
+import com.datalab.siesta.queryprocessor.declare.queries.QueryOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.existence.QueryPlanExistences;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.QueryPlanOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPosition;
 import com.datalab.siesta.queryprocessor.declare.queries.QueryPositions;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -46,6 +48,9 @@ public class DeclareController {
     private QueryExistence queryExistence;
 
     @Autowired
+    private QueryOrderedRelations queryOrderedRelations;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @RequestMapping(path = "/positions", method = RequestMethod.GET)
@@ -74,12 +79,28 @@ public class DeclareController {
         } else {
             QueryPlanExistences queryPlanExistences = queryExistence.getQueryPlan(m);
             List<String> faultyModes = queryPlanExistences.evaluateModes(modes);
-            if(!faultyModes.isEmpty()){
-                return new ResponseEntity<>("Modes "+String.join(",",faultyModes)+" are incorrect",
+            if (!faultyModes.isEmpty()) {
+                return new ResponseEntity<>("Modes " + String.join(",", faultyModes) + " are incorrect",
                         HttpStatus.NOT_FOUND);
             }
-            QueryResponse qr = queryPlanExistences.execute(log_database,modes,support);
-            return new ResponseEntity<>(objectMapper.writeValueAsString(qr),HttpStatus.OK);
+            QueryResponse qr = queryPlanExistences.execute(log_database, modes, support);
+            return new ResponseEntity<>(objectMapper.writeValueAsString(qr), HttpStatus.OK);
+        }
+    }
+
+    @RequestMapping(path = "/ordered-relations", method = RequestMethod.GET)
+    public ResponseEntity getOrderedRelationsConstraints(@RequestParam String log_database,
+                                                         @RequestParam(required = false, defaultValue = "0.9") double support,
+                                                         @RequestParam(required = false, defaultValue = "simple") String mode,
+                                                         @RequestParam(required = false, defaultValue = "response") String constraint) throws IOException {
+        Metadata m = allMetadata.getMetadata(log_database);
+        if (m == null) {
+            return new ResponseEntity<>("{\"message\":\"Log database is not found! If it is recently indexed " +
+                    "consider executing endpoint /refresh \"", HttpStatus.NOT_FOUND);
+        } else {
+            QueryPlanOrderedRelations queryPlanOrderedRelations = queryOrderedRelations.getQueryPlan(m, mode);
+            QueryResponse qr = queryPlanOrderedRelations.execute(log_database, constraint, support);
+            return new ResponseEntity<>(objectMapper.writeValueAsString(qr), HttpStatus.OK);
         }
     }
 

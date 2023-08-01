@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.declare;
 
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 
@@ -29,5 +30,9 @@ public class DeclareDBConnector {
 
     public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname){
         return this.db.queryIndexTableDeclare(logname);
+    }
+
+    public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname){
+        return this.db.queryIndexTableAllDeclare(logname);
     }
 }
