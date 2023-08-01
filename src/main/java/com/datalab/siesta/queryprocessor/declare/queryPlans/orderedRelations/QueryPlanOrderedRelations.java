@@ -232,8 +232,8 @@ public class QueryPlanOrderedRelations {
             setResults(precedence, "precedence");
         }
         intermediate.unpersist();
-
     }
+
 
     protected void setResults(List<EventPairSupport> results, String constraint) {
         switch (constraint) {
