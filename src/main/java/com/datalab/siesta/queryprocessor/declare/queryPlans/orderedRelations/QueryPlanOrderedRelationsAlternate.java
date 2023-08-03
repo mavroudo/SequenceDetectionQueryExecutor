@@ -10,6 +10,7 @@ import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.Tuple4;
@@ -22,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanOrderedRelationsAlternate extends QueryPlanOrderedRelations{
     public QueryPlanOrderedRelationsAlternate(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext,
                                               OrderedRelationsUtilityFunctions utils) {

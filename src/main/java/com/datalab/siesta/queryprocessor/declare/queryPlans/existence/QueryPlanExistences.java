@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.Tuple4;
@@ -23,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanExistences {
 
     private DeclareDBConnector declareDBConnector;
@@ -186,7 +187,8 @@ public class QueryPlanExistences {
                 if (time < 2) {
                     continue;
                 }
-                double s = (double) times.stream().filter(x -> x < time).mapToLong(t::get).sum() / totalTraces;
+                double s = (double) times.stream().filter(x -> x < time).map(t::get)
+                        .filter(Objects::nonNull).mapToLong(x->x).sum() / totalTraces;
                 if (s >= support) {
                     response.add(new EventN(et, time, s));
                     break;
@@ -267,7 +269,7 @@ public class QueryPlanExistences {
         List<EventPairSupport> exclusiveChoice = uEventType.keyBy(UniqueTracesPerEventType::getEventType)
                 .cartesian(uEventType.keyBy(UniqueTracesPerEventType::getEventType))
                 .filter(x -> x._1._1.compareTo(x._2._1) < 0) //remove duplicate pairs
-                .filter(x -> x._1._2.getOccurrences().size() + x._2._2.getOccurrences().size() >=
+                .filter(x ->bUniqueSingle.getValue().get(x._1._1) + bUniqueSingle.getValue().get(x._2._1) >=
                         (bSupport.getValue()) * bTotalTraces.getValue())
                 .map(x -> {
                     LinkedHashSet<Long> listA = x._1._2.getOccurrences().stream()

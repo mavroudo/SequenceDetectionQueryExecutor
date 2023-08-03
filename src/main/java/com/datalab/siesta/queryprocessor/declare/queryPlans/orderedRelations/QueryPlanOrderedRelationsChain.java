@@ -7,6 +7,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple3;
 import scala.Tuple4;
 import scala.Tuple5;
@@ -14,7 +15,7 @@ import scala.Tuple5;
 import java.util.Set;
 
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanOrderedRelationsChain extends QueryPlanOrderedRelations{
 
     public QueryPlanOrderedRelationsChain(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext, OrderedRelationsUtilityFunctions utils) {
