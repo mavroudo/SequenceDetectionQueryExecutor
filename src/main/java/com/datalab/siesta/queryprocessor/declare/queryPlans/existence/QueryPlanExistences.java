@@ -57,8 +57,8 @@ public class QueryPlanExistences {
         JavaRDD<Tuple3<String, String, Integer>> joined = joinUnionTraces(uPairs);
         joined.persist(StorageLevel.MEMORY_AND_DISK());
 
-        for(String m :modes){
-            switch (m){
+        for (String m : modes) {
+            switch (m) {
                 case "existence":
                     existence(groupTimes, support, metadata.getTraces());
                     break;
@@ -75,7 +75,7 @@ public class QueryPlanExistences {
                     choice(uEventType, bSupport, bTotalTraces);
                     break;
                 case "exclusive-choice":
-                    exclusiveChoice(uEventType, bUniqueSingle, bSupport, bTotalTraces);
+                    exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces);
                     break;
                 case "responded-existence":
                     respondedExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
@@ -91,16 +91,16 @@ public class QueryPlanExistences {
         return this.queryResponseExistence;
     }
 
-    public QueryResponseExistence runAll(Map<String, HashMap<Integer, Long>> groupTimes,double support,
-                                         JavaRDD<Tuple3<String, String, Integer>> joined , Broadcast<Double> bSupport,
+    public QueryResponseExistence runAll(Map<String, HashMap<Integer, Long>> groupTimes, double support,
+                                         JavaRDD<Tuple3<String, String, Integer>> joined, Broadcast<Double> bSupport,
                                          Broadcast<Long> bTotalTraces, Broadcast<Map<String, Long>> bUniqueSingle,
-                                         JavaRDD<UniqueTracesPerEventType> uEventType){
+                                         JavaRDD<UniqueTracesPerEventType> uEventType) {
         existence(groupTimes, support, metadata.getTraces());
         absence(groupTimes, support, metadata.getTraces());
         exactly(groupTimes, support, metadata.getTraces());
         coExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
         choice(uEventType, bSupport, bTotalTraces);
-        exclusiveChoice(uEventType, bUniqueSingle, bSupport, bTotalTraces);
+        exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces);
         respondedExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
         return this.queryResponseExistence;
     }
@@ -110,8 +110,8 @@ public class QueryPlanExistences {
         List<String> l = Arrays.asList("existence", "absence", "exactly", "co-existence", "choice",
                 "exclusive-choice", "responded-existence");
         Set<String> correct_ms = new HashSet<>(l);
-        for(String m : modes){
-            if(!correct_ms.contains(m)){
+        for (String m : modes) {
+            if (!correct_ms.contains(m)) {
                 s.add(m);
             }
         }
@@ -188,7 +188,7 @@ public class QueryPlanExistences {
                     continue;
                 }
                 double s = (double) times.stream().filter(x -> x < time).map(t::get)
-                        .filter(Objects::nonNull).mapToLong(x->x).sum() / totalTraces;
+                        .filter(Objects::nonNull).mapToLong(x -> x).sum() / totalTraces;
                 if (s >= support) {
                     response.add(new EventN(et, time, s));
                     break;
@@ -264,25 +264,13 @@ public class QueryPlanExistences {
         queryResponseExistence.setChoice(choice);
     }
 
-    private void exclusiveChoice(JavaRDD<UniqueTracesPerEventType> uEventType, Broadcast<Map<String, Long>> bUniqueSingle,
+    private void exclusiveChoice(JavaRDD<Tuple3<String, String, Integer>> joined, Broadcast<Map<String, Long>> bUniqueSingle,
                                  Broadcast<Double> bSupport, Broadcast<Long> bTotalTraces) {
-        List<EventPairSupport> exclusiveChoice = uEventType.keyBy(UniqueTracesPerEventType::getEventType)
-                .cartesian(uEventType.keyBy(UniqueTracesPerEventType::getEventType))
-                .filter(x -> x._1._1.compareTo(x._2._1) < 0) //remove duplicate pairs
-                .filter(x ->bUniqueSingle.getValue().get(x._1._1) + bUniqueSingle.getValue().get(x._2._1) >=
-                        (bSupport.getValue()) * bTotalTraces.getValue())
+        List<EventPairSupport> exclusiveChoice = joined.filter(x -> x._1().compareTo(x._2()) < 0)
                 .map(x -> {
-                    LinkedHashSet<Long> listA = x._1._2.getOccurrences().stream()
-                            .map(y -> y._1).collect(Collectors.toCollection(LinkedHashSet::new));
-                    listA.retainAll(x._2._2.getOccurrences().stream().map(y -> y._1).collect(Collectors.toList()));
-                    return new Tuple3<>(x._1._1, x._2._1, listA.size());
-                })
-                .map(x -> {
-                    long s = (bUniqueSingle.getValue().get(x._1()) + bUniqueSingle.getValue().get(x._2()) - 2L * x._3());
-                    double supp = (double) s / bTotalTraces.getValue();
-                    return new EventPairSupport(x._1(), x._2(), supp);
-                })
-                .filter(x -> x.getSupport() >= bSupport.getValue())
+                    double sup = (double) (bUniqueSingle.getValue().get(x._1()) + bUniqueSingle.getValue().get(x._2()) - 2 * x._3()) / bTotalTraces.getValue();
+                    return new EventPairSupport(x._1(), x._2(), sup);
+                }).filter(x -> x.getSupport() >= bSupport.getValue())
                 .collect();
         queryResponseExistence.setExclusiveChoice(exclusiveChoice);
     }
@@ -299,7 +287,7 @@ public class QueryPlanExistences {
 
     }
 
-    public void initResponse(){
+    public void initResponse() {
         this.queryResponseExistence = new QueryResponseExistence();
     }
 
