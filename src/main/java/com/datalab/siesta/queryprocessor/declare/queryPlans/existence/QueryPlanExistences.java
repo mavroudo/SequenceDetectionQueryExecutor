@@ -90,6 +90,20 @@ public class QueryPlanExistences {
         return this.queryResponseExistence;
     }
 
+    public QueryResponseExistence runAll(Map<String, HashMap<Integer, Long>> groupTimes,double support,
+                                         JavaRDD<Tuple3<String, String, Integer>> joined , Broadcast<Double> bSupport,
+                                         Broadcast<Long> bTotalTraces, Broadcast<Map<String, Long>> bUniqueSingle,
+                                         JavaRDD<UniqueTracesPerEventType> uEventType){
+        existence(groupTimes, support, metadata.getTraces());
+        absence(groupTimes, support, metadata.getTraces());
+        exactly(groupTimes, support, metadata.getTraces());
+        coExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
+        choice(uEventType, bSupport, bTotalTraces);
+        exclusiveChoice(uEventType, bUniqueSingle, bSupport, bTotalTraces);
+        respondedExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
+        return this.queryResponseExistence;
+    }
+
     public List<String> evaluateModes(List<String> modes) {
         List<String> s = new ArrayList<>();
         List<String> l = Arrays.asList("existence", "absence", "exactly", "co-existence", "choice",
@@ -107,7 +121,7 @@ public class QueryPlanExistences {
         this.metadata = metadata;
     }
 
-    private Map<String, HashMap<Integer, Long>> createMapForSingle(JavaRDD<UniqueTracesPerEventType> uEventType) {
+    public Map<String, HashMap<Integer, Long>> createMapForSingle(JavaRDD<UniqueTracesPerEventType> uEventType) {
         Map<String, HashMap<Integer, Long>> groupTimes = uEventType.map(x -> new Tuple2<>(x.getEventType(), x.groupTimes()))
                 .keyBy(x -> x._1)
                 .mapValues(x -> x._2)
@@ -115,7 +129,7 @@ public class QueryPlanExistences {
         return groupTimes;
     }
 
-    private Map<String, Long> extractUniqueTracesSingle(Map<String, HashMap<Integer, Long>> groupTimes) {
+    public Map<String, Long> extractUniqueTracesSingle(Map<String, HashMap<Integer, Long>> groupTimes) {
         Map<String, Long> response = new HashMap<>();
         groupTimes.entrySet().stream().map(x -> {
             long s = x.getValue().values().stream().mapToLong(l -> l).sum();
@@ -124,7 +138,7 @@ public class QueryPlanExistences {
         return response;
     }
 
-    private JavaRDD<Tuple3<String, String, Integer>> joinUnionTraces(JavaRDD<UniqueTracesPerEventPair> uPairs) {
+    public JavaRDD<Tuple3<String, String, Integer>> joinUnionTraces(JavaRDD<UniqueTracesPerEventPair> uPairs) {
         return uPairs
                 .keyBy(UniqueTracesPerEventPair::getKey)
                 .leftOuterJoin(uPairs.keyBy(UniqueTracesPerEventPair::getKeyReverse))
@@ -281,6 +295,10 @@ public class QueryPlanExistences {
                 .collect();
         this.queryResponseExistence.setRespondedExistence(responseExistence);
 
+    }
+
+    public void initResponse(){
+        this.queryResponseExistence = new QueryResponseExistence();
     }
 
 

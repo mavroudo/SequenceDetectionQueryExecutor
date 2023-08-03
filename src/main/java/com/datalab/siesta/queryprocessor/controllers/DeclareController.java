@@ -3,10 +3,12 @@ package com.datalab.siesta.queryprocessor.controllers;
 
 import com.datalab.siesta.queryprocessor.declare.queries.QueryExistence;
 import com.datalab.siesta.queryprocessor.declare.queries.QueryOrderedRelations;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.QueryPlanDeclareAll;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.existence.QueryPlanExistences;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.QueryPlanOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPosition;
 import com.datalab.siesta.queryprocessor.declare.queries.QueryPositions;
+import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseAll;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.services.LoadInfo;
@@ -49,6 +51,9 @@ public class DeclareController {
 
     @Autowired
     private QueryOrderedRelations queryOrderedRelations;
+
+    @Autowired
+    private QueryPlanDeclareAll queryPlanDeclareAll;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -103,6 +108,23 @@ public class DeclareController {
             return new ResponseEntity<>(objectMapper.writeValueAsString(qr), HttpStatus.OK);
         }
     }
+
+
+    @RequestMapping(path = "/", method = RequestMethod.GET)
+    public ResponseEntity getAll(@RequestParam String log_database,
+                                 @RequestParam(required = false, defaultValue = "0.9") double support) throws IOException {
+
+        Metadata m = allMetadata.getMetadata(log_database);
+        if (m == null) {
+            return new ResponseEntity<>("{\"message\":\"Log database is not found! If it is recently indexed " +
+                    "consider executing endpoint /refresh \"", HttpStatus.NOT_FOUND);
+        } else {
+            this.queryPlanDeclareAll.setMetadata(m);
+            QueryResponseAll queryResponseAll = this.queryPlanDeclareAll.execute(log_database,support);
+            return new ResponseEntity<>(objectMapper.writeValueAsString(queryResponseAll), HttpStatus.OK);
+        }
+    }
+
 
 
 }

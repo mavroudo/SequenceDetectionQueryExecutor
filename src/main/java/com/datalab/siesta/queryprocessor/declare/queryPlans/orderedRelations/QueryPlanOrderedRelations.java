@@ -66,7 +66,7 @@ public class QueryPlanOrderedRelations {
         return this.queryResponseOrderedRelations;
     }
 
-    protected JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joinTables(JavaRDD<IndexPair> indexPairsRDD) {
+    public JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joinTables(JavaRDD<IndexPair> indexPairsRDD) {
 
         JavaPairRDD<String, Iterable<IndexPair>> singleGrouped = indexPairsRDD
                 .filter(x -> x.getEventA().equals(x.getEventB()))
@@ -144,7 +144,7 @@ public class QueryPlanOrderedRelations {
 
     //(eventA,eventB, constraint (r for response and p for precedence) ) key
     // (eventA,eventB,
-    protected JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint
+    public JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint
     (JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined, String constraint) {
 
         JavaRDD<Tuple4<String, String, String, Integer>> tuple4JavaRDD;
@@ -169,7 +169,7 @@ public class QueryPlanOrderedRelations {
 
 
     //filters based on support and constraint required and write them to the response
-    protected void filterBasedOnSupport(JavaRDD<Tuple4<String, String, String, Integer>> c,
+    public void filterBasedOnSupport(JavaRDD<Tuple4<String, String, String, Integer>> c,
              Broadcast<Map<String, Long>> bUEventType, double support) {
         Broadcast<Double> bSupport = javaSparkContext.broadcast(support);
         JavaRDD<Tuple2<String, EventPairSupport>> intermediate = c.map(x -> {
@@ -255,5 +255,9 @@ public class QueryPlanOrderedRelations {
 
     public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
+    }
+
+    public QueryResponseOrderedRelations getQueryResponseOrderedRelations() {
+        return queryResponseOrderedRelations;
     }
 }

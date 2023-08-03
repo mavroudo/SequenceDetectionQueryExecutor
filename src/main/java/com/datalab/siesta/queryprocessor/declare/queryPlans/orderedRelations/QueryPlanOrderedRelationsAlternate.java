@@ -35,7 +35,7 @@ public class QueryPlanOrderedRelationsAlternate extends QueryPlanOrderedRelation
     }
 
     @Override
-    protected JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint(JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined, String constraint) {
+    public JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint(JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined, String constraint) {
         JavaRDD<Tuple4<String, String, String, Integer>> tuple4JavaRDD;
         switch (constraint) {
             case "response":
@@ -55,7 +55,7 @@ public class QueryPlanOrderedRelationsAlternate extends QueryPlanOrderedRelation
     }
 
     @Override
-    protected void filterBasedOnSupport(JavaRDD<Tuple4<String, String, String, Integer>> c,
+    public void filterBasedOnSupport(JavaRDD<Tuple4<String, String, String, Integer>> c,
                                         Broadcast<Map<String, Long>> bUEventType, double support) {
         Broadcast<Double> bSupport = javaSparkContext.broadcast(support);
         JavaRDD<Tuple2<String, EventPairSupport>> intermediate = c.map(x -> {

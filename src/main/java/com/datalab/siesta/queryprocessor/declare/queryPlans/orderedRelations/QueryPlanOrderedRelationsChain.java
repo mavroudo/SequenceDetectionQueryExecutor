@@ -27,7 +27,7 @@ public class QueryPlanOrderedRelationsChain extends QueryPlanOrderedRelations{
     }
 
     @Override
-    protected JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint(JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined, String constraint) {
+    public JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint(JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined, String constraint) {
         JavaRDD<Tuple4<String, String, String, Integer>> tuple4JavaRDD;
         switch (constraint) {
             case "response":
