@@ -15,9 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This class is the middle man between the databases and the rest of the application. It provides methods to do certain
+ * operations in the database utilizing the methods described in the DatabaseRepository interface.
+ */
 @Service
 public class DBConnector {
 
+    /**
+     * Database object. Depending on the resources it is either implements the connection with S3 or the connection
+     * with Cassandra.
+     */
     private DatabaseRepository db;
 
     @Autowired
@@ -25,38 +33,101 @@ public class DBConnector {
         this.db = databaseRepository;
     }
 
+    /**
+     *
+     * @param logname the log database
+     * @return the metadata
+     */
     public Metadata getMetadata(String logname) {
         return db.getMetadata(logname);
     }
 
+    /**
+     *
+     * @param logname the log database
+     * @return a list with all the event types stored in it
+     */
     public List<String> getEventNames(String logname) {
         return db.getEventNames(logname);
     }
 
+    /**
+     * @return a set with all the stored log databases
+     */
     public Set<String> findAllLongNames() {
         return db.findAllLongNames();
     }
 
+    /**
+     * Retrieves the corresponding stats (min, max duration and so on) from the CountTable, for a given set of event
+     * pairs
+     * @param logname the log database
+     * @param eventPairs a set with the event pairs
+     * @return a list of the stats for the set of event pairs
+     */
     public List<Count> getStats(String logname, Set<EventPair> eventPairs) {
         return db.getCounts(logname, eventPairs);
     }
 
+    /**
+     * For a given event type inside a log database, returns all the possible next events. That is, since Count
+     * contains for each pair the stats, return all the events that have at least one pair with the given event
+     * @param logname the log database
+     * @param event the event type
+     * @return the possible next events
+     */
     public List<Count> getCountForExploration(String logname, String event){
         return db.getCountForExploration(logname,event);
     }
 
+    /**
+     * Detects the traces that contain all the given event pairs
+     * @param logname the log database
+     * @param combined a list where each event pair is combined with the according stats from the CountTable
+     * @param metadata the log database metadata
+     * @param pairs the event pairs extracted from the query
+     * @param from the starting timestamp, set to null if not used
+     * @param till the ending timestamp, set to null if not used
+     * @return the traces that contain all the pairs. It will be then processed by SASE in order to remove false
+     * positives.
+     */
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata, ExtractedPairsForPatternDetection pairs, Timestamp from, Timestamp till) {
         return db.patterDetectionTraceIds(logname, combined, metadata, pairs, from, till);
     }
 
+    /**
+     * Retrieves the appropriate events from the SequenceTable, which contains the original traces
+     * @param logname the log database
+     * @param traceIds the ids of the traces that will be retrieved
+     * @param eventTypes the events that will be retrieved
+     * @param from the starting timestamp, set to null if not used
+     * @param till the ending timestamp, set to null if not used
+     * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
+     * timestamps)
+     */
     public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes, Timestamp from, Timestamp till) {
         return db.querySeqTable(logname, traceIds, eventTypes, from, till);
     }
 
+    /**
+     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     * @param logname the log database
+     * @param traceIds the ids of the traces that wil be retrieved
+     * @param eventTypes the events that will we retrieved
+     * @return a list of all the retrieved events (wth their timestamps)
+     */
     public List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes) {
         return db.querySingleTable(logname, traceIds, eventTypes);
     }
 
+    /**
+     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     * @param logname the log database
+     * @param groups a list of the groups as defined in the query
+     * @param eventTypes the events that will we retrieved
+     * @return a map where the key is the group id and the value is a list of the retrieved events (with their t
+     * imestamps)
+     */
     public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes) {
         return db.querySingleTableGroups(logname, groups, eventTypes);
     }

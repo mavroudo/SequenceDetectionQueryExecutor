@@ -23,6 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * This in a class the contains common logic for all databases that utilize spark (like Cassandra and S3)
+ * and therefore it is implemented by both of them
+ */
 public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
     protected SparkSession sparkSession;
@@ -40,15 +44,22 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
 
     /**
      * return all the IndexPairs grouped by the eventA and eventB
-     *
-     * @param pairs
-     * @param logname
-     * @return
+     * needs to be implemented by each different connector
+     * @param pairs set of the pairs
+     * @param logname the log database
+     * @return extract the pairs
      */
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname, Metadata metadata, Timestamp from, Timestamp till) {
         return null;
     }
 
+    /**
+     * Retrieves the appropriate events from the SequenceTable, which contains the original traces
+     * @param logname the log database
+     * @param traceIds the ids of the traces that will be retrieved
+     * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
+     *      * timestamps)
+     */
     @Override
     public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
         Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(new HashSet<>(traceIds));
@@ -58,6 +69,16 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
                 .collectAsMap();
     }
 
+    /**
+     * Retrieves the appropriate events from the SequenceTable, which contains the original traces
+     * @param logname the log database
+     * @param traceIds the ids of the traces that will be retrieved
+     * @param eventTypes the events that will be retrieved
+     * @param from the starting timestamp, set to null if not used
+     * @param till the ending timestamp, set to null if not used
+     * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
+     * timestamps)
+     */
     @Override
     public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes, Timestamp from, Timestamp till) {
         Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(new HashSet<>(traceIds));
@@ -86,6 +107,13 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return null;
     }
 
+    /**
+     * Retrieves data from the primary inverted index
+     * @param pairs a set of the pairs that we need to retrieve information for
+     * @param logname the log database
+     * @param metadata the metadata for this log database
+     * @return the corresponding records from the index
+     */
     @Override
     public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
         List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs, logname, metadata, null, null)
@@ -93,6 +121,15 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return new IndexRecords(results);
     }
 
+    /**
+     * Retrieves data from the primary inverted index
+     * @param pairs a set of the pairs that we need to retrieve information for
+     * @param logname the log database
+     * @param metadata the metadata for this log database
+     * @param from the starting timestamp, set to null if not used
+     * @param till the ending timestamp, set to null if not used
+     * @return the corresponding records from the index
+     */
     @Override
     public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata, Timestamp from, Timestamp till) {
         List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs, logname, metadata, from, till)
@@ -104,6 +141,12 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return pairs.flatMap((FlatMapFunction<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>, IndexPair>) g -> g._2.iterator());
     }
 
+    /**
+     * Extract the ids of the traces that contains all the provided pairs
+     * @param pairs pairs retrieved from the storage
+     * @param trueEventPairs the pairs that required to appear in a trace in order to be a candidate
+     * @return the candidate trace ids
+     */
     protected List<Long> getCommonIds(JavaRDD<IndexPair> pairs, Set<EventPair> trueEventPairs) {
         Broadcast<Set<EventPair>> truePairs = javaSparkContext.broadcast(trueEventPairs);
         return pairs.map((Function<IndexPair, Tuple3<String, String, Long>>) pair ->
@@ -124,6 +167,14 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
                 .collect();
     }
 
+    /**
+     * Filters te results based on the starting and ending timestamp
+     * @param pairs the retrieved pairs from the IndexTable
+     * @param traceIds the trace ids that contains all the required pairs
+     * @param from the starting timestamp, set to null if not used
+     * @param till the ending timestamp, set to null if not used
+     * @return the intermediate results, i.e. the candidate traces before remove false positives
+     */
     protected IndexMiddleResult addFilterIds(JavaRDD<IndexPair> pairs, List<Long> traceIds, Timestamp from, Timestamp till) {
         Broadcast<Set<Long>> bTraces = javaSparkContext.broadcast(new HashSet<>(traceIds));
         Broadcast<Timestamp> bFrom = javaSparkContext.broadcast(from);
@@ -167,6 +218,17 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
 
+    /**
+     * Detects the traces that contain all the given event pairs
+     * @param logname the log database
+     * @param combined a list where each event pair is combined with the according stats from the CountTable
+     * @param metadata the log database metadata
+     * @param expairs the event pairs extracted from the query
+     * @param from the starting timestamp, set to null if not used
+     * @param till the ending timestamp, set to null if not used
+     * @return the traces that contain all the pairs. It will be then processed by SASE in order to remove false
+     * positives.
+     */
     @Override
     public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata,
                                                      ExtractedPairsForPatternDetection expairs, Timestamp from, Timestamp till) {
@@ -181,7 +243,7 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     /**
-     * Should be override by any storage that uses spark
+     * Should be overridden by any storage that uses spark
      *
      * @param logname    The name of the Log
      * @param traceIds   The traces we want to detect
@@ -192,11 +254,26 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return null;
     }
 
+    /**
+     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     * @param logname the log database
+     * @param traceIds the ids of the traces that wil be retrieved
+     * @param eventTypes the events that will we retrieved
+     * @return a list of all the retrieved events (wth their timestamps)
+     */
     @Override
     public List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes) {
         return this.getFromSingle(logname, traceIds, eventTypes).collect();
     }
 
+    /**
+     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     * @param logname the log database
+     * @param groups a list of the groups as defined in the query
+     * @param eventTypes the events that will we retrieved
+     * @return a map where the key is the group id and the value is a list of the retrieved events (with their t
+     * imestamps)
+     */
     @Override
     public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes) {
         Set<Long> allTraces = groups.stream()
@@ -213,7 +290,7 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
                 })
                 .filter((Function<Tuple2<Integer, EventBoth>, Boolean>) event -> event._1 != -1)
                 .groupBy((Function<Tuple2<Integer, EventBoth>, Integer>) event -> event._1)
-                //maintain only these groups that contain all of the event types in the query
+                //maintain only these groups that contain all the event types in the query
                 .filter((Function<Tuple2<Integer, Iterable<Tuple2<Integer, EventBoth>>>, Boolean>) group -> {
                     Set<String> events = new HashSet<>();
                     group._2.forEach(x -> events.add(x._2.getName()));
@@ -227,7 +304,6 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
                     return eventBoth.stream().sorted().collect(Collectors.toList());
                 }).collectAsMap();
         return response;
-
     }
 
 

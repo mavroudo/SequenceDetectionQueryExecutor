@@ -12,6 +12,9 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.stereotype.Service;
 
+/**
+ * Contains the configuration of spark in order to connect to Cassandra database
+ */
 @Configuration
 @PropertySource("classpath:application.properties")
 @ConditionalOnProperty(

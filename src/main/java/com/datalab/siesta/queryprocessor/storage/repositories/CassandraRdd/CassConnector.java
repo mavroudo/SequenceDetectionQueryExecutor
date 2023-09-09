@@ -39,6 +39,9 @@ import java.util.stream.Collectors;
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.*;
 
 
+/**
+ * Main class that describes the connection of Query Processor to Cassandra
+ */
 @Configuration
 @ConditionalOnProperty(
         value = "database",
@@ -53,6 +56,11 @@ public class CassConnector extends SparkDatabaseRepository {
         super(sparkSession, javaSparkContext, utils);
     }
 
+    /**
+     *
+     * @param logname the log database
+     * @return a list with all the event types stored in it
+     */
     @Override
     public Metadata getMetadata(String logname) {
         Dataset<Row> df = sparkSession.read()
@@ -68,10 +76,12 @@ public class CassConnector extends SparkDatabaseRepository {
         return new Metadata(m);
     }
 
+    /**
+     * @return a set with all the stored log databases
+     */
     @Override
     public Set<String> findAllLongNames() {
         CassandraConnector connector = CassandraConnector.apply(sparkSession.sparkContext().getConf());
-
         List<String> keywords = new ArrayList<>() {{
             add("set");
             add("sign");
@@ -93,6 +103,14 @@ public class CassConnector extends SparkDatabaseRepository {
         return set;
     }
 
+
+    /**
+     * For a given event type inside a log database, returns all the possible next events. That is, since Count
+     * contains for each pair the stats, return all the events that have at least one pair with the given event
+     * @param logname the log database
+     * @param event the event type
+     * @return the possible next events
+     */
     @Override
     public List<Count> getCountForExploration(String logname, String event) {
         String path = String.format("%s_count", logname);
@@ -116,6 +134,13 @@ public class CassConnector extends SparkDatabaseRepository {
         return new ArrayList<>(l);
     }
 
+    /**
+     * Retrieves the corresponding stats (min, max duration and so on) from the CountTable, for a given set of event
+     * pairs
+     * @param logname the log database
+     * @param pairs a set with the event pairs
+     * @return a list of the stats for the set of event pairs
+     */
     @Override
     public List<Count> getCounts(String logname, Set<EventPair> pairs) {
         String path = String.format("%s_count", logname);
@@ -149,20 +174,12 @@ public class CassConnector extends SparkDatabaseRepository {
         return new ArrayList<>(l);
     }
 
-//    @Override
-//    public List<String> getEventNames(String logname) {
-//        String path = String.format("%s_count", logname);
-//        return sparkSession.read()
-//                .format("org.apache.spark.sql.cassandra")
-//                .options(Map.of("table", path, "keyspace", "siesta"))
-//                .load()
-//                .select("event_a")
-//                .distinct()
-//                .toJavaRDD()
-//                .map((Function<Row, String>) r -> r.getString(0))
-//                .collect();
-//    }
 
+    /**
+     *
+     * @param logname the log database
+     * @return a list with all the event types stored in it
+     */
     @Override
     public List<String> getEventNames(String logname) {
         String path = String.format("%s_count", logname);
@@ -174,6 +191,14 @@ public class CassConnector extends SparkDatabaseRepository {
         return s;
     }
 
+    /**
+     * Should be overridden by any storage that uses spark
+     *
+     * @param logname    The name of the Log
+     * @param traceIds   The traces we want to detect
+     * @param eventTypes The event types to be collected
+     * @return a JavaRDD<EventBoth> that will be used in querySingleTable and querySingleTableGroups
+     */
     @Override
     protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
         String path = String.format("%s_single", logname);
@@ -199,6 +224,14 @@ public class CassConnector extends SparkDatabaseRepository {
                 });
     }
 
+    /**
+     * This function reads data from the Sequence table into a JavaRDD, any database that utilizes spark should
+     * override it
+     *
+     * @param logname   Name of the log
+     * @param bTraceIds broadcasted the values of the trace ids we are interested in
+     * @return a JavaRDD<Trace>
+     */
     @Override
     protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
         String path = String.format("%s_seq", logname);
@@ -223,6 +256,13 @@ public class CassConnector extends SparkDatabaseRepository {
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
+    /**
+     * return all the IndexPairs grouped by the eventA and eventB
+     *
+     * @param pairs set of the pairs
+     * @param logname the log database
+     * @return extract the pairs
+     */
     @Override
     protected JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
                                                                                         String logname, Metadata metadata,

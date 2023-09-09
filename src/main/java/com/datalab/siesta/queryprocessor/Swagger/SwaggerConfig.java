@@ -12,6 +12,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @Configuration
 @EnableSwagger2
+/**
+ * Configuration for the Swagger to show the different endpoints' documentation
+ */
 public class SwaggerConfig {
 
     @Bean
@@ -28,7 +31,7 @@ public class SwaggerConfig {
         return new ApiInfoBuilder()
                 .title("SIESTA API")
                 .description("API documentation for SIESTA")
-                .version("1.0")
+                .version("2.0")
                 .build();
     }
 }

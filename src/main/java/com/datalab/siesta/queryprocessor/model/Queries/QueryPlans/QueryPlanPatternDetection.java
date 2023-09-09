@@ -96,6 +96,18 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return queryResponsePatternDetection;
     }
 
+    /**
+     * Calculates the middle results of the pattern detection. That is, for a given query, evaluates if the query can be
+     * executed (all the event types and event pairs exist at least once in the indices). If the query is valid then
+     * it proceeds, otherwise it returns.
+     * Check if the qr is empty before proceeding. If it is empty it means that everything is ok, otherwise it means
+     * that the query is not consistent and did not move further.
+     * If the query actually executed then it used the method patternDetectiontraceIds from the dbConnector which finds
+     * all the traces that contains all the appropriate pairs. The traces are then stored in the IndexMiddleResult
+     * so that they are available in the rest of the methods
+     * @param qpdw the user query
+     * @param qr a wrapper that contains probable inconsistencies in the query
+     */
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr){
         boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
         ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
