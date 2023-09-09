@@ -8,6 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This class represents the Signature as extracted from all the log file. More specifically, it contains
+ * a list of all the event types and a list of the most frequent event pairs.
+ * This Signature is directly stored inside the storage and needs to be extracted at the beginning.
+ * For a given query, this class is utilized to extract the signature and then proceed in comparing the signature
+ * with the signatures of all the traces stored.
+ */
 public class Signature {
 
     private List<EventTypes> eventPairs;

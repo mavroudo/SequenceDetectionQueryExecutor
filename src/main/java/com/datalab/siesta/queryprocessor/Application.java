@@ -7,10 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-@SpringBootApplication
 /**
  * Main Class to start the application
  */
+@SpringBootApplication
 public class Application {
 
 

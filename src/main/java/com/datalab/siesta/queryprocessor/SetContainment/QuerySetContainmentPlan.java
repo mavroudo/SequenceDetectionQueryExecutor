@@ -19,6 +19,12 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class describes the logic on how the Query Processor utilized the indices stored from teh Set Containment
+ * method in order to respond to pattern detection queries. First, it extracts all the inverted lists for all the
+ * event types described in the query, and then maintains all the trace ids that contains all the events.
+ * Finally, SASE is used to remove the false positive traces
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QuerySetContainmentPlan implements QueryPlan {
