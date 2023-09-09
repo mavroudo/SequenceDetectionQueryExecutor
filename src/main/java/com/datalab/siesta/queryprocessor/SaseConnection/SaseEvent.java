@@ -9,6 +9,12 @@ import org.joda.time.Instant;
 import java.sql.Timestamp;
 
 
+/**
+ * An intermediate class that is used to transforms the events of SIESTA into events that comply with the
+ * SASE mechanism.
+ * Since timestamps had to be integer number -> they are transformed into ms and then the minimum value is subtracted,
+ * if the timestamps are not present then the position of the event in the trace is used as a timestamp
+ */
 public class SaseEvent implements Event {
 
     private int trace_id;

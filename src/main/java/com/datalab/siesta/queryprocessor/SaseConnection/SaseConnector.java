@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * This class describes the connection between SIESTA and SASE.
+ */
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SaseConnector {
@@ -35,6 +38,13 @@ public class SaseConnector {
         this.utils=utils;
     }
 
+    /**
+     * For a given pattern and a list of traces, returns where this pattern occurred
+     * @param pattern the user defined pattern
+     * @param events the required events for each trace in order to determine if pattern occurs
+     * @param onlyAppearances set to false if the pattern contains no constraints
+     * @return where the pattern occur
+     */
     public List<Occurrences> evaluate(SIESTAPattern pattern, Map<Long, List<Event>> events, boolean onlyAppearances) {
         EngineController ec = this.getEngineController(pattern, onlyAppearances);
         List<Occurrences> occurrences = new ArrayList<>();
@@ -62,6 +72,13 @@ public class SaseConnector {
         return occurrences;
     }
 
+    /**
+     * Similar to the above method but it is used to evaluate the appearence of a pattern in the events when they
+     * are grouped for different trace-groups
+     * @param pattern the user defined pattern
+     * @param events the required events for each trace in order to determine if pattern occurs
+     * @return where the pattern occur
+     */
     public List<GroupOccurrences> evaluateGroups(SIESTAPattern pattern, Map<Integer, List<EventBoth>> events){
         EngineController ec = this.getEngineController(pattern,false);
         List<GroupOccurrences> occurrences = new ArrayList<>();
@@ -89,6 +106,13 @@ public class SaseConnector {
         return occurrences;
     }
 
+    /**
+     * Based on the pattern it creates a NFA that contains the states and the transitions of a state machine
+     * that will be used to detect the occurrences of the pattern
+     * @param pattern the user defined pattern
+     * @param onlyAppearances set to false if the pattern contains no constraints
+     * @return the egnine that will be used for the evaluation
+     */
     private EngineController getEngineController(SIESTAPattern pattern, boolean onlyAppearances) {
         EngineController ec = new EngineController();
         NFAWrapper nfaWrapper = new NFAWrapper("skip-till-next-match");
@@ -103,6 +127,11 @@ public class SaseConnector {
     }
 
 
+    /**
+     * Transforms the retrieved events from a trace to a stream (as described in SASE)
+     * @param events the retrieved events of a trace
+     * @return the events transformed in stream
+     */
     private Stream getStream(List<Event> events) {
         Stream s = new Stream(events.size());
         List<SaseEvent> saseEvents = utils.transformToSaseEvents(events);

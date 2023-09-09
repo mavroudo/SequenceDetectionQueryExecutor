@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * This class is running during initialization and loads information from the storage. Specifically, it loads the metadata
+ * for all the log databases, and also for each log database loads the different event types.
+ */
 @Service
 @ComponentScan
 public class LoadInfo {
