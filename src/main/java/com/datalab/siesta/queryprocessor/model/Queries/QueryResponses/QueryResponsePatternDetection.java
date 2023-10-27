@@ -10,10 +10,10 @@ import java.util.List;
 
 public class QueryResponsePatternDetection implements QueryResponse {
 
-    private List<Occurrences> occurrences;
+    protected List<Occurrences> occurrences;
 
     @JsonProperty("performance statistics")
-    private TimeStats timeStats;
+    protected TimeStats timeStats;
 
     public QueryResponsePatternDetection() {
     }

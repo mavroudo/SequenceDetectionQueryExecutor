@@ -7,9 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QueryResponseWhyNotMatch implements QueryResponse{
-
-    List<Occurrences> trueOccurrences;
+public class QueryResponseWhyNotMatch extends  QueryResponsePatternDetection{
 
     Map<Long,String> almostOccurrences;
 
@@ -17,19 +15,11 @@ public class QueryResponseWhyNotMatch implements QueryResponse{
     }
 
     public QueryResponseWhyNotMatch(List<Occurrences> trueOccurrences, List<AlmostMatch> almostMatches) {
-        this.trueOccurrences = trueOccurrences;
+        this.occurrences = trueOccurrences;
         almostOccurrences = new HashMap<>(){{
             for(AlmostMatch am : almostMatches)
                 put(am.getTrace_id(),am.getRecommendation());
         }};
-    }
-
-    public List<Occurrences> getTrueOccurrences() {
-        return trueOccurrences;
-    }
-
-    public void setTrueOccurrences(List<Occurrences> trueOccurrences) {
-        this.trueOccurrences = trueOccurrences;
     }
 
     public Map<Long, String> getAlmostOccurrences() {

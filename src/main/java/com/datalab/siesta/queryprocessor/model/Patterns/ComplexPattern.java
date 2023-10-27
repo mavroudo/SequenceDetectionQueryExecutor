@@ -181,7 +181,7 @@ public class ComplexPattern extends SIESTAPattern {
     public SimplePattern getItSimpler() {
         List<EventPos> response = new ArrayList<>();
         for (EventSymbol ep : this.eventsWithSymbols) {
-            if (ep.getSymbol().equals("")) response.add(ep);
+            if (ep.getSymbol().isEmpty() ||ep.getSymbol().equals("_")) response.add(ep);
             else return null;
         }
         SimplePattern sp = new SimplePattern(response);

@@ -115,7 +115,6 @@ public class QueryPlanPatternDetection implements QueryPlan {
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
         qr = this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
         if (!qr.isEmpty()) return; //There was an original error
-//        minPairs = minPairs == -1 ? pairs._1 : minPairs; //set minPairs to the one returned from the extractPairsForPatternDetection
         imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, pairs,qpdw.getFrom(),qpdw.getTill());
     }
 
