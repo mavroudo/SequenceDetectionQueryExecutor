@@ -34,22 +34,39 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * The query plan of the pattern detection query
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanPatternDetection implements QueryPlan {
 
+    /**
+     * Connection with the database
+     */
     protected final DBConnector dbConnector;
 
+    /**
+     * Log Database's metadata
+     */
     protected Metadata metadata;
 
-    protected int minPairs;
-
+    /**
+     * Connection with the SASE
+     */
     protected final SaseConnector saseConnector;
 
+    /**
+     * IntermediateResults: Holds the traces that contain all the required et-pairs.
+     * These are the results before the validation step that will remove the false positives
+     */
     protected IndexMiddleResult imr;
 
     protected Utils utils;
 
+    /**
+     * A set of all the event types in this log database.
+     */
     protected Set<String> eventTypesInLog;
 
     public void setEventTypesInLog(Set<String> eventTypesInLog) {
@@ -60,25 +77,35 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return imr;
     }
 
+    /**
+     * Using Spring Boot framework to get the required objects from the Heap. These are the connection to the database,
+     * the connection to Sase and the utilities
+     * @param dbConnector
+     * @param saseConnector
+     * @param utils
+     */
     @Autowired
     public QueryPlanPatternDetection(DBConnector dbConnector, SaseConnector saseConnector, Utils utils) {
         this.saseConnector = saseConnector;
         this.dbConnector = dbConnector;
         this.utils = utils;
-        minPairs = -1;
     }
 
-    public void setMinPairs(int minPairs) {
-        this.minPairs = minPairs;
-    }
-
+    /**
+     * The query plan has the following steps:
+     * (1) Retrieve the required et-pairs from the database and prune the search space
+     * (2) Validate the remaining pairs to remove false positives.
+     * The (1) is handled inside the getMiddleResults function while the (2) is handled using the saseConnector
+     * @param qw the QueryPatternDetectionWrapper
+     * @return a QueryResponsePatternDetection if succeed or a QueryResponseBadRequestForDetection if failed
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         long start = System.currentTimeMillis();
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
         this.getMiddleResults(qpdw,firstCheck);
-        Logger logger = LoggerFactory.getLogger(Application.class);
+        Logger logger = LoggerFactory.getLogger(QueryPlanPatternDetection.class);
         logger.info(String.format("Retrieve event pairs: %d ms",System.currentTimeMillis()-start));
         if(!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         QueryResponsePatternDetection queryResponsePatternDetection = new QueryResponsePatternDetection();
@@ -88,11 +115,11 @@ public class QueryPlanPatternDetection implements QueryPlan {
         occurrences.forEach(x->x.clearOccurrences(qpdw.isReturnAll()));
         long ts_eval = System.currentTimeMillis();
         queryResponsePatternDetection.setOccurrences(occurrences);
-        TimeStats timeStats = new TimeStats();
+        TimeStats timeStats = new TimeStats(); //create the response stats (pruning,validation and total time)
         timeStats.setTimeForPrune(ts_trace-start);
         timeStats.setTimeForValidation(ts_eval-ts_trace);
         timeStats.setTotalTime(ts_eval-start);
-        queryResponsePatternDetection.setTimeStats(timeStats);
+        queryResponsePatternDetection.setTimeStats(timeStats); //add time-stats to the response object
         return queryResponsePatternDetection;
     }
 
@@ -119,6 +146,14 @@ public class QueryPlanPatternDetection implements QueryPlan {
     }
 
 
+    /**
+     * Check if the query pattern requires to get information from the SequenceTable. That is, if the query describes a
+     * time constraint and the IndexTable was build using positions, and vice versa, information is required that are
+     * only stored in the SequenceTable.
+     * @param qpdw the query pattern
+     * @return if it is required to get information from the sequence table, or if the available information in IndexTable
+     * is adequate.
+     */
     protected boolean requiresQueryToDB(QueryPatternDetectionWrapper qpdw) {
         Tuple2<List<TimeConstraint>, List<GapConstraint>> cl= utils.splitConstraints(qpdw.getPattern().getConstraints());
         return (!cl._1.isEmpty() && !cl._2.isEmpty()) || (!cl._2.isEmpty() && metadata.getMode().equals("timestamps")) ||
@@ -127,6 +162,12 @@ public class QueryPlanPatternDetection implements QueryPlan {
                 (qpdw.getTill()!=null && metadata.getMode().equals("positions"));
     }
 
+    /**
+     * Utilizes the above function to determine if more information from SequenceTable is required and if that is the
+     * case it retrieves the events and store them in the IndexMiddleResults object (overriding the previous ones).
+     * That is ok, because the events from SequenceTable will always contain both time and position information
+     * @param qpdw The query pattern
+     */
     protected void checkIfRequiresDataFromSequenceTable(QueryPatternDetectionWrapper qpdw){
         long start = System.currentTimeMillis();
         if (this.requiresQueryToDB(qpdw)) { // we need to get from SeqTable
@@ -135,11 +176,20 @@ public class QueryPlanPatternDetection implements QueryPlan {
             List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
             Map<Long,List<Event>> e = this.querySeqDB(tracesToQuery, qpdw.getPattern(), qpdw.getLog_name(),qpdw.getFrom(),qpdw.getTill());
             imr.setEvents(e);
-            Logger logger = LoggerFactory.getLogger(Application.class);
+            Logger logger = LoggerFactory.getLogger(QueryPlanPatternDetection.class);
             logger.info(String.format("Retrieve traces: %d ms",System.currentTimeMillis()-start));
         }
     }
 
+    /**
+     * Retrieves events from the SequenceTable
+     * @param trace_ids a list of all the trace ids
+     * @param pattern the query pattern (used to get the list of all the events)
+     * @param logname the log database
+     * @param from the starting timestamp
+     * @param till the ending timestamp
+     * @return the retrieved events from the SequenceTable
+     */
     protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname, Timestamp from, Timestamp till){
         Set<String> eventTypes = pattern.getEventTypes();
         Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes,from,till);
@@ -172,7 +222,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
         List<Tuple2<EventPair, Count>> response = new ArrayList<>();
         for (Count c : sortedCounts) {
             for (EventPair p : pairs) {
-                if (p.equals(c)) {
+                if (p.equals(c)) { //a correlation between counts and event pairs is already described in the equals
+                                    // function of the EventPair class
                     response.add(new Tuple2<>(p, c));
                 }
             }
@@ -180,11 +231,25 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return response;
     }
 
+    /**
+     * This function evaluates the query pattern. Based on the retrieved stats for each consecutive et-pair checks if the
+     * query fulfills the following conditions:
+     * (1) All the events exist in the database
+     * (2) All the et-pairs exist in the database
+     * (3) All conditions (pos and time) can be fulfilled by at least one event-pair in the database
+     *
+     * If the query meets all conditions the QueryResponseBadRequestForDetection will remain empty, else for each
+     * violation and for each condition relevant information will be added to the response
+     * @param queryPatternDetectionWrapper the query pattern
+     * @param pairs the extracted pairs
+     * @param combined the above pairs combined with the stats retrieved from the CountTable
+     * @param qr a response that will store all the violations of the
+     * @return the response object
+     */
     protected QueryResponseBadRequestForDetection firstParsing(QueryPatternDetectionWrapper queryPatternDetectionWrapper,
                                                                Set<EventPair> pairs,
                                                                List<Tuple2<EventPair, Count>> combined,
                                                                QueryResponseBadRequestForDetection qr) {
-//        QueryResponseBadRequestForDetection qr = new QueryResponseBadRequestForDetection();
         List<String> nonExistingEvents = new ArrayList<>();
         for (String eventType : queryPatternDetectionWrapper.getPattern().getEventTypes()) {
             if (!this.eventTypesInLog.contains(eventType)) {
@@ -211,7 +276,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
                     inPairs.add(pair);
                 }
             }
-            if (inPairs.size() > 0) {
+            if (!inPairs.isEmpty()) {
                 qr.setNonExistingPairs(inPairs);
             }
         }
@@ -223,7 +288,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
                 }
             }
         }
-        if (inPairs.size() > 0) {
+        if (!inPairs.isEmpty()) {
             qr.setConstraintsNotFulfilled(inPairs);
         }
         return qr;

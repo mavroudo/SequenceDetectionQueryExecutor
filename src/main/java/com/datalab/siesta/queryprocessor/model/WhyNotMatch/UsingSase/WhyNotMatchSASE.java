@@ -26,6 +26,12 @@ import scala.collection.mutable.ListBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * A modified connector to SASE that encapsulates the logic of the PointBased method (responsible to detect inconsistencies
+ * in the stored timestamps). This class will create an uncertain stream (stream with events that their timestamp has been
+ * modified according to the parameter "uncertainty" and then detect the query pattern over this stream. The total
+ * modification in the trace, in order to be a valid match for the query pattern, has to be less than the parameter "k"
+ */
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class WhyNotMatchSASE {
@@ -150,6 +156,13 @@ public class WhyNotMatchSASE {
         return response;
     }
 
+    /**
+     * Based on the detected matches creates the responses, that verbally states what modifications are required in each
+     * trace, in order for a valid match of the query pattern to appear
+     * @param maps The detected matches (in the modified stream)
+     * @param original The original events in each trace
+     * @return A list of the matches detected in the modified stream
+     */
     public List<AlmostMatch> createResponse(Map<Long, List<Match>> maps, Map<Long,List<Event>> original) {
         return maps.entrySet().stream().map(entry->{
             List<UncertainTimeEvent> e = entry.getValue().stream().map(x -> {

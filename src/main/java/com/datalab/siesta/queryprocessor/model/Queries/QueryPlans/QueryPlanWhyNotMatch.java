@@ -28,10 +28,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * The query plan for the detection queries that have the explainability setting on
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
 
+    /**
+     * A modified SASE connector that creates the uncertain stream and detects the query pattern in it.
+     */
     private WhyNotMatchSASE whyNotMatchSASE;
 
 
@@ -42,14 +48,19 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
     }
 
 
+    /**
+     * Executes a pattern detection query that has the explainability setting on
+     * @param qw the QueryPatternDetectionWrapper
+     * @return
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         long start = System.currentTimeMillis();
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
-        //set minPairs before the getMiddleResults
-        boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
-        super.getMiddleResults(qpdw, firstCheck);
+        //The following part is similar to the QueryPlanPatternDetection with the additional exploration of possible
+        //modifications in the end
+        super.getMiddleResults(qpdw, firstCheck); // finds the middle results
         if (!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         if (qpdw.getPattern().getItSimpler() == null) { //the pattern is not simple (we don't allow that yet)
             QueryResponseBadRequestWhyNotMatch queryResponseBadRequestWhyNotMatch = new QueryResponseBadRequestWhyNotMatch();
@@ -75,6 +86,7 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
         // Execute the whyNotMatch search
         SimplePattern sp = qpdw.getPattern().getItSimpler();
         List<AlmostMatch> almostMatches = whyNotMatchSASE.evaluate(sp,restTraces, qpdw.getUncertainty(), qpdw.getStepInSeconds(), qpdw.getK());
+        // collects the time-stat information and added it to the response
         long ts_eval = System.currentTimeMillis();
         TimeStats timeStats = new TimeStats();
         timeStats.setTimeForPrune(ts_trace-start);

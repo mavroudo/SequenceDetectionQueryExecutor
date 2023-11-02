@@ -7,6 +7,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * The class that represents a et-pair
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventPair implements Serializable {
 
@@ -53,6 +56,12 @@ public class EventPair implements Serializable {
     }
 
 
+    /**
+     * Since this is an et-pair we are only interested in the name of the events and not in their positions
+     * or timestamps
+     * @param o
+     * @return
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -63,7 +72,7 @@ public class EventPair implements Serializable {
         }
         if (getClass() != o.getClass()) return false;
         EventPair eventPair = (EventPair) o;
-        return eventA.equals(eventPair.eventA) && eventB.equals(eventPair.eventB);
+        return eventA.getName().equals(eventPair.eventA.getName()) && eventB.getName().equals(eventPair.eventB.getName());
     }
 
 
