@@ -7,6 +7,9 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Query Stats: Nothing fancy here, just an intermediate class simply return the QueryPlanStats.
+ */
 @Service
 public class QueryStats implements Query {
 
