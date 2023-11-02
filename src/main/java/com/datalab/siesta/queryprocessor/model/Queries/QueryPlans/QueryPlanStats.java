@@ -17,7 +17,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Set;
 
-
+/**
+ * Executing the stats query, which returns the basic statistics for each consecutive et-pair in the query pattern.
+ * The basic statistics are min, max and average duration as well as the number of total completions
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanStats implements QueryPlan{

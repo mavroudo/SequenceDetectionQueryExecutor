@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * The query plan for the accurate detection of continuation for the query pattern
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection implements QueryPlan {
@@ -38,6 +41,14 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
         super(dbConnector, saseConnector, utils);
     }
 
+    /**
+     * Using the CountTable, the next possible events are retrieved. Then for each possible next event the pattern detection
+     * query runs in order to determine the exact number of traces that contain the complete pattern.
+     * Finally the propositions were added in the response and are sorted from the most frequent next event to the least
+     * frequent
+     * @param qw the QueryPatternDetectionWrapper
+     * @return the possible next events sorted based on frequency, in the form of propositions
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryExploreWrapper queryExploreWrapper = (QueryExploreWrapper) qw;
