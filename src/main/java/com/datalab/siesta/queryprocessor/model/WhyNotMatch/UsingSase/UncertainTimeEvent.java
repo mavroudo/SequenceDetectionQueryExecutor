@@ -2,6 +2,10 @@ package com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase;
 
 import edu.umass.cs.sase.stream.Event;
 
+/**
+ * It is an implementation of the SASE Event. It contains the modified timestamp, the position of the event in the trace
+ * (based on the modified timestamp) and the change that was made.
+ */
 public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent> {
 
     private long trace_id;
@@ -93,6 +97,11 @@ public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent>
         return position;
     }
 
+    /**
+     * The events are ordered based on their timestamp
+     * @param o the object to be compared.
+     * @return the relative position between this event and o
+     */
     @Override
     public int compareTo(UncertainTimeEvent o) {
         return Integer.compare(this.timestamp,o.getTimestamp());
