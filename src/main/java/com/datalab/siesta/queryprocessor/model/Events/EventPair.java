@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * The class that represents a et-pair
+ * The class that represents an et-pair
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventPair implements Serializable {

@@ -9,6 +9,9 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Objects;
 
+/**
+ * A SIESTA event that contains only time information
+ */
 public class EventTs extends Event implements Serializable, Cloneable {
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)

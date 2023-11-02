@@ -8,6 +8,9 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * A SIESTA event that contains only position information
+ */
 public class EventPos extends Event implements Serializable, Comparable, Cloneable {
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)

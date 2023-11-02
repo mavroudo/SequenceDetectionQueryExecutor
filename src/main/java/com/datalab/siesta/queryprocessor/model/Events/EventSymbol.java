@@ -5,6 +5,10 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.Objects;
 
+/**
+ * An event that it is passed in the query pattern and except for an event (with the corresponding position) it also
+ * contains a symbol. This symbol determines the operator (*->Kleene*, +->Kleene+, !->not, ||-> or, _ -> simple)
+ */
 public class EventSymbol extends EventPos{
 
     @JsonView(MappingJacksonViews.EventAllInfo.class)
