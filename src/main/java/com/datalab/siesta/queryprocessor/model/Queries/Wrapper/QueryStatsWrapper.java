@@ -2,6 +2,10 @@ package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 
+/**
+ * Stats Query: should have a query pattern (sequence of events) and the name of the log database (which is available
+ * in the superclass)
+ */
 public class QueryStatsWrapper extends QueryWrapper{
 
     private SimplePattern pattern;
