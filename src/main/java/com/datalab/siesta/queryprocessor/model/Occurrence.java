@@ -6,6 +6,10 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.util.List;
 
+/**
+ * A single occurrence of the pattern in a trace. It is consisted of a list of all the events that correspond to the
+ * pattern occurrence
+ */
 public class Occurrence {
 
 
@@ -23,6 +27,11 @@ public class Occurrence {
         this.occurrence = occurrence;
     }
 
+    /**
+     * Determines if this occurrence overlaps in time with another one
+     * @param occurrence another occurrence
+     * @return true if these occurrences overlap and false otherwise
+     */
     public boolean overlaps(Occurrence occurrence){
         EventBoth fEvent = occurrence.getOccurrence().get(0);
         EventBoth lEvent = occurrence.getOccurrence().get(occurrence.getOccurrence().size()-1);
@@ -38,6 +47,9 @@ public class Occurrence {
         return !notOverlaps;
     }
 
+    /**
+     * @return the duration in seconds, where duration is the difference between the first and last event
+     */
     @JsonIgnore
     public double getDuration(){
         int s = occurrence.size();

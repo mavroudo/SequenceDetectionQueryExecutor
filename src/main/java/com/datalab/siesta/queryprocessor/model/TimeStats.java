@@ -2,6 +2,10 @@ package com.datalab.siesta.queryprocessor.model;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
+/**
+ * Wraps information about the performance of the pattern detection queries. More specifically
+ * it contains information about the time that it took for pruning and validation (as well as the total response time)
+ */
 public class TimeStats {
 
     @JsonProperty("time for pruning in ms")

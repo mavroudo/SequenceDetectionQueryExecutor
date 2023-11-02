@@ -13,6 +13,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Defines the list of groups in the pattern detection query. user can describe the different groups of traces in the
+ * following way: the groups are defined inside an order list of sets. in each set the elements can be single trace ids
+ * or a range of trace ids. for example the group definition (1,3-10),(12,15-17) defines 2 groups. the first one contains
+ * the traces with ids 1,3,4...10 and the second one contains the traces with ids 12,15,16 and 17.
+ * Note that the same trace can be used in multiple groups and that if a trace id is missing from all groups it is
+ * not consider in the pattern detection.
+ */
 public class GroupConfig implements Serializable {
 
     @JsonProperty("groups")
@@ -55,6 +63,12 @@ public class GroupConfig implements Serializable {
         this.groups=parseGroups(groupsString);
     }
 
+    /**
+     * Parse the input string utilizing regex, to extract the corresponding groups
+     * @param input the input string
+     * @return a list of the groups (each group is a set of the trace ids that it contains)
+     * @throws RuntimeException
+     */
     private List<Set<Long>> parseGroups(String input) throws RuntimeException {
         List<Set<Long>> response = new ArrayList<>();
         if(input.equals("")){
