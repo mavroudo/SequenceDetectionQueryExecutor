@@ -14,7 +14,6 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper
 import com.datalab.siesta.queryprocessor.services.LoadInfo;
 import com.datalab.siesta.queryprocessor.services.LoadedEventTypes;
 import com.datalab.siesta.queryprocessor.services.LoadedMetadata;
-import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
