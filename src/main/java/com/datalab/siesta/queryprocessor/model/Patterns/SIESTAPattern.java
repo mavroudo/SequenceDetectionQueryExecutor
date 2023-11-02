@@ -17,20 +17,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Abstract class of the patterns that are defined in SIESTA. There are 2 types: (1) the simple ones and the (2)
+ * complex ones that contains more sophisticated operators like the Kleene, the and, or etc.
+ */
 public abstract class SIESTAPattern {
 
-//    protected Set<EventPair> extractPairsAll(List<EventPos> events, List<Constraint> constraints){
-//        Set<EventPair> eventPairs = new HashSet<>();
-//        for (int i = 0; i < events.size() - 1; i++) {
-//            for (int j = i+1; j < events.size(); j++) {
-//                EventPair n = new EventPair(events.get(i), events.get(j));
-//                Constraint c = this.searchForConstraint(i, j,constraints);
-//                if (c != null) n.setConstraint(c);
-//                eventPairs.add(n);
-//            }
-//        }
-//        return eventPairs;
-//    }
 
     /**
      * Extract all the pairs that should are contained in the pattern
@@ -65,6 +57,13 @@ public abstract class SIESTAPattern {
         return pairs;
     }
 
+    /**
+     * Returns if there is a pattern constraint between two positions in the pattern
+     * @param posA first position
+     * @param posB second position
+     * @param constraints a list of constraints
+     * @return the constraint between posA and posB if exists, or null otherwise
+     */
     protected Constraint searchForConstraint(int posA, int posB, List<Constraint> constraints) {
         for (Constraint c : constraints) {
             if (c.getPosA() == posA && c.getPosB() == posB) {
@@ -74,6 +73,13 @@ public abstract class SIESTAPattern {
         return null;
     }
 
+    /**
+     * Extracts the consecutive event pairs along with their constraints. For example for the pattern A-B-C, with
+     * constraint between 0 and 1, it will create two EventPairs: A,B (with the constraint) and B,C
+     * @param events list of events in the query pattern
+     * @param constraints list of constraints in the pattern query
+     * @return the consecutive event pairs
+     */
     protected Set<EventPair> extractPairsConsecutive(List<EventPos> events, List<Constraint> constraints) {
         Set<EventPair> eventPairs = new HashSet<>();
         for (int i = 0; i < events.size() - 1; i++) {
