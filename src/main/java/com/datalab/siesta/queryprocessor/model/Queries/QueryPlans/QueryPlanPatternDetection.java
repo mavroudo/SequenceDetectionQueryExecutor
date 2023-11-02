@@ -1,6 +1,5 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
-import com.datalab.siesta.queryprocessor.Application;
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
@@ -80,9 +79,9 @@ public class QueryPlanPatternDetection implements QueryPlan {
     /**
      * Using Spring Boot framework to get the required objects from the Heap. These are the connection to the database,
      * the connection to Sase and the utilities
-     * @param dbConnector
-     * @param saseConnector
-     * @param utils
+     * @param dbConnector Connection with the database
+     * @param saseConnector Connection with the SASE
+     * @param utils utilities object
      */
     @Autowired
     public QueryPlanPatternDetection(DBConnector dbConnector, SaseConnector saseConnector, Utils utils) {
@@ -237,7 +236,6 @@ public class QueryPlanPatternDetection implements QueryPlan {
      * (1) All the events exist in the database
      * (2) All the et-pairs exist in the database
      * (3) All conditions (pos and time) can be fulfilled by at least one event-pair in the database
-     *
      * If the query meets all conditions the QueryResponseBadRequestForDetection will remain empty, else for each
      * violation and for each condition relevant information will be added to the response
      * @param queryPatternDetectionWrapper the query pattern

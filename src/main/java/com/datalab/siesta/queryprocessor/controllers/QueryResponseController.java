@@ -35,29 +35,26 @@ import java.util.List;
 @RequestMapping(path = "/")
 public class QueryResponseController {
 
-    @Autowired
-    private DBConnector dbConnector;
-
-    @Autowired
     private LoadedMetadata allMetadata;
-
-    @Autowired
-    private QueryStats qs;
-
-    @Autowired
-    private QueryPatternDetection qpd;
-
-    @Autowired
-    private QueryExploration queryExploration;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
+    private final QueryStats qs;
+    private final QueryPatternDetection qpd;
+    private final QueryExploration queryExploration;
+    private final ObjectMapper objectMapper;
     private LoadedEventTypes loadedEventTypes;
+    private final LoadInfo loadInfo;
 
     @Autowired
-    private LoadInfo loadInfo;
+    public QueryResponseController(LoadedMetadata allMetadata, QueryStats qs,
+                                   QueryPatternDetection qpd, QueryExploration queryExploration,
+                                   ObjectMapper objectMapper, LoadedEventTypes loadedEventTypes, LoadInfo loadInfo) {
+        this.allMetadata = allMetadata;
+        this.qs = qs;
+        this.qpd = qpd;
+        this.queryExploration = queryExploration;
+        this.objectMapper = objectMapper;
+        this.loadedEventTypes = loadedEventTypes;
+        this.loadInfo = loadInfo;
+    }
 
     /**
      * Returns the name of all the indexed log databases

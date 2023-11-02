@@ -1,13 +1,10 @@
 package com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.NFAWrapper;
-import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
-import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import edu.umass.cs.sase.engine.EngineController;
@@ -16,12 +13,10 @@ import edu.umass.cs.sase.query.NFA;
 import edu.umass.cs.sase.query.State;
 import edu.umass.cs.sase.stream.Stream;
 import net.sourceforge.jeval.EvaluationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
-import scala.collection.mutable.ListBuffer;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -59,8 +59,8 @@ public class EventPair implements Serializable {
     /**
      * Since this is an et-pair we are only interested in the name of the events and not in their positions
      * or timestamps
-     * @param o
-     * @return
+     * @param o another object that check equality
+     * @return if these 2 objects have the same two names of events
      */
     @Override
     public boolean equals(Object o) {

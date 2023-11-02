@@ -1,8 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
-import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
@@ -38,7 +36,7 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
     /**
      * A modified SASE connector that creates the uncertain stream and detects the query pattern in it.
      */
-    private WhyNotMatchSASE whyNotMatchSASE;
+    private final WhyNotMatchSASE whyNotMatchSASE;
 
 
     @Autowired
@@ -51,7 +49,7 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
     /**
      * Executes a pattern detection query that has the explainability setting on
      * @param qw the QueryPatternDetectionWrapper
-     * @return
+     * @return the pattern detection response
      */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
