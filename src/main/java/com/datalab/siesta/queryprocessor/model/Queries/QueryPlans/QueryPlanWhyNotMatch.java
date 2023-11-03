@@ -1,8 +1,6 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
-import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
@@ -12,6 +10,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryRespo
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseWhyNotMatch;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+import com.datalab.siesta.queryprocessor.model.TimeStats;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase.WhyNotMatchSASE;
@@ -27,11 +26,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * The query plan for the detection queries that have the explainability setting on
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
 
-    private WhyNotMatchSASE whyNotMatchSASE;
+    /**
+     * A modified SASE connector that creates the uncertain stream and detects the query pattern in it.
+     */
+    private final WhyNotMatchSASE whyNotMatchSASE;
 
 
     @Autowired
@@ -41,16 +46,19 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
     }
 
 
+    /**
+     * Executes a pattern detection query that has the explainability setting on
+     * @param qw the QueryPatternDetectionWrapper
+     * @return the pattern detection response
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
+        long start = System.currentTimeMillis();
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
         QueryResponseBadRequestForDetection firstCheck = new QueryResponseBadRequestForDetection();
-        //set minPairs before the getMiddleResults
-        boolean fromOrTillSet = qpdw.getFrom()!=null || qpdw.getTill()!=null;
-//        //TODO: check this to work as intended with minPairs
-//        minPairs=qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet).getTruePairs().size() - qpdw.getPattern().getSize() +1;
-//        minPairs = Math.max(minPairs, 1); //if the minPair goes below 0 we will have to evaluate all the traces gathered
-        super.getMiddleResults(qpdw, firstCheck);
+        //The following part is similar to the QueryPlanPatternDetection with the additional exploration of possible
+        //modifications in the end
+        super.getMiddleResults(qpdw, firstCheck); // finds the middle results
         if (!firstCheck.isEmpty()) return firstCheck; //stop the process as an error was found
         if (qpdw.getPattern().getItSimpler() == null) { //the pattern is not simple (we don't allow that yet)
             QueryResponseBadRequestWhyNotMatch queryResponseBadRequestWhyNotMatch = new QueryResponseBadRequestWhyNotMatch();
@@ -58,11 +66,11 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
             return queryResponseBadRequestWhyNotMatch;
         }
         super.checkIfRequiresDataFromSequenceTable(qpdw); //checks if data is required from the sequence table and gets them
-
+        long ts_trace = System.currentTimeMillis();
         List<Occurrences> trueOccurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         trueOccurrences.forEach(x -> x.clearOccurrences(qpdw.isReturnAll()));
         QueryResponseWhyNotMatch queryResponseWhyNotMatch = new QueryResponseWhyNotMatch();
-        queryResponseWhyNotMatch.setTrueOccurrences(trueOccurrences);
+        queryResponseWhyNotMatch.setOccurrences(trueOccurrences);
 
 
         //Keep the traces that do not contain any occurrences
@@ -76,7 +84,15 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
         // Execute the whyNotMatch search
         SimplePattern sp = qpdw.getPattern().getItSimpler();
         List<AlmostMatch> almostMatches = whyNotMatchSASE.evaluate(sp,restTraces, qpdw.getUncertainty(), qpdw.getStepInSeconds(), qpdw.getK());
+        // collects the time-stat information and added it to the response
+        long ts_eval = System.currentTimeMillis();
+        TimeStats timeStats = new TimeStats();
+        timeStats.setTimeForPrune(ts_trace-start);
+        timeStats.setTimeForValidation(ts_eval-ts_trace);
+        timeStats.setTotalTime(ts_eval-start);
+        queryResponseWhyNotMatch.setTimeStats(timeStats);
         queryResponseWhyNotMatch.setAlmostOccurrences(almostMatches);
+
         return queryResponseWhyNotMatch;
     }
 

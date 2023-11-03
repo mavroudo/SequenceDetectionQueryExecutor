@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * The query plan for the fast detection of continuation for the query pattern
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanExplorationFast implements QueryPlan {
@@ -34,10 +37,17 @@ public class QueryPlanExplorationFast implements QueryPlan {
         this.dbConnector = dbConnector;
     }
 
+    /**
+     * Using the CountTable, the next possible events are retrieved and sorted from the most frequent next event, to the
+     * least frequent. Then these propositions are added to a QueryResponseExploration object and returned.
+     * @param qw the QueryPatternDetectionWrapper
+     * @return the possible next events sorted based on frequency, in the form of propositions
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryExploreWrapper queryExploreWrapper = (QueryExploreWrapper) qw;
         Set<EventPair> pairs = queryExploreWrapper.getPattern().extractPairsConsecutive();
+        //approximate the total completions of the pattern based on the occurrences of the consecutive pairs
         List<Count> pairCount = dbConnector.getStats(queryExploreWrapper.getLog_name(), pairs);
         int lastCompletions = this.getCompletionCountOfFullFunnel(pairCount);
         List<EventPos> events = queryExploreWrapper.getPattern().getEvents();
@@ -47,6 +57,17 @@ public class QueryPlanExplorationFast implements QueryPlan {
         return new QueryResponseExploration(props);
     }
 
+    /**
+     * This function approximates the total occurrences of the query pattern if another event is appended at the end.
+     * The list of the last events is retrieved from the CountTable. The approximation is calculated as the min of the
+     * total completions of the query pattern and the number of occurences of the last event of the query pattern and the
+     * possible next event
+     * @param lastEvent the last event of the query pattern
+     * @param logname the database log
+     * @param lastCompletions the approximation of the total completions of the query pattern, based on stats
+     * @return a list of propositions for the continuation of the query pattern sorted based on the approximate completion
+     * times
+     */
     protected List<Proposition> exploreFast(String lastEvent, String logname, int lastCompletions) {
         List<Proposition> propositions = new ArrayList<>();
         List<Count> freqs = dbConnector.getCountForExploration(logname, lastEvent);
@@ -60,6 +81,12 @@ public class QueryPlanExplorationFast implements QueryPlan {
         return propositions;
     }
 
+    /**
+     * Approximate the total completions of the query pattern based on the number of occurrences of the consecutive
+     * pairs
+     * @param counts stats for each consecutive pair
+     * @return an approximation of the total completions of the query pattern
+     */
     protected int getCompletionCountOfFullFunnel(List<Count> counts) {
         int partialCount = Integer.MAX_VALUE;
         for (Count c : counts) {

@@ -1,5 +1,8 @@
 package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
+/**
+ * Metadata Query: it only requires the log database from which the user wants to retrieve the metadata
+ */
 public class QueryMetadataWrapper extends QueryWrapper {
 
 

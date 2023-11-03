@@ -7,13 +7,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-
+/**
+ *  The response for the pattern detection query. It contains a list of the occurrences per
+ *  trace and information about the time required for each step of the execution (pruning and validation)
+ */
 public class QueryResponsePatternDetection implements QueryResponse {
 
-    private List<Occurrences> occurrences;
+    protected List<Occurrences> occurrences;
 
     @JsonProperty("performance statistics")
-    private TimeStats timeStats;
+    protected TimeStats timeStats;
 
     public QueryResponsePatternDetection() {
     }

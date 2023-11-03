@@ -9,6 +9,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.sql.Timestamp;
 import java.util.List;
 
+/**
+ * Contains a match that was found in the modified events. It contains the match found, the original events and
+ * the trace id.
+ */
 public class AlmostMatch {
 
     private long trace_id;
@@ -50,6 +54,12 @@ public class AlmostMatch {
         this.match = match;
     }
 
+    /**
+     * It constructs a string that describes the modification that is required in the original events in order to
+     * appear an occurrence of the query pattern. There is also information about the total amount of modifications needed.
+     * @return a string that describes the required modification in the original events in order for a pattern
+     * occurrence to appear
+     */
     @JsonIgnore
     public String getRecommendation() {
         StringBuilder sb = new StringBuilder("This would be a match if:\n");

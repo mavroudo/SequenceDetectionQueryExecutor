@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * A subclass of the SIESTAPattern. Describes patterns that contain simple events, i.e. events with no special operaor,
+ * simple ordered events.
+ */
 public class SimplePattern extends SIESTAPattern implements Cloneable{
 
     private List<EventPos> events;

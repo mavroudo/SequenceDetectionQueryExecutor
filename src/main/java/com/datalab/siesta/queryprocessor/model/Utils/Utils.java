@@ -14,10 +14,19 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Contains some general functions that are utilized throughout the project and since it is a component it is easy
+ * to call them from anywhere
+ */
 @Component
 public class Utils implements Serializable {
 
 
+    /**
+     * Separates a list of constraints into 2 lists (1) the Time constraints and (2) the gap constaints
+     * @param constraints a list of all the constraints in the query pattern
+     * @return a tuple of the 2 lists of constraints separated
+     */
     public Tuple2<List<TimeConstraint>, List<GapConstraint>> splitConstraints(List<Constraint> constraints){
         List<TimeConstraint> tcs = new ArrayList<>();
         List<GapConstraint> gcs = new ArrayList<>();
@@ -31,6 +40,11 @@ public class Utils implements Serializable {
     }
 
 
+    /**
+     * Transform a list of Siesta events into a list of SASE events in order to be evaluated by SASE engine
+     * @param events a list of Siesta events
+     * @return the transformed SASE events
+     */
     public List<SaseEvent> transformToSaseEvents(List<Event> events){
         List<SaseEvent> ses = new ArrayList<>();
         Event fe = events.get(0);

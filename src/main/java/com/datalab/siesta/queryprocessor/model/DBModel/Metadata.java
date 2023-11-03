@@ -6,21 +6,64 @@ import org.apache.spark.sql.Row;
 
 import java.util.Map;
 
+/**
+ * A Metadata object contains all the metadata about a specific log database.
+ */
 public class Metadata {
 
+    /**
+     * Compression algorithm used during indexing
+     */
     private String compression;
+    /**
+     * Number of indexed events
+     */
     private Long events;
+    /**
+     * Name of the last indexed logfile
+     */
     private String filename;
+    /**
+     * If this log database has already indexed records, or it is recently initialized
+     */
     private Boolean has_previous_stored;
+    /**
+     * If there were previously indexed records, this shows the last interval of the IndexTable
+     */
     private String last_interval;
+    /**
+     * Name of the log database
+     */
     private String logname;
+    /**
+     * That parameter shows what is the maximum allow time-distance between two events in order to construct a valid
+     * event-pair
+     */
     private Long lookback;
+    /**
+     * Takes 2 values positions/timestamps. Shows what information is stored in the IndexTable
+     * @see com.datalab.siesta.queryprocessor.model.DBModel.IndexPair
+     */
     private String mode;
+    /**
+     * Number of indexed pairs
+     */
     private Long pairs;
+    /**
+     * That parameter shows every how many days will the IndexTable create a new segment. It is used
+     * to keep the length of the inverted lists manageable.
+     */
     private Long split_every_days;
+    /**
+     * Number of indexed traces
+     */
     private Long traces;
 
 
+    /**
+     * Parse a json row. Utilized in S3, as metadata stored in json format
+     * @param json metadata in json format
+     */
     public Metadata(Row json) {
         this.compression = (String) json.getAs("compression");
         this.events = (Long) json.getAs("events");
@@ -35,6 +78,10 @@ public class Metadata {
         this.traces = (Long) json.getAs("traces");
     }
 
+    /**
+     * Parse data from a map. Utilized in Cassandra, as metadata stored in a key:value format
+     * @param attributes metadata in map format
+     */
     public Metadata(Map<String,String> attributes){
         this.compression = attributes.get("compression");
         this.events = Long.valueOf(attributes.get("events"));

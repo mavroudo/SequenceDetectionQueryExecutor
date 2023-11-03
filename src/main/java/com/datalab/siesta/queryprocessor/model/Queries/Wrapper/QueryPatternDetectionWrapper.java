@@ -9,6 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.sql.Timestamp;
 
 
+/**
+ * Pattern Detection Query: It has a number of different fields, similar to an sql query, that can be filled.
+ * The only non-optional field is the pattern. This pattern contain the order of the events that will be detected
+ * as well as constraints and their operators (Kleene+, Kleene *, +, etc.)
+ */
 public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     private ComplexPattern pattern;
@@ -29,6 +34,9 @@ public class QueryPatternDetectionWrapper extends QueryWrapper {
 
     private boolean returnAll;
 
+    /**
+     * Initializes the optional fields to their default values
+     */
     public QueryPatternDetectionWrapper() {
         this.returnAll=false;
         this.whyNotMatchFlag=false;

@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Contains the structure of each row in the Indextable in Cassandra
+ */
 public class IndexRow implements Serializable {
 
     private String event_a;

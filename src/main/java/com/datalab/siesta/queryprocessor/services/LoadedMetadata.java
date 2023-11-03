@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
+/**
+ * Maintains information for all the metadata for each log databsae
+ */
 public class LoadedMetadata {
 
     private Map<String, Metadata> metadata;

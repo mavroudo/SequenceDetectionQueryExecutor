@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * A grouping of the IndexPairs based on the et-types
+ * @see com.datalab.siesta.queryprocessor.model.DBModel.IndexPair
+ */
 public class IndexRecords {
 
     private Map<EventTypes, List<IndexPair>> records;

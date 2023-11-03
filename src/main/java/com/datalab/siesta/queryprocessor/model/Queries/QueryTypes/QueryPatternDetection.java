@@ -10,11 +10,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+/**
+ * Pattern Detection: Based on the characteristics of the query pattern this class determines which query plan will
+ * be executed. If the pattern has groups defined then the QueryPlanPatternDetectionGroups will be executed. If
+ * the patterns has the explainability setting on then the QueryPlanWhyNotMatch will be executed. If none of the above is
+ * correct then the generic QueryPlanPatternDetection will be executed.
+ */
 @Service
 public class QueryPatternDetection implements Query{
 
-    private QueryPlanPatternDetection qppd;
-    private QueryPlanWhyNotMatch planWhyNotMatch;
+    private final QueryPlanPatternDetection qppd;
+    private final QueryPlanWhyNotMatch planWhyNotMatch;
 
     @Autowired
     public QueryPatternDetection(@Qualifier("queryPlanPatternDetection") QueryPlanPatternDetection qppd,
@@ -23,16 +29,20 @@ public class QueryPatternDetection implements Query{
         this.planWhyNotMatch=planWhyNotMatch;
     }
 
+    /**
+     * Determines which query plan will be executed. If the pattern has groups defined then the
+     * QueryPlanPatternDetectionGroups will be executed. If the patterns has the explainability setting on then the
+     * QueryPlanWhyNotMatch will be executed. If none of the above is
+     * correct then the generic QueryPlanPatternDetection will be executed.
+     */
+
     @Override
     public QueryPlan createQueryPlan(QueryWrapper qw, Metadata m) {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
 
         if(qpdw.isWhyNotMatchFlag()){
             planWhyNotMatch.setMetadata(m);
-//            int n = qpdw.getPattern().getSize();
             planWhyNotMatch.setEventTypesInLog(qpdw.getPattern().getEventTypes());
-//            planWhyNotMatch.setMinPairs(((n-1)*(n-2))/2); //set min pairs
-//            planWhyNotMatch.setMinPairs(1); //set min pairs
             return planWhyNotMatch;
         }else {
             qppd.setEventTypesInLog(qpdw.getPattern().getEventTypes());

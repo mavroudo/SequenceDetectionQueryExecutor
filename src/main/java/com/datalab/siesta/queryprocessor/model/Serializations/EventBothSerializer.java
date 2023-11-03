@@ -10,6 +10,9 @@ import org.codehaus.jackson.map.JsonSerializer;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
+/**
+ * Custom Serializer for the EventBoth Class
+ */
 public class EventBothSerializer extends JsonSerializer<EventBoth> {
 
     @Override

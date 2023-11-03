@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The query plan for the detection queries that have the defined the groups
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
@@ -35,6 +38,13 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
         super(dbConnector, saseConnector, utils);
     }
 
+    /**
+     * Executes the pattern detection over groups. The execution is similar to the basic pattern detection query plan,
+     * but the getMiddleResults have been override and instead of querying the IndexTable, we get the data from the
+     * SingleTable and group the events based on the group of traces
+     * @param qw the query pattern
+     * @return the group of traces that have the query pattern and in which positions
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         long start = System.currentTimeMillis();

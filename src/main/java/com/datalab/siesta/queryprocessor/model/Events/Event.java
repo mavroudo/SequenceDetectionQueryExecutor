@@ -8,6 +8,10 @@ import com.fasterxml.jackson.annotation.JsonView;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * Simple event in siesta contains only the name of the activity that it is an instance of and the trace id
+ * that it belongs to.
+ */
 public class Event implements Serializable, Comparable, Cloneable {
 
 
@@ -69,6 +73,12 @@ public class Event implements Serializable, Comparable, Cloneable {
         return new EventBoth(this.name,null,-1);
     }
 
+    /**
+     * This function transforms the current event in a SASE event in order to be processed
+     * by the SASE engine
+     * @param position the position of the event in the trace
+     * @return a SASE event
+     */
     @JsonIgnore
     public SaseEvent transformSaseEvent(int position){
         SaseEvent se= new SaseEvent();

@@ -10,6 +10,15 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This response contains is returned when a pattern detection query is deemed imprecise. Reasons for imprecision are:
+ * - some events do not appear in the database
+ * - some et-pairs do not appear in the database
+ * - some constraints contain error
+ * - some of the constraints cannot be fulfilled by at least of the event-pairs in the database
+ * There is a distinct list for each one of these errors, so the user can have a better understanding of what had gone
+ * wrong.
+ */
 @JsonInclude(Include.NON_EMPTY)
 public class QueryResponseBadRequestForDetection implements QueryResponse {
 

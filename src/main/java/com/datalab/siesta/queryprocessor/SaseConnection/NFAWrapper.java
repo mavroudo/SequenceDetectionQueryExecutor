@@ -2,6 +2,10 @@ package com.datalab.siesta.queryprocessor.SaseConnection;
 
 import edu.umass.cs.sase.query.State;
 
+/**
+ * This class contains the information required to generate the NFA in SASE. An object of this class is
+ * passed from the pattern to the SASE connector in order to create the State machine
+ */
 public class NFAWrapper {
 
     private String selectionStrategy;

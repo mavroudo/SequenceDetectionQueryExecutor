@@ -25,6 +25,11 @@ import scala.collection.Seq;
 import java.sql.Timestamp;
 import java.util.*;
 
+/**
+ * This class contains the connection between the Cassandra and the Set Containment method. It retrieves
+ * data from the appropriate indices and transform them in the required form so then can be further
+ * processed by the QuerySetContainmentPlan
+ */
 @Configuration
 @PropertySource("classpath:application.properties")
 @ConditionalOnProperty(

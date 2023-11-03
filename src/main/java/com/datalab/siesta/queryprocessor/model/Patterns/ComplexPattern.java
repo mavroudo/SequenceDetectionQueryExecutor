@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
+/**
+ * A subclass of the SIESTAPattern. Describes patterns that contain complex events, i.e. events with special operators
+ * like Kleene*, Or and Not. The patterns described by this class is
+ */
 public class ComplexPattern extends SIESTAPattern {
 
     private List<EventSymbol> eventsWithSymbols;
@@ -181,7 +184,7 @@ public class ComplexPattern extends SIESTAPattern {
     public SimplePattern getItSimpler() {
         List<EventPos> response = new ArrayList<>();
         for (EventSymbol ep : this.eventsWithSymbols) {
-            if (ep.getSymbol().equals("")) response.add(ep);
+            if (ep.getSymbol().isEmpty() ||ep.getSymbol().equals("_")) response.add(ep);
             else return null;
         }
         SimplePattern sp = new SimplePattern(response);

@@ -1,13 +1,10 @@
 package com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.NFAWrapper;
-import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.GapConstraint;
 import com.datalab.siesta.queryprocessor.model.Constraints.TimeConstraint;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
-import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import edu.umass.cs.sase.engine.EngineController;
@@ -16,16 +13,20 @@ import edu.umass.cs.sase.query.NFA;
 import edu.umass.cs.sase.query.State;
 import edu.umass.cs.sase.stream.Stream;
 import net.sourceforge.jeval.EvaluationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
-import scala.collection.mutable.ListBuffer;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * A modified connector to SASE that encapsulates the logic of the PointBased method (responsible to detect inconsistencies
+ * in the stored timestamps). This class will create an uncertain stream (stream with events that their timestamp has been
+ * modified according to the parameter "uncertainty" and then detect the query pattern over this stream. The total
+ * modification in the trace, in order to be a valid match for the query pattern, has to be less than the parameter "k"
+ */
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class WhyNotMatchSASE {
@@ -150,6 +151,13 @@ public class WhyNotMatchSASE {
         return response;
     }
 
+    /**
+     * Based on the detected matches creates the responses, that verbally states what modifications are required in each
+     * trace, in order for a valid match of the query pattern to appear
+     * @param maps The detected matches (in the modified stream)
+     * @param original The original events in each trace
+     * @return A list of the matches detected in the modified stream
+     */
     public List<AlmostMatch> createResponse(Map<Long, List<Match>> maps, Map<Long,List<Event>> original) {
         return maps.entrySet().stream().map(entry->{
             List<UncertainTimeEvent> e = entry.getValue().stream().map(x -> {

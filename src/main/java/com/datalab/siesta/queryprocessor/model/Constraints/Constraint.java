@@ -5,6 +5,12 @@ import com.fasterxml.jackson.annotation.*;
 
 import java.io.Serializable;
 
+/**
+ * General constraint type. It allows different type of constraints to be added in query patterns.
+ * The type of constraint it is added as a json attribute (namely constraint_type). As the query wrapper
+ * unravels the json in the Controller, it assigns the correct subclass of constraint based on the above
+ * attribute
+ */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -25,10 +31,6 @@ public abstract class Constraint implements Cloneable, Serializable {
     @JsonProperty("type")
     protected String method; //It will be set to atleast or within
 
-//    public Constraint() {
-//        System.out.println("invoke constructor 1");
-//        method="within";
-//    }
     public Constraint(String method){
         this.method=method;
     }
@@ -46,7 +48,6 @@ public abstract class Constraint implements Cloneable, Serializable {
             @JsonProperty("posB") int posB,
             @JsonProperty("constraint_type") String constraintType,
             @JsonProperty("constraint") long constraint) {
-        System.out.println("invoke constructor 2");
         if ("timeConstraint".equals(constraintType)) {
             return new TimeConstraint(posA, posB,constraint);
         } else if ("gapConstraint".equals(constraintType)) {

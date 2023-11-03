@@ -6,6 +6,10 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The total occurrences of a single trace. Since each trace can have multiple occurrences of the query pattern,
+ * this class groups them together so they can be easier represented in the response
+ */
 public class Occurrences {
 
     protected long traceID;
@@ -46,6 +50,11 @@ public class Occurrences {
         this.occurrences = occurrences;
     }
 
+    /**
+     * Determines which of the found occurrences will be returned. This depends on the parameter returnAll, the
+     * number of events in each occurrence and if the various occurrences overlap in time
+     * @param returnAll query parameter that determines if all of non-overlapping occurrences will be returned
+     */
     public void clearOccurrences(boolean returnAll) { //here we can determine different selection policies
         List<Occurrence> response = new ArrayList<>() {
             {
@@ -60,10 +69,11 @@ public class Occurrences {
                 add(e);
             }
         };
-        if (!returnAll) {
+        if (!returnAll) { //return the one occurrence with the largest size (that is if Kleene* or Kleene+ was used)
             this.occurrences = response;
             return;
         } else {
+            //return all occurrences as long as they do not overlap
             for (int i = 1; i < occurrences.size(); i++) {
                 boolean overlaps = false;
                 for (Occurrence o : response) {

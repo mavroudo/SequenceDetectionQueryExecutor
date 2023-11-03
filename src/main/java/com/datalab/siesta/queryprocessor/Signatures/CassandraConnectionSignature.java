@@ -26,6 +26,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+/**
+ * This class Describes the communication between Cassandra and Signatures, in order to retrieve the
+ * required information in the appropriate format
+ */
 @Configuration
 @PropertySource("classpath:application.properties")
 @ConditionalOnProperty(

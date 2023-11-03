@@ -2,6 +2,11 @@ package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 
+/**
+ * Exploration query: except for the log database and the pattern, this query has two more fields: (1) the mode
+ * which takes values accurate,fast and hybrid (default = fast) and (2) in case of hybrid the user can define the parameter
+ * k (top-k propositions discovered by the fast approach will be executed using the accurate approach)
+ */
 public class QueryExploreWrapper extends QueryWrapper {
 
     private SimplePattern pattern;

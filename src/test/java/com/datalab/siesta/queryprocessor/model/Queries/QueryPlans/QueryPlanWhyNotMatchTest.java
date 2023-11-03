@@ -62,7 +62,7 @@ class QueryPlanWhyNotMatchTest {
                 queryPatternDetection.createQueryPlan(queryPatternDetectionWrapper,m);
 
         QueryResponse qr = queryPlan.execute(queryPatternDetectionWrapper);
-        Assertions.assertEquals(0,((QueryResponseWhyNotMatch) qr).getTrueOccurrences().size());
+        Assertions.assertEquals(0,((QueryResponseWhyNotMatch) qr).getOccurrences().size());
         Assertions.assertEquals(3,((QueryResponseWhyNotMatch) qr).getAlmostOccurrences().size());
         Assertions.assertNotNull(qr);
     }

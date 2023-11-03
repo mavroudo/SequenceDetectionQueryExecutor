@@ -10,6 +10,9 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import java.sql.Timestamp;
 import java.util.Objects;
 
+/**
+ * A SIESTA event that contains both time and position information
+ */
 @JsonSerialize(using = EventBothSerializer.class)
 public class EventBoth extends EventTs implements Comparable{
 

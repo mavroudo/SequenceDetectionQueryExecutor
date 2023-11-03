@@ -9,6 +9,9 @@ import org.codehaus.jackson.map.SerializerProvider;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
+/**
+ * Custom serializer for the pattern matches found in the group of traces
+ */
 public class GroupOccurrencesSerialization extends JsonSerializer<GroupOccurrences> {
 
     @Override

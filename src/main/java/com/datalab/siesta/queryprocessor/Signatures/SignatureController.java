@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 
+/**
+ * Controller for the Signatures query.
+ */
 @RestController
 @RequestMapping("/signatures")
 @ConditionalOnProperty(
@@ -30,12 +33,6 @@ public class SignatureController {
 
     @RequestMapping(path = "detect", method = RequestMethod.POST)
     public ResponseEntity<String> detect(@RequestBody QueryPatternDetectionWrapper qpdw ) throws IOException {
-//        QueryPatternDetectionWrapper qpdw = null;
-//        try {
-//            qpdw = objectMapper.readValue(json, QueryPatternDetectionWrapper.class);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
         QueryPlan queryPlan = querySignatures.createQueryPlan(qpdw,null);
         QueryResponse queryResponse = queryPlan.execute(qpdw);
         return new ResponseEntity<>(objectMapper.writeValueAsString(queryResponse), HttpStatus.OK);

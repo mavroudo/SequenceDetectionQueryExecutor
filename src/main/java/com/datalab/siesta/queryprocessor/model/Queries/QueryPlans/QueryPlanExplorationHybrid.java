@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The query plan for the accurate detection of continuation for the query pattern
+ */
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class QueryPlanExplorationHybrid extends QueryPlanExplorationAccurate {
@@ -32,6 +35,15 @@ public class QueryPlanExplorationHybrid extends QueryPlanExplorationAccurate {
         this.queryPlanExplorationFast = queryPlanExplorationFast;
     }
 
+    /**
+     * The hybrid explorations is a trade-off between accuracy and efficiency. The idea is that the fast exploration
+     * is executed first and then for each of the top "k" propositions yielded by the exploration, a complete
+     * pattern detection is executed. That way as the "k" increases the process becomes more time-consuming and comes
+     * closer to the accurate method. On the other hand if "k" decreases the process becomes less accurate and resembles
+     * the fast exploration
+     * @param qw the QueryPatternDetectionWrapper
+     * @return te possible next events sorted based on frequency, in the form of propositions
+     */
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryExploreWrapper queryExploreWrapper = (QueryExploreWrapper) qw;

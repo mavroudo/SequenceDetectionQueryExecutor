@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
+/**
+ * Contains the configuration of spark in order to connect to s3 database
+ */
 @Configuration
 @PropertySource("classpath:application.properties")
 @ConditionalOnProperty(

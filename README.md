@@ -74,13 +74,14 @@ users to easily test the various endpoints and get results back.
 
 ## Change log
 
-### [2.0.0] - 2023-05-24
+### [2.0.0] - 2023-11-03
 - Integrate SASE with SIESTA to increase expressivity
 - Explainable results
 - Support for S3, as a database for storing the inverted indices
 - Implementation of the pruning phase on Apache Spark
 - Multiple interfaces for additional databases, query types and query execution plans
 - Integration of Swagger-ui
+- javadoc
 
 
 ### [1.0.0] - 2022-12-14

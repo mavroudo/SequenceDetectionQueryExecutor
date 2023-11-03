@@ -5,11 +5,10 @@ import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 
 import java.io.Serializable;
 
-
+/**
+ * constraint is referring to the seconds gap between 2 events
+ */
 public class TimeConstraint extends Constraint implements Cloneable, Serializable {
-    /**
-     * constraint is referring to the seconds gap between 2 events
-     */
     private long constraint;
 
     private String granularity;
@@ -66,10 +65,10 @@ public class TimeConstraint extends Constraint implements Cloneable, Serializabl
         this.granularity = granularity;
     }
 
-    @Override
     /**
      * a should be before b
      */
+    @Override
     public boolean isCorrect(EventBoth a, EventBoth b) {
         if (a.getTimestamp() == null || b.getTimestamp() == null) return false;
         if (this.method.equals("within")) {
@@ -77,10 +76,10 @@ public class TimeConstraint extends Constraint implements Cloneable, Serializabl
         } else return (b.getTimestamp().getTime() - a.getTimestamp().getTime()) / 1000 >= this.getConstraint();
     }
 
-    @Override
     /**
      * Returns the minimum time in seconds that will be required for event a to come within range of
      */
+    @Override
     public long minimumChangeRequired(EventBoth a, EventBoth b) {
         if (a.getTimestamp() == null || b.getTimestamp() == null) return -1;
         if (this.method.equals("within")) {

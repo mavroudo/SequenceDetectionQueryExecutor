@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Contains the logic for how the signatures query is able to utilize the stored indice in order to respond to
+ * pattern detection queries
+ */
 @Configuration
 @ConditionalOnProperty(
         value = "database",
