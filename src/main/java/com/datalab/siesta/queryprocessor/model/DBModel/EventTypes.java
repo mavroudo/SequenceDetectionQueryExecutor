@@ -2,6 +2,10 @@ package com.datalab.siesta.queryprocessor.model.DBModel;
 
 import java.util.Objects;
 
+/**
+ * The class that represents an et-pair without the conditions.
+ * @see com.datalab.siesta.queryprocessor.model.Events.EventPair (for implementation with conditions)
+ */
 public class EventTypes{
     private String eventA;
 

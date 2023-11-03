@@ -4,6 +4,9 @@ import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 
 import java.io.Serializable;
 
+/**
+ * Constraint based on the position-distance between the two events in a event-pair
+ */
 public class GapConstraint extends Constraint implements Cloneable, Serializable {
 
     private int constraint;

@@ -2,6 +2,11 @@ package com.datalab.siesta.queryprocessor.model.DBModel;
 
 import java.io.Serializable;
 
+/**
+ * A record in the CountTable. Contains the et-pair (eventA, eventB), the minimum and maximum duration (calculated
+ * based on the time distance between every event-pair of these events, the number of event-pairs in the database and the
+ * sum of all the durations (used to calculate mean duration)
+ */
 public class Count implements Serializable {
 
     private String eventA;

@@ -1,6 +1,5 @@
 package com.datalab.siesta.queryprocessor.model.DBModel;
 
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 
 import java.io.Serializable;
@@ -10,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * A sequence of events. It is represented by a trace id and a list of the events it contains in the correct order.
+ */
 public class Trace implements Serializable {
 
     private long traceID;

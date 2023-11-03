@@ -12,6 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A record of the IndexTable. Stores information about:
+ * - the trace if
+ * - the names of the events (eventA, eventB)
+ * - the timestamps of the events (timestampA, timestampB)
+ * - the position of the events in the trace (positionA, positionB)
+ * Note that depending on the metadata, IndexTable will contain only one of the timestamps/positions. Therefore
+ * it is expected the other fields to be empty (null/-1 respectively). If both information is required to answer a
+ * query, they can be retrieved from SequenceTable (which contains both).
+ */
 public class IndexPair implements Serializable {
 
     private long traceId;

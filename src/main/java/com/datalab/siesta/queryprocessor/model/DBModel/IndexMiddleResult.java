@@ -7,6 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class handles the middle results in pattern detection queries. More specifically, it contains the id of
+ * the traces that have occurrences of all the required et-pairs, along with the exact events (fetched from the
+ * IndexTable)
+ */
 public class IndexMiddleResult {
 
 
