@@ -234,10 +234,10 @@ public class S3Connector extends SparkDatabaseRepository {
 
         List<String> whereStatements = new ArrayList<>();
         if (from != null) {
-            whereStatements.add(String.format("start <= %s ", till));
+            whereStatements.add(String.format("start <= '%s' ", till));
         }
         if (till != null) {
-            whereStatements.add(String.format("end >= %s ", from));
+            whereStatements.add(String.format("end >= '%s' ", from));
         }
         whereStatements.add(
                 pairs.stream().map(x->x.getEventA().getName()).distinct()
