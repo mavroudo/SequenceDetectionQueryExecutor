@@ -291,52 +291,5 @@ public class S3Connector extends SparkDatabaseRepository {
                 })
                 .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
         return rows;
-
-//        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> df = sparkSession.read()
-//                .parquet(path)
-//                .where(whereStatement)
-//                .toJavaRDD()
-//                .filter((Function<Row, Boolean>) row -> {
-//                    Timestamp start = row.getAs("start");
-//                    Timestamp end = row.getAs("end");
-//                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
-//                    if (bTill.value() != null && bTill.value().before(start)) return false;
-//                    return true;
-//                })
-//                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
-//                    String eventA = row.getAs("eventA");
-//                    String eventB = row.getAs("eventB");
-//                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
-//                    List<IndexPair> response = new ArrayList<>();
-//                    for (Row r2 : l) {
-//                        long tid = r2.getLong(0);
-//                        List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
-//                        if (mode.getValue().equals("positions")) {
-//                            for (Row inner : innerList) {
-//                                int posA = inner.getInt(0);
-//                                int posB = inner.getInt(1);
-//                                response.add(new IndexPair(tid, eventA, eventB, posA, posB));
-//                            }
-//                        } else {
-//                            for (Row inner : innerList) {
-//                                String tsA = inner.getString(0);
-//                                String tsB = inner.getString(1);
-//                                response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
-//                            }
-//                        }
-//                    }
-//                    return response.iterator();
-//                })
-//                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
-//                .filter((Function<IndexPair, Boolean>) p -> {
-//                    if (mode.value().equals("timestamps")) {
-//                        if (bTill.value() != null && p.getTimestampA().after(bTill.value())) return false;
-//                        if (bFrom.value() != null && p.getTimestampB().before(bFrom.value())) return false;
-//                    }
-//                    //If from and till has been set we cannot check it here
-//                    return true;
-//                })
-//                .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
-//        return df;
     }
 }

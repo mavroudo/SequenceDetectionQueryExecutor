@@ -34,7 +34,6 @@ public class DBConnector {
     }
 
     /**
-     *
      * @param logname the log database
      * @return the metadata
      */
@@ -43,7 +42,6 @@ public class DBConnector {
     }
 
     /**
-     *
      * @param logname the log database
      * @return a list with all the event types stored in it
      */
@@ -61,7 +59,8 @@ public class DBConnector {
     /**
      * Retrieves the corresponding stats (min, max duration and so on) from the CountTable, for a given set of event
      * pairs
-     * @param logname the log database
+     *
+     * @param logname    the log database
      * @param eventPairs a set with the event pairs
      * @return a list of the stats for the set of event pairs
      */
@@ -72,22 +71,24 @@ public class DBConnector {
     /**
      * For a given event type inside a log database, returns all the possible next events. That is, since Count
      * contains for each pair the stats, return all the events that have at least one pair with the given event
+     *
      * @param logname the log database
-     * @param event the event type
+     * @param event   the event type
      * @return the possible next events
      */
-    public List<Count> getCountForExploration(String logname, String event){
-        return db.getCountForExploration(logname,event);
+    public List<Count> getCountForExploration(String logname, String event) {
+        return db.getCountForExploration(logname, event);
     }
 
     /**
      * Detects the traces that contain all the given event pairs
-     * @param logname the log database
+     *
+     * @param logname  the log database
      * @param combined a list where each event pair is combined with the according stats from the CountTable
      * @param metadata the log database metadata
-     * @param pairs the event pairs extracted from the query
-     * @param from the starting timestamp, set to null if not used
-     * @param till the ending timestamp, set to null if not used
+     * @param pairs    the event pairs extracted from the query
+     * @param from     the starting timestamp, set to null if not used
+     * @param till     the ending timestamp, set to null if not used
      * @return the traces that contain all the pairs. It will be then processed by SASE in order to remove false
      * positives.
      */
@@ -97,11 +98,12 @@ public class DBConnector {
 
     /**
      * Retrieves the appropriate events from the SequenceTable, which contains the original traces
-     * @param logname the log database
-     * @param traceIds the ids of the traces that will be retrieved
+     *
+     * @param logname    the log database
+     * @param traceIds   the ids of the traces that will be retrieved
      * @param eventTypes the events that will be retrieved
-     * @param from the starting timestamp, set to null if not used
-     * @param till the ending timestamp, set to null if not used
+     * @param from       the starting timestamp, set to null if not used
+     * @param till       the ending timestamp, set to null if not used
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      * timestamps)
      */
@@ -110,9 +112,21 @@ public class DBConnector {
     }
 
     /**
-     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     * Retrieves all the events from specific traces in the SequenceTable
      * @param logname the log database
-     * @param traceIds the ids of the traces that wil be retrieved
+     * @param traceIds the ids of the traces that will be retrieved
+     * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
+     *      * timestamps)
+     */
+    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
+        return db.querySeqTable(logname, traceIds);
+    }
+
+    /**
+     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     *
+     * @param logname    the log database
+     * @param traceIds   the ids of the traces that wil be retrieved
      * @param eventTypes the events that will we retrieved
      * @return a list of all the retrieved events (wth their timestamps)
      */
@@ -122,8 +136,9 @@ public class DBConnector {
 
     /**
      * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
-     * @param logname the log database
-     * @param groups a list of the groups as defined in the query
+     *
+     * @param logname    the log database
+     * @param groups     a list of the groups as defined in the query
      * @param eventTypes the events that will we retrieved
      * @return a map where the key is the group id and the value is a list of the retrieved events (with their t
      * imestamps)
