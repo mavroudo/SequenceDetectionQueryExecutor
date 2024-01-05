@@ -107,7 +107,7 @@ public class QueryResponseController {
     }
 
     /**
-     * Returns the stats for each concecutive event-pair. For example for the pattern ABC, it will return the stats
+     * Returns the stats for each consecutive event-pair. For example for the pattern ABC, it will return the stats
      * for the event pairs A-B and B-C. Stats include min,max, average duration and number of completions.
      */
     @RequestMapping(path = "/stats", method = RequestMethod.POST)
