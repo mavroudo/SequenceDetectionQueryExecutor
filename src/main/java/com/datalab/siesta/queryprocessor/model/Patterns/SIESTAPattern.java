@@ -42,12 +42,24 @@ public abstract class SIESTAPattern {
 
 //        Set<EventPair> trueEventPairs = new HashSet<>();
         for (int i = 0; i < events.size() - 1; i++) {
-            if (positionOfConstraints.contains(i))
+            if (positionOfConstraints.contains(events.get(i).getPosition()))
                 pairs.addPair(new EventPair(events.get(i), events.get(i))); //get double pairs
             for (int j = i + 1; j < events.size(); j++) { //get the rest of the pairs
-                pairs.addTruePair(new EventPair(events.get(i), events.get(j)));
+                // add constraints if exist
+                boolean added = false;
+                for (Constraint c : constraints) {
+                    if (c.getPosA() == events.get(i).getPosition() && c.getPosB() == events.get(j).getPosition()) {
+                        pairs.addTruePair(new EventPair(events.get(i), events.get(j), c));
+                        added = true;
+                    }
+                }
+                if (!added) {
+                    pairs.addTruePair(new EventPair(events.get(i), events.get(j)));
+                }
             }
         }
+
+
         if (fromOrTillSet) {
             for (EventPos e : events) {
                 pairs.addPair(new EventPair(e, e));
@@ -59,8 +71,9 @@ public abstract class SIESTAPattern {
 
     /**
      * Returns if there is a pattern constraint between two positions in the pattern
-     * @param posA first position
-     * @param posB second position
+     *
+     * @param posA        first position
+     * @param posB        second position
      * @param constraints a list of constraints
      * @return the constraint between posA and posB if exists, or null otherwise
      */
@@ -76,7 +89,8 @@ public abstract class SIESTAPattern {
     /**
      * Extracts the consecutive event pairs along with their constraints. For example for the pattern A-B-C, with
      * constraint between 0 and 1, it will create two EventPairs: A,B (with the constraint) and B,C
-     * @param events list of events in the query pattern
+     *
+     * @param events      list of events in the query pattern
      * @param constraints list of constraints in the pattern query
      * @return the consecutive event pairs
      */
@@ -111,20 +125,25 @@ public abstract class SIESTAPattern {
     /**
      * Generate the strings that dictates the predicates. i value is equal to state number -1, and that is because
      * states starts from 1 and states[] startrs from 0
+     *
      * @param i equal to the number of state -1
      * @return a list of the preicates for this state
      */
-    protected List<String> generatePredicates(int i, List<Constraint> constraints){
+    protected List<String> generatePredicates(int i, List<Constraint> constraints) {
         List<String> response = new ArrayList<>();
-        for(Constraint c: constraints){
-            if(c.getPosB()==i && c instanceof GapConstraint){
+        for (Constraint c : constraints) {
+            if (c.getPosB() == i && c instanceof GapConstraint) {
                 GapConstraint gc = (GapConstraint) c;
-                if(gc.getMethod().equals("within")) response.add(String.format(" position <= $%d.position + %d ",c.getPosA()+1,gc.getConstraint()));
-                else response.add(String.format(" position >= $%d.position + %d ",c.getPosA()+1,gc.getConstraint())); //atleast
-            }else if(c.getPosB()==i && c instanceof TimeConstraint){
+                if (gc.getMethod().equals("within"))
+                    response.add(String.format(" position <= $%d.position + %d ", c.getPosA() + 1, gc.getConstraint()));
+                else
+                    response.add(String.format(" position >= $%d.position + %d ", c.getPosA() + 1, gc.getConstraint())); //atleast
+            } else if (c.getPosB() == i && c instanceof TimeConstraint) {
                 TimeConstraint tc = (TimeConstraint) c;
-                if(tc.getMethod().equals("within")) response.add(String.format(" timestamp <= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint()));
-                else response.add(String.format(" timestamp >= $%d.timestamp + %d ",c.getPosA()+1,tc.getConstraint())); //atleast
+                if (tc.getMethod().equals("within"))
+                    response.add(String.format(" timestamp <= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraint()));
+                else
+                    response.add(String.format(" timestamp >= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraint())); //atleast
             }
         }
         return response;

@@ -234,8 +234,9 @@ public class QueryPlanPatternDetection implements QueryPlan {
      * This function evaluates the query pattern. Based on the retrieved stats for each consecutive et-pair checks if the
      * query fulfills the following conditions:
      * (1) All the events exist in the database
-     * (2) All the et-pairs exist in the database
-     * (3) All conditions (pos and time) can be fulfilled by at least one event-pair in the database
+     * (2) No constraint contains error
+     * (3) All the et-pairs exist in the database
+     * (4) All conditions (pos and time) can be fulfilled by at least one event-pair in the database
      * If the query meets all conditions the QueryResponseBadRequestForDetection will remain empty, else for each
      * violation and for each condition relevant information will be added to the response
      * @param queryPatternDetectionWrapper the query pattern
@@ -248,6 +249,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
                                                                Set<EventPair> pairs,
                                                                List<Tuple2<EventPair, Count>> combined,
                                                                QueryResponseBadRequestForDetection qr) {
+        // check if all events exist in the database
         List<String> nonExistingEvents = new ArrayList<>();
         for (String eventType : queryPatternDetectionWrapper.getPattern().getEventTypes()) {
             if (!this.eventTypesInLog.contains(eventType)) {
@@ -257,6 +259,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
         if (!nonExistingEvents.isEmpty()) {
             qr.setNonExistingEvents(nonExistingEvents);
         }
+
+        //check if all constraints are ok
         List<Constraint> wrongConstraints = new ArrayList<>();
         for(Constraint c: queryPatternDetectionWrapper.getPattern().getConstraints()){
             if (c.hasError()) wrongConstraints.add(c);
@@ -265,7 +269,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
             qr.setWrongConstraints(wrongConstraints);
         }
 
-
+        //check if all pairs exist in the database
         List<EventPair> inPairs = new ArrayList<>();
         List<EventPair> fromCombined = combined.stream().map(x->x._1).collect(Collectors.toList());
         if (pairs.size() != combined.size()) { //find non-existing event pairs
@@ -278,16 +282,22 @@ public class QueryPlanPatternDetection implements QueryPlan {
                 qr.setNonExistingPairs(inPairs);
             }
         }
-        for (Tuple2<EventPair, Count> c : combined) { //Find constraints that do not hold in all db
+
+        //Find constraints that do not hold in all db
+        List<EventPair> cannotBeFullFilled = new ArrayList<>();
+        for (Tuple2<EventPair, Count> c : combined) {
+            if(c._1.getConstraint()==null){
+                continue;
+            }
             if (c._1.getConstraint() instanceof TimeConstraint) {
                 TimeConstraint tc = (TimeConstraint) c._1.getConstraint();
                 if (!tc.isConstraintHolds(c._2)) {
-                    inPairs.add(c._1);
+                    cannotBeFullFilled.add(c._1);
                 }
             }
         }
-        if (!inPairs.isEmpty()) {
-            qr.setConstraintsNotFulfilled(inPairs);
+        if (!cannotBeFullFilled.isEmpty()) {
+            qr.setConstraintsNotFulfilled(cannotBeFullFilled);
         }
         return qr;
 
