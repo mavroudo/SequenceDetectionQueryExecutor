@@ -28,15 +28,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
+import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -233,22 +232,22 @@ public class S3Connector extends SparkDatabaseRepository {
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
 
         List<String> whereStatements = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if (from != null) {
-            whereStatements.add(String.format("start <= '%s' ", till));
+            whereStatements.add(String.format("start >= '%s' ", dateFormat.format(new Date(from.getTime()))));
         }
         if (till != null) {
-            whereStatements.add(String.format("end >= '%s' ", from));
+            whereStatements.add(String.format("end <= '%s' ", dateFormat.format(new Date(till.getTime()))));
         }
         whereStatements.add(
-                pairs.stream().map(x->x.getEventA().getName()).distinct()
-                .map(p -> String.format("eventA = '%s'",p))
+                pairs.stream().map(x -> x.getEventA().getName()).distinct()
+                        .map(p -> String.format("eventA = '%s'", p))
                         .collect(Collectors.joining(" or ")));
 
         for (int i = 0; i < whereStatements.size(); i++) {
             whereStatements.set(i, String.format("( %s )", whereStatements.get(i)));
         }
         String whereStatement = String.join(" and ", whereStatements);
-
 
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> rows = sparkSession.read()
                 .parquet(path)
@@ -258,13 +257,13 @@ public class S3Connector extends SparkDatabaseRepository {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
                     boolean checkContained = false;
-                    for(EventPair ep: bPairs.getValue()){
-                        if(eventA.equals(ep.getEventA().getName())&& eventB.equals(ep.getEventB().getName())){
-                            checkContained=true;
+                    for (EventPair ep : bPairs.getValue()) {
+                        if (eventA.equals(ep.getEventA().getName()) && eventB.equals(ep.getEventB().getName())) {
+                            checkContained = true;
                         }
                     }
                     List<IndexPair> response = new ArrayList<>();
-                    if(checkContained){
+                    if (checkContained) {
                         List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                         for (Row r2 : l) {
                             long tid = r2.getLong(0);
@@ -280,7 +279,7 @@ public class S3Connector extends SparkDatabaseRepository {
                                     Timestamp tsA = Timestamp.valueOf(inner.getString(0));
                                     Timestamp tsB = Timestamp.valueOf(inner.getString(1));
                                     if (!(bTill.value() != null && tsA.after(bTill.value()) ||
-                                    bFrom.value() != null && tsB.before(bFrom.value()))) {
+                                            bFrom.value() != null && tsB.before(bFrom.value()))) {
                                         response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
                                     }
                                 }

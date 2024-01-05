@@ -50,6 +50,9 @@ public class SaseConnector {
         List<Occurrences> occurrences = new ArrayList<>();
         for (Map.Entry<Long, List<Event>> e : events.entrySet()) {
             ec.initializeEngine();
+            if(e.getValue().isEmpty()){ // in case that events have been removed due to filters
+                continue;
+            }
             Stream s = this.getStream(new ArrayList<>(e.getValue()));
             ec.setInput(s);
             try {
