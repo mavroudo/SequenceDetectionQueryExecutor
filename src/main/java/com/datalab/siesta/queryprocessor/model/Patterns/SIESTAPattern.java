@@ -141,9 +141,9 @@ public abstract class SIESTAPattern {
             } else if (c.getPosB() == i && c instanceof TimeConstraint) {
                 TimeConstraint tc = (TimeConstraint) c;
                 if (tc.getMethod().equals("within"))
-                    response.add(String.format(" timestamp <= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraint()));
+                    response.add(String.format(" timestamp <= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraintInSeconds()));
                 else
-                    response.add(String.format(" timestamp >= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraint())); //atleast
+                    response.add(String.format(" timestamp >= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraintInSeconds())); //atleast
             }
         }
         return response;

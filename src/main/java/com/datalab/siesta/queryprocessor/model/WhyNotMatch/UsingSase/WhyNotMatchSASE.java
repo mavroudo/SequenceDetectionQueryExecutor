@@ -143,9 +143,9 @@ public class WhyNotMatchSASE {
                 TimeConstraint tc = (TimeConstraint) c;
                 if (i > 0) response.add("timestamp > $previous.timestamp");
                 if (tc.getMethod().equals("within"))
-                    response.add(String.format(" timestamp <= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraint()));
+                    response.add(String.format(" timestamp <= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraintInSeconds()));
                 else
-                    response.add(String.format(" timestamp >= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraint())); //atleast
+                    response.add(String.format(" timestamp >= $%d.timestamp + %d ", c.getPosA() + 1, tc.getConstraintInSeconds())); //atleast
             }
         }
         return response;
