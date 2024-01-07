@@ -25,7 +25,6 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -44,8 +43,9 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
     /**
      * Using the CountTable, the next possible events are retrieved. Then for each possible next event the pattern detection
      * query runs in order to determine the exact number of traces that contain the complete pattern.
-     * Finally the propositions were added in the response and are sorted from the most frequent next event to the least
+     * Finally, the propositions were added in the response and are sorted from the most frequent next event to the least
      * frequent
+     *
      * @param qw the QueryPatternDetectionWrapper
      * @return the possible next events sorted based on frequency, in the form of propositions
      */
@@ -59,7 +59,7 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
         for (Count freq : freqs) {
             try {
                 SimplePattern sp = (SimplePattern) queryExploreWrapper.getPattern().clone();
-                Proposition p = this.patternDetection(sp, freq.getEventB());
+                Proposition p = this.patternDetection(sp, freq.getEventB(), qw.getLog_name());
                 if (p != null) props.add(p);
             } catch (CloneNotSupportedException e) {
                 throw new RuntimeException(e);
@@ -78,14 +78,17 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
      * @param next    a count pair that contains the last event of the pattern and one possible extension
      * @return a proposition
      */
-    protected Proposition patternDetection(SimplePattern pattern, String next) {
+    protected Proposition patternDetection(SimplePattern pattern, String next, String logname) {
         List<EventPos> events = pattern.getEvents();
         events.add(new EventPos(next, events.size()));
         pattern.setEvents(events); //create the pattern
         ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
+        //Todo: check if we need all the pairs or simply the consecutive ones
         List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), metadata.getLogname());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
         imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, pairs, null, null);
+        //retrieve time information from the SequenceTable
+        super.retrieveTimeInformation(pattern, logname, null, null);
         List<Occurrences> occurrences = saseConnector.evaluate(pattern, imr.getEvents(), false);
         occurrences.forEach(x -> x.clearOccurrences(true));
         List<Occurrence> ocs = occurrences.stream().parallel().flatMap(x -> x.getOccurrences().stream()).collect(Collectors.toList());

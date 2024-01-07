@@ -65,7 +65,11 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
             queryResponseBadRequestWhyNotMatch.setSimple(false);
             return queryResponseBadRequestWhyNotMatch;
         }
-        super.checkIfRequiresDataFromSequenceTable(qpdw); //checks if data is required from the sequence table and gets them
+        //checks if data is required from the sequence table and gets them
+        if (super.requiresQueryToDB(qpdw)) { // we need to get from SeqTable
+            super.retrieveTimeInformation(qpdw.getPattern(), qpdw.getLog_name(), qpdw.getFrom(), qpdw.getTill());
+        }
+
         long ts_trace = System.currentTimeMillis();
         List<Occurrences> trueOccurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         trueOccurrences.forEach(x -> x.clearOccurrences(qpdw.isReturnAll()));

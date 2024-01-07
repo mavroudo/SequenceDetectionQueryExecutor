@@ -41,6 +41,7 @@ public class QueryPlanExplorationHybrid extends QueryPlanExplorationAccurate {
      * pattern detection is executed. That way as the "k" increases the process becomes more time-consuming and comes
      * closer to the accurate method. On the other hand if "k" decreases the process becomes less accurate and resembles
      * the fast exploration
+     *
      * @param qw the QueryPatternDetectionWrapper
      * @return te possible next events sorted based on frequency, in the form of propositions
      */
@@ -50,12 +51,12 @@ public class QueryPlanExplorationHybrid extends QueryPlanExplorationAccurate {
         queryPlanExplorationFast.setMetadata(metadata);
         List<Proposition> fast = ((QueryResponseExploration) queryPlanExplorationFast.execute(qw)).getPropositions();
         List<Proposition> props = new ArrayList<>();
-        for(Proposition p : fast.subList(0, queryExploreWrapper.getK())){
+        for (Proposition p : fast.subList(0, queryExploreWrapper.getK())) {
             try {
                 SimplePattern sp = (SimplePattern) queryExploreWrapper.getPattern().clone();
-                Proposition newp = this.patternDetection(sp,p.getEvent());
+                Proposition newp = this.patternDetection(sp, p.getEvent(), qw.getLog_name());
                 if (newp != null) props.add(newp);
-            }catch (CloneNotSupportedException e) {
+            } catch (CloneNotSupportedException e) {
                 throw new RuntimeException(e);
             }
         }
