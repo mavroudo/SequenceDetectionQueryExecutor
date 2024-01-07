@@ -125,6 +125,7 @@ public class SaseConnector {
         } else {
             nfaWrapper.setStates(pattern.getNfa());
         }
+        nfaWrapper.setSize(nfaWrapper.getStates().length);
         ec.setNfa(new NFA(nfaWrapper));
         return ec;
     }

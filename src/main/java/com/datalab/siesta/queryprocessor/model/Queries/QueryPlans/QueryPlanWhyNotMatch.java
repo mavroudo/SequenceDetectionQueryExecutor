@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
  * The query plan for the detection queries that have the explainability setting on
  */
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
 
     /**

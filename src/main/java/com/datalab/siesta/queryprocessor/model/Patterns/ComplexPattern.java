@@ -82,9 +82,10 @@ public class ComplexPattern extends SIESTAPattern {
 //        return pairs;
 //    }
     @JsonIgnore
-    public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet) {
+    public List<ExtractedPairsForPatternDetection> extractPairsForPatternDetection(boolean fromOrTillSet) {
         List<ExtractedPairsForPatternDetection> elist = new ArrayList<>();
-        for (List<EventSymbol> events : this.splitWithOr()) {
+        Set<List<EventSymbol>> splitWithOr = this.splitWithOr();
+        for (List<EventSymbol> events : splitWithOr) {
             List<EventPos> l = new ArrayList<>();
             List<EventPair> allPairs = new ArrayList<>();
             for (int i = 0; i < events.size(); i++) {
@@ -111,14 +112,14 @@ public class ComplexPattern extends SIESTAPattern {
             s.addPairs(allPairs);
             elist.add(s);
         }
-        ExtractedPairsForPatternDetection all = elist.get(0);
-        if (elist.size() > 1) {
-            for (int i = 1; i < elist.size(); i++) {
-                all.addPairs(elist.get(i).getAllPairs());
-                all.getTruePairs().retainAll(elist.get(i).getTruePairs());
-            }
-        }
-        return all;
+//        ExtractedPairsForPatternDetection all = elist.get(0);
+//        if (elist.size() > 1) {
+//            for (int i = 1; i < elist.size(); i++) {
+//                all.addPairs(elist.get(i).getAllPairs());
+//                all.getTruePairs().retainAll(elist.get(i).getTruePairs());
+//            }
+//        }
+        return elist;
     }
 
     private Set<List<EventSymbol>> splitWithOr() {
@@ -130,8 +131,8 @@ public class ComplexPattern extends SIESTAPattern {
                 for (List<EventSymbol> sl : l) {
                     List<EventSymbol> slnew = new ArrayList<>(sl);
                     try {
-                        e.setSymbol("_");
-                        slnew.set(last_pos, e);
+                        EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),"_");
+                        slnew.set(last_pos, es);
                     } catch (IndexOutOfBoundsException exe) {
                         slnew.add(e);
                     }
@@ -140,7 +141,8 @@ public class ComplexPattern extends SIESTAPattern {
             } else {
                 last_pos = e.getPosition();
                 for (List<EventSymbol> sl : l) {
-                    sl.add(e);
+                    EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),"_");
+                    sl.add(es);
                 }
             }
         }

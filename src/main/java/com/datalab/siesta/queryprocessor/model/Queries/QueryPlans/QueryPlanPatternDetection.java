@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 
 import java.sql.Timestamp;
@@ -37,7 +38,8 @@ import java.util.stream.Collectors;
  * The query plan of the pattern detection query
  */
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+//@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanPatternDetection implements QueryPlan {
 
     /**
@@ -89,6 +91,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
         this.saseConnector = saseConnector;
         this.dbConnector = dbConnector;
         this.utils = utils;
+        this.imr=null;
     }
 
     /**
@@ -114,8 +117,6 @@ public class QueryPlanPatternDetection implements QueryPlan {
         if (this.requiresQueryToDB(qpdw)) { // we need to get from SeqTable
             retrieveTimeInformation(qpdw.getPattern(), qpdw.getLog_name(), qpdw.getFrom(), qpdw.getTill());
         }
-
-
 
         long ts_trace = System.currentTimeMillis();
         List<Occurrences> occurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
@@ -145,17 +146,53 @@ public class QueryPlanPatternDetection implements QueryPlan {
      */
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
         boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
-        ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
-
+        List<ExtractedPairsForPatternDetection> multiplePairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
+        //keep only true from all patterns
+        Set<EventPair> allTruePairs = new HashSet<>();
+        for (ExtractedPairsForPatternDetection pairs : multiplePairs) {
+            allTruePairs.addAll(pairs.getTruePairs());
+        }
         //check if the true pairs, constraints and event types are set correctly before start querying
-        List<Count> sortedTruePairs = filterTruePairs(sortedPairs, pairs.getTruePairs());
-        List<Tuple2<EventPair, Count>> combinedTrue = this.combineWithPairs(pairs.getTruePairs(), sortedTruePairs);
-        qr = this.firstParsing(qpdw, pairs.getTruePairs(), combinedTrue, qr);
-
+        List<Count> sortedTruePairs = this.getStats(allTruePairs, qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combinedTrue = this.combineWithPairs(allTruePairs, sortedTruePairs);
+        qr = this.firstParsing(qpdw, allTruePairs, combinedTrue, qr);
         if (!qr.isEmpty()) return; //There was an original error
-        imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, pairs, qpdw.getFrom(), qpdw.getTill());
+
+
+        for (ExtractedPairsForPatternDetection pairs : multiplePairs) {
+            List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
+            List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
+            // run pattern detection for each potential pattern (multiple patterns when or is used)
+            IndexMiddleResult imrTemp = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, pairs, qpdw.getFrom(), qpdw.getTill());
+            if (imr == null) {
+                imr = imrTemp;
+            } else {
+                Map<Long, List<Event>> merged = mergeMaps(imr.getEvents(), imrTemp.getEvents());
+                imr.setTrace_ids(new ArrayList<>(merged.keySet()));
+                imr.setEvents(merged);
+            }
+        }
+    }
+
+    private Map<Long, List<Event>> mergeMaps(Map<Long, List<Event>> map1, Map<Long, List<Event>> map2) {
+        HashMap<Long, List<Event>> merged = new HashMap<>(map1);
+
+        map1.forEach((traceId, eventsList1) -> {
+            List<Event> eventsList2 = map2.getOrDefault(traceId, new ArrayList<>());
+            eventsList1.forEach(event -> {
+                if (!eventsList2.contains(event)) {
+                    eventsList2.add(event);
+                }
+            });
+            Collections.sort(eventsList2);
+            merged.put(traceId, eventsList2);
+        });
+        map2.forEach((traceId, eventsList2) -> {
+            if (!merged.containsKey(traceId)) {
+                merged.put(traceId, eventsList2);
+            }
+        });
+        return merged;
     }
 
     /**
@@ -196,8 +233,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
      *
      * @param pattern the query pattern
      * @param logname the name of log database
-     * @param from starting timestamp (set to null if not used)
-     * @param till ending timestamp (set to null if not used)
+     * @param from    starting timestamp (set to null if not used)
+     * @param till    ending timestamp (set to null if not used)
      */
     protected void retrieveTimeInformation(SIESTAPattern pattern, String logname, Timestamp from, Timestamp till) {
         //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
