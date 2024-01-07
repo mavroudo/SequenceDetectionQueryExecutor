@@ -139,9 +139,26 @@ public class QueryPlanPatternDetection implements QueryPlan {
         ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
         List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
-        qr = this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
+
+        //check if the true pairs, constraints and event types are set correctly before start querying
+        List<Count> sortedTruePairs =filterTruePairs(sortedPairs,pairs.getTruePairs());
+        List<Tuple2<EventPair,Count>> combinedTrue = this.combineWithPairs(pairs.getTruePairs(),sortedTruePairs);
+        qr = this.firstParsing(qpdw, pairs.getTruePairs(), combinedTrue,qr);
+
         if (!qr.isEmpty()) return; //There was an original error
         imr = dbConnector.patterDetectionTraceIds(qpdw.getLog_name(), combined, metadata, pairs,qpdw.getFrom(),qpdw.getTill());
+    }
+
+    /**
+     * Filters the true pairs, so they can be passed to the first evaluation
+     * @param sortedPairs the ordered stats for the et-pairs retrieved from the CountTable
+     * @param truePairs the true et-pairs
+     * @return the ordered stats only for the true pairs
+     */
+    protected List<Count> filterTruePairs(List<Count> sortedPairs, Set<EventPair> truePairs){
+        return sortedPairs.stream().filter(x-> truePairs.contains(
+                new EventPair(new Event(x.getEventA()),new Event(x.getEventB()))))
+                .collect(Collectors.toList());
     }
 
 
@@ -217,6 +234,12 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return results;
     }
 
+    /**
+     * Combines the pairs with the ordered retrieved stats from the CountTable
+     * @param pairs the et-pairs
+     * @param sortedCounts the ordered stats for the et-pairs retrieved from the CountTable
+     * @return the combined list
+     */
     protected List<Tuple2<EventPair, Count>> combineWithPairs(Set<EventPair> pairs, List<Count> sortedCounts) {
         List<Tuple2<EventPair, Count>> response = new ArrayList<>();
         for (Count c : sortedCounts) {

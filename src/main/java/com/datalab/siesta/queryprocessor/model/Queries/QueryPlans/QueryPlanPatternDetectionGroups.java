@@ -72,7 +72,12 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
         ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
         List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
-        this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
+
+
+        //check if the true pairs, constraints and event types are set correctly before start querying
+        List<Count> sortedTruePairs = filterTruePairs(sortedPairs,pairs.getTruePairs());
+        List<Tuple2<EventPair,Count>> combinedTrue = this.combineWithPairs(pairs.getTruePairs(),sortedTruePairs);
+        qr = this.firstParsing(qpdw, pairs.getTruePairs(), combinedTrue,qr);
         if (!qr.isEmpty()) {//There was an original error
             return;
         }
