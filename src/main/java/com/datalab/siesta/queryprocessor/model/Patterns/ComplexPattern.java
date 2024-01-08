@@ -122,7 +122,6 @@ public class ComplexPattern extends SIESTAPattern {
         // recursively detect different patterns
         generateCombinations(samePos, 0, new ArrayList<>(), result);
         return new HashSet<>(result);
-
     }
 
     /**
@@ -146,62 +145,6 @@ public class ComplexPattern extends SIESTAPattern {
         }
     }
 
-    private Set<List<EventSymbol>> splitWithOrOld() {
-        Set<List<EventSymbol>> l = new HashSet<>();
-        l.add(new ArrayList<>());
-        int last_pos = -1;
-        for (EventSymbol e : eventsWithSymbols) {
-            if (e.getPosition() == last_pos) { //That means it uses or and this is the second, third, ... event
-                for (List<EventSymbol> sl : l) {
-                    List<EventSymbol> slnew = new ArrayList<>(sl);
-                    try {
-                        EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),"_");
-                        slnew.set(last_pos, es);
-                    } catch (IndexOutOfBoundsException exe) {
-                        slnew.add(e);
-                    }
-                    l.add(slnew);
-                }
-            } else {
-                last_pos = e.getPosition();
-                for (List<EventSymbol> sl : l) {
-                    EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),e.getSymbol());
-                    if(e.getSymbol().equals("||")){
-                        es.setSymbol("_");
-                    }
-                    sl.add(es);
-                }
-            }
-        }
-        return l;
-    }
-
-//    private Set<List<EventPos>> splitIntoSimples() {
-//        Set<List<EventPos>> l = new HashSet<>();
-//        l.add(new ArrayList<>());
-//        int last_pos = -1;
-//        for (EventSymbol e : eventsWithSymbols) {
-//            if (e.getPosition() == last_pos) {
-//                for (List<EventPos> sl : l) {
-//                    List<EventPos> slnew = new ArrayList<>(sl);
-//                    try {
-//                        slnew.set(last_pos, e);
-//                    }catch (IndexOutOfBoundsException exe){
-//                        slnew.add(e);
-//                    }
-//                    l.add(slnew);
-//                }
-//            } else if (e.getSymbol().equals("+") || e.getSymbol().equals("")) {
-//                last_pos = e.getPosition();
-//                for (List<EventPos> sl : l) {
-//                    sl.add(e);
-//                }
-//            } else if (e.getSymbol().equals("not") || e.getSymbol().equals("*")) {
-//                last_pos = e.getPosition();
-//            }
-//        }
-//        return l;
-//    }
 
     @JsonIgnore
     @Override

@@ -145,19 +145,9 @@ public class QueryPlanPatternDetection implements QueryPlan {
      * @param qr   a wrapper that contains probable inconsistencies in the query
      */
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
-        boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
-        List<ExtractedPairsForPatternDetection> multiplePairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-        //keep only true from all patterns
-        Set<EventPair> allTruePairs = new HashSet<>();
-        for (ExtractedPairsForPatternDetection pairs : multiplePairs) {
-            allTruePairs.addAll(pairs.getTruePairs());
-        }
-        //check if the true pairs, constraints and event types are set correctly before start querying
-        List<Count> sortedTruePairs = this.getStats(allTruePairs, qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combinedTrue = this.combineWithPairs(allTruePairs, sortedTruePairs);
-        qr = this.firstParsing(qpdw, allTruePairs, combinedTrue, qr);
+        List<ExtractedPairsForPatternDetection> multiplePairs = new ArrayList<>();
+        qr = this.evaluateQuery(multiplePairs,qpdw,qr);
         if (!qr.isEmpty()) return; //There was an original error
-
 
         for (ExtractedPairsForPatternDetection pairs : multiplePairs) {
             List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
@@ -172,6 +162,22 @@ public class QueryPlanPatternDetection implements QueryPlan {
                 imr.setEvents(merged);
             }
         }
+    }
+
+    protected QueryResponseBadRequestForDetection evaluateQuery(List<ExtractedPairsForPatternDetection> multiplePairs,
+                                                                QueryPatternDetectionWrapper qpdw,
+                                                                QueryResponseBadRequestForDetection qr){
+        boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
+        multiplePairs.addAll(qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet));
+        //keep only true from all patterns
+        Set<EventPair> allTruePairs = new HashSet<>();
+        for (ExtractedPairsForPatternDetection pairs : multiplePairs) {
+            allTruePairs.addAll(pairs.getTruePairs());
+        }
+        //check if the true pairs, constraints and event types are set correctly before start querying
+        List<Count> sortedTruePairs = this.getStats(allTruePairs, qpdw.getLog_name());
+        List<Tuple2<EventPair, Count>> combinedTrue = this.combineWithPairs(allTruePairs, sortedTruePairs);
+        return this.firstParsing(qpdw, allTruePairs, combinedTrue, qr);
     }
 
     private Map<Long, List<Event>> mergeMaps(Map<Long, List<Event>> map1, Map<Long, List<Event>> map2) {
@@ -195,18 +201,6 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return merged;
     }
 
-    /**
-     * Filters the true pairs, so they can be passed to the first evaluation
-     *
-     * @param sortedPairs the ordered stats for the et-pairs retrieved from the CountTable
-     * @param truePairs   the true et-pairs
-     * @return the ordered stats only for the true pairs
-     */
-    protected List<Count> filterTruePairs(List<Count> sortedPairs, Set<EventPair> truePairs) {
-        return sortedPairs.stream().filter(x -> truePairs.contains(
-                        new EventPair(new Event(x.getEventA()), new Event(x.getEventB()))))
-                .collect(Collectors.toList());
-    }
 
 
     /**

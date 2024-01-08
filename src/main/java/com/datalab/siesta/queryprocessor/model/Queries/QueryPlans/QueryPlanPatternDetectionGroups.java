@@ -21,9 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The query plan for the detection queries that have the defined the groups
@@ -69,21 +67,11 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
 
     @Override
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
-        //TODO: fix That
-//        boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
-//        ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-//        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
-//        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
-//
-//
-//        //check if the true pairs, constraints and event types are set correctly before start querying
-//        List<Count> sortedTruePairs = filterTruePairs(sortedPairs,pairs.getTruePairs());
-//        List<Tuple2<EventPair,Count>> combinedTrue = this.combineWithPairs(pairs.getTruePairs(),sortedTruePairs);
-//        qr = this.firstParsing(qpdw, pairs.getTruePairs(), combinedTrue,qr);
-//        if (!qr.isEmpty()) {//There was an original error
-//            return;
-//        }
-//        middleResults = dbConnector.querySingleTableGroups(qpdw.getLog_name(), qpdw.getGroupConfig()
-//                .getGroups(), qpdw.getPattern().getEventTypes());
+        List<ExtractedPairsForPatternDetection> multiplePairs = new ArrayList<>();
+        qr = this.evaluateQuery(multiplePairs,qpdw,qr);
+        if (!qr.isEmpty()) return; //There was an original error
+        middleResults = dbConnector.querySingleTableGroups(qpdw.getLog_name(), qpdw.getGroupConfig()
+                .getGroups(), qpdw.getPattern().getEventTypes());
     }
+
 }

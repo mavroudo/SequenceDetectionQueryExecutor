@@ -4,6 +4,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanPatternDetection;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanPatternDetectionGroups;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanWhyNotMatch;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
@@ -23,16 +24,19 @@ import java.util.List;
  */
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class QueryPatternDetection implements Query{
+public class QueryPatternDetection implements Query {
 
     private final QueryPlanPatternDetection qppd;
+    private final QueryPlanPatternDetectionGroups qppdg;
     private final QueryPlanWhyNotMatch planWhyNotMatch;
 
     @Autowired
     public QueryPatternDetection(@Qualifier("queryPlanPatternDetection") QueryPlanPatternDetection qppd,
-                                 QueryPlanWhyNotMatch planWhyNotMatch){
-        this.qppd=qppd;
-        this.planWhyNotMatch=planWhyNotMatch;
+                                 @Qualifier("queryPlanPatternDetectionGroups") QueryPlanPatternDetectionGroups qppdg,
+                                 QueryPlanWhyNotMatch planWhyNotMatch) {
+        this.qppd = qppd;
+        this.qppdg = qppdg;
+        this.planWhyNotMatch = planWhyNotMatch;
     }
 
     /**
@@ -49,11 +53,15 @@ public class QueryPatternDetection implements Query{
         boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
         List<ExtractedPairsForPatternDetection> pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
 
-        if(qpdw.isWhyNotMatchFlag()){
+        if (qpdw.isWhyNotMatchFlag()) {
             planWhyNotMatch.setMetadata(m);
             planWhyNotMatch.setEventTypesInLog(qpdw.getPattern().getEventTypes());
             return planWhyNotMatch;
-        }else {
+        } else if (qpdw.isHasGroups()) {
+            qppdg.setMetadata(m);
+            qppdg.setEventTypesInLog(qpdw.getPattern().getEventTypes());
+            return qppdg;
+        } else {
             qppd.setEventTypesInLog(qpdw.getPattern().getEventTypes());
             qppd.setMetadata(m);
             return qppd;
