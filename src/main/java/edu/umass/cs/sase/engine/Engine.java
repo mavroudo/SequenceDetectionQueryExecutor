@@ -950,7 +950,12 @@ public class Engine {
             newRun.addEvent(e);
             //this.numberOfRuns.update(1);
             Profiling.numberOfRuns++;
-            this.activeRuns.add(newRun);
+
+            if (newRun.checkMatch()) {
+                this.outputMatch(new Match(newRun, this.nfa, this.buffer));
+            }else {
+                this.activeRuns.add(newRun);
+            }
 
         } else if (this.nfa.getStates(0).getStateType().equalsIgnoreCase("kleeneClosure*") ||
                 this.nfa.getStates(0).getStateType().equalsIgnoreCase("negative")) {
