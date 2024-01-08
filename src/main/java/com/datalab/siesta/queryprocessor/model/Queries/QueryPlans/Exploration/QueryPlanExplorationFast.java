@@ -1,10 +1,11 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Exploration;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Proposition;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseExploration;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryExploreWrapper;

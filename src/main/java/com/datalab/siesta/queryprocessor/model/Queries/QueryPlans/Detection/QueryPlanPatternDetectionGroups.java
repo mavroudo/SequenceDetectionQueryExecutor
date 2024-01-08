@@ -1,9 +1,7 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
-import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
@@ -15,11 +13,8 @@ import com.datalab.siesta.queryprocessor.model.TimeStats;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
-import scala.Tuple2;
 
 import java.util.*;
 
@@ -30,7 +25,7 @@ import java.util.*;
 @RequestScope
 public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
 
-    private Map<Integer, List<EventBoth>> middleResults;
+    protected Map<Integer, List<EventBoth>> middleResults;
 
     @Autowired
     public QueryPlanPatternDetectionGroups(DBConnector dbConnector, SaseConnector saseConnector, Utils utils) {

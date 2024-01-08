@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.Constraints.Constraint;
@@ -13,6 +13,7 @@ import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SIESTAPattern;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseBadRequestForDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
@@ -24,8 +25,6 @@ import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;

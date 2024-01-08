@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Exploration;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
@@ -10,6 +10,8 @@ import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.datalab.siesta.queryprocessor.model.Proposition;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection.QueryPlanPatternDetection;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseExploration;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryExploreWrapper;
@@ -17,8 +19,6 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;

@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 import scala.Tuple2;
 
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class is the middle man between the databases and the rest of the application. It provides methods to do certain
@@ -132,6 +130,34 @@ public class DBConnector {
      */
     public List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes) {
         return db.querySingleTable(logname, traceIds, eventTypes);
+    }
+
+    /**
+     * Retrieves event from the SingleTable and group them based on the traceID
+     * @param logname the log database
+     * @param eventTypes the eventTypes that we want to retrieve
+     * @return a Map of the ids of the traces and the events that belong to this
+     */
+    public Map<Long,List<EventBoth>> getEventsFromSingleTableGroupedByTraceID(String logname, Set<String> eventTypes){
+        Map<String,List<EventBoth>> retrieved = db.querySingleTable(logname,eventTypes);
+        Map<Long,List<EventBoth>> answer = new HashMap<>();
+        retrieved.forEach((name,eventList)->{
+            for(EventBoth e: eventList){
+                if(answer.containsKey(e.getTraceID())){
+                    answer.get(e.getTraceID()).add(e);
+                }else{
+                    List<EventBoth> tempList = new ArrayList<>();
+                    tempList.add(e);
+                    answer.put(e.getTraceID(),tempList);
+                }
+            }
+
+        });
+        Comparator<EventBoth> comparator = Comparator.comparing(EventBoth::getTimestamp);
+        for (List<EventBoth> list : answer.values()) {
+            list.sort(comparator);
+        }
+        return answer;
     }
 
     /**

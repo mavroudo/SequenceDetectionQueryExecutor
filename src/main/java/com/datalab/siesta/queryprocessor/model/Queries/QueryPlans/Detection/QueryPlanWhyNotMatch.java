@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
@@ -16,8 +16,6 @@ import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase.WhyNotMatchSASE;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;

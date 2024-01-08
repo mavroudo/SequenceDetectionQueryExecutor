@@ -191,10 +191,36 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
 
+//    @Override
+//    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+//        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+//        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
+//        Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
+//        return sparkSession.read()
+//                .parquet(path)
+//                .toJavaRDD()
+//                .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains(x.getString(1)))
+//                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
+//                    String eventType = row.getString(1);
+//                    List<EventBoth> events = new ArrayList<>();
+//                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
+//                    for (Row occurrence : occurrences) {
+//                        long traceId = occurrence.getLong(0);
+//                        if (bTraceIds.value().contains(traceId)) {
+//                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
+//                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+//                            for (int i = 0; i < times.size(); i++) {
+//                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
+//                            }
+//                        }
+//                    }
+//                    return events.iterator();
+//                });
+//    }
+
     @Override
-    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+    protected JavaRDD<EventBoth> queryFromSingle(String logname, Set<String> eventTypes) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
-        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
         Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
         return sparkSession.read()
                 .parquet(path)
@@ -206,18 +232,15 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
                         long traceId = occurrence.getLong(0);
-                        if (bTraceIds.value().contains(traceId)) {
-                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
-                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
-                            for (int i = 0; i < times.size(); i++) {
-                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
-                            }
+                        List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
+                        List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+                        for (int i = 0; i < times.size(); i++) {
+                            events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
                         }
                     }
                     return events.iterator();
                 });
     }
-
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
