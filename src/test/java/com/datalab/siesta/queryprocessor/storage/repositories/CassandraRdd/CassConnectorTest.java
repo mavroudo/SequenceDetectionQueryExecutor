@@ -82,7 +82,7 @@ class CassConnectorTest {
         Set<String> events = new HashSet<>();
         events.add("A");
         events.add("B");
-        cassConnector.getFromSingle("test",traces,events);
+        cassConnector.querySingleTable("test",traces,events);
     }
 
     @Test
