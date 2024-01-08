@@ -93,9 +93,6 @@ public class ComplexPattern extends SIESTAPattern {
                     case "*":
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
-//                    case "!":
-//                        allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
-//                        break;
                 }
             }
             ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(l, this.getConstraints(), fromOrTillSet);
@@ -105,12 +102,56 @@ public class ComplexPattern extends SIESTAPattern {
         return elist;
     }
 
-    private Set<List<EventSymbol>> splitWithOr() {
+    private Set<List<EventSymbol>> splitWithOr(){
+        List<Set<EventSymbol>> samePos = new ArrayList<>();
+        // split events to different sets based on their positions in the pattern
+        for(EventSymbol e: this.eventsWithSymbols){
+            EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),e.getSymbol());
+            if(e.getSymbol().equals("||")){
+                es.setSymbol("_");
+            }
+            if(samePos.size()==e.getPosition()){
+                Set<EventSymbol> temp = new HashSet<>();
+                temp.add(es);
+                samePos.add(temp);
+            }else{
+                samePos.get(e.getPosition()).add(es);
+            }
+        }
+        List<List<EventSymbol>> result = new ArrayList<>();
+        // recursively detect different patterns
+        generateCombinations(samePos, 0, new ArrayList<>(), result);
+        return new HashSet<>(result);
+
+    }
+
+    /**
+     * Recursive function that finds the different patterns that are separated by or
+     * @param eventSets a list of sets of events (each set corresponds to events that share the same position)
+     * @param index the index od the set that it is currently explored
+     * @param current list of combinations so far
+     * @param result the list of all the different patterns
+     */
+    private void generateCombinations(List<Set<EventSymbol>> eventSets, int index, List<EventSymbol> current, List<List<EventSymbol>> result) {
+        if (index == eventSets.size()) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        Set<EventSymbol> currentSet = eventSets.get(index);
+        for (EventSymbol event : currentSet) {
+            current.add(event);
+            generateCombinations(eventSets, index + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
+    private Set<List<EventSymbol>> splitWithOrOld() {
         Set<List<EventSymbol>> l = new HashSet<>();
         l.add(new ArrayList<>());
         int last_pos = -1;
         for (EventSymbol e : eventsWithSymbols) {
-            if (e.getPosition() == last_pos) { //That means it uses or
+            if (e.getPosition() == last_pos) { //That means it uses or and this is the second, third, ... event
                 for (List<EventSymbol> sl : l) {
                     List<EventSymbol> slnew = new ArrayList<>(sl);
                     try {
@@ -125,6 +166,9 @@ public class ComplexPattern extends SIESTAPattern {
                 last_pos = e.getPosition();
                 for (List<EventSymbol> sl : l) {
                     EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),e.getSymbol());
+                    if(e.getSymbol().equals("||")){
+                        es.setSymbol("_");
+                    }
                     sl.add(es);
                 }
             }
