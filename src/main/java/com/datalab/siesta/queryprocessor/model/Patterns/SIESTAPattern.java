@@ -40,7 +40,6 @@ public abstract class SIESTAPattern {
             return l.stream();
         }).collect(Collectors.toSet());
 
-//        Set<EventPair> trueEventPairs = new HashSet<>();
         for (int i = 0; i < events.size() - 1; i++) {
             if (positionOfConstraints.contains(events.get(i).getPosition()))
                 pairs.addPair(new EventPair(events.get(i), events.get(i))); //get double pairs

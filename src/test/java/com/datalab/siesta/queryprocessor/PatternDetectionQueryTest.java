@@ -156,8 +156,9 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        ExtractedPairsForPatternDetection pairs = cp.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5, pairs.getAllPairs().size());
+        List<ExtractedPairsForPatternDetection> pairs = cp.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(1,pairs.size());
+        Assertions.assertEquals(5,pairs.get(0).getAllPairs().size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -165,7 +166,7 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        Assertions.assertEquals(3,pairs.getTruePairs().size());
+        Assertions.assertEquals(3,pairs.get(0).getAllPairs().size());
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -205,8 +206,9 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        ExtractedPairsForPatternDetection pairs = cp.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5, pairs.getAllPairs().size());
+        List<ExtractedPairsForPatternDetection> pairs = cp.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(1,pairs.size());
+        Assertions.assertEquals(5,pairs.get(0).getAllPairs().size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -255,8 +257,9 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        ExtractedPairsForPatternDetection pairs = cp.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5, pairs.getAllPairs().size());
+        List<ExtractedPairsForPatternDetection> pairs = cp.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(1,pairs.size());
+        Assertions.assertEquals(5,pairs.get(0).getAllPairs().size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -264,7 +267,7 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        Assertions.assertEquals(3,pairs.getTruePairs().size());
+        Assertions.assertEquals(3,pairs.get(0).getTruePairs().size());
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
@@ -290,8 +293,9 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        ExtractedPairsForPatternDetection pairs = cp.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5,pairs.getAllPairs().size());
+        List<ExtractedPairsForPatternDetection> pairs = cp.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(1,pairs.size());
+        Assertions.assertEquals(5,pairs.get(0).getAllPairs().size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -299,7 +303,7 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        Assertions.assertEquals(3,pairs.getTruePairs().size());
+        Assertions.assertEquals(3,pairs.get(0).getTruePairs().size());
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -339,8 +343,9 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        ExtractedPairsForPatternDetection pairs = cp.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5, pairs.getAllPairs().size());
+        List<ExtractedPairsForPatternDetection> pairs = cp.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(1,pairs.size());
+        Assertions.assertEquals(5,pairs.get(0).getAllPairs().size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
@@ -348,7 +353,7 @@ public class PatternDetectionQueryTest {
         Set<String> events = new HashSet<>(dbConnector.getEventNames(qpdw.getLog_name()));
         QueryPlanPatternDetection plan = (QueryPlanPatternDetection) query.createQueryPlan(qpdw, m);
         plan.setEventTypesInLog(events);
-        Assertions.assertEquals(3,pairs.getTruePairs().size());
+        Assertions.assertEquals(3,pairs.get(0).getTruePairs().size());
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
@@ -390,8 +395,9 @@ public class PatternDetectionQueryTest {
         }};
         ComplexPattern cp = this.getPattern();
         cp.setConstraints(constraints);
-        ExtractedPairsForPatternDetection pairs = cp.extractPairsForPatternDetection(false);
-        Assertions.assertEquals(5, pairs.getAllPairs().size());
+        List<ExtractedPairsForPatternDetection> pairs = cp.extractPairsForPatternDetection(false);
+        Assertions.assertEquals(1,pairs.size());
+        Assertions.assertEquals(5,pairs.get(0).getAllPairs().size());
         qpdw.setPattern(cp);
         qpdw.setLog_name("test_pos");
         Metadata m = dbConnector.getMetadata(qpdw.getLog_name());
