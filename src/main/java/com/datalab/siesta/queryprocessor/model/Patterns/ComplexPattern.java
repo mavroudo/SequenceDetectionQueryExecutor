@@ -75,22 +75,47 @@ public class ComplexPattern extends SIESTAPattern {
     public List<ExtractedPairsForPatternDetection> extractPairsForPatternDetection(boolean fromOrTillSet) {
         List<ExtractedPairsForPatternDetection> elist = new ArrayList<>();
         Set<List<EventSymbol>> splitWithOr = this.splitWithOr();
+
         for (List<EventSymbol> events : splitWithOr) {
+            //firstNonEmpty is used in order to be sure that at least one of the events of the * or ! will be present
+            //using A,A is not valid if there is only one A in the pattern
+            Event firstNonEmpty = null;
             List<EventPos> l = new ArrayList<>();
             List<EventPair> allPairs = new ArrayList<>();
             for (int i = 0; i < events.size(); i++) {
                 EventSymbol es = events.get(i);
+                if(firstNonEmpty==null && (es.getSymbol().equals("+")||es.getSymbol().equals("")||es.getSymbol().equals("_"))){
+                    firstNonEmpty=new Event(es.getName());
+                }
                 switch (es.getSymbol()) {
                     case "_":
                     case "":
                         l.add(new EventPos(es.getName(), i));
                         break;
                     case "+":
-                    case "!":
+//                    case "!":
                         l.add(new EventPos(es.getName(), i));
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
+                    case "!":
                     case "*":
+                        if(firstNonEmpty!=null){
+                            allPairs.add(new EventPair(firstNonEmpty, new Event(es.getName())));
+                        }else{
+                            //find the next event that is not null
+                            Event nextNonEmpty = null;
+                            int k = i+1;
+                            while(nextNonEmpty==null && k<events.size()){
+                                EventSymbol eventSymbol = events.get(k);
+                                if(eventSymbol.getSymbol().equals("+")||eventSymbol.getSymbol().equals("")||eventSymbol.getSymbol().equals("_")){
+                                    nextNonEmpty=new Event(eventSymbol.getName());
+                                }
+                            }
+                            if(nextNonEmpty!=null){
+                                allPairs.add(new EventPair(new Event(es.getName()),nextNonEmpty));
+                            }
+
+                        }
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
                 }
