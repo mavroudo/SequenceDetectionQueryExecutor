@@ -50,7 +50,8 @@ public class QueryPlanExplorationHybrid extends QueryPlanExplorationAccurate {
         queryPlanExplorationFast.setMetadata(metadata);
         List<Proposition> fast = ((QueryResponseExploration) queryPlanExplorationFast.execute(qw)).getPropositions();
         List<Proposition> props = new ArrayList<>();
-        for (Proposition p : fast.subList(0, queryExploreWrapper.getK())) {
+        int k = Math.min(fast.size(), queryExploreWrapper.getK());
+        for (Proposition p : fast.subList(0, k)) {
             try {
                 SimplePattern sp = (SimplePattern) queryExploreWrapper.getPattern().clone();
                 Proposition newp = this.patternDetection(sp, p.getEvent(), qw.getLog_name());
