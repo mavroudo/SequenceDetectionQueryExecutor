@@ -250,10 +250,12 @@ public class QueryPlanPatternDetection implements QueryPlan {
      * @param till      the ending timestamp
      * @return the retrieved events from the SequenceTable
      */
-    protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern, String logname, Timestamp from, Timestamp till) {
+    protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern,
+                                                String logname, Timestamp from, Timestamp till) {
         Set<String> eventTypes = pattern.getEventTypes();
         Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes, from, till);
-        return fromDB.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)
+        return fromDB.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)
                 .collect(Collectors.toList())));
     }
 
