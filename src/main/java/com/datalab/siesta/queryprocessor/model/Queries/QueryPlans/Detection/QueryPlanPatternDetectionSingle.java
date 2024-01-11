@@ -58,7 +58,6 @@ public class QueryPlanPatternDetectionSingle extends QueryPlanPatternDetection {
 
     @Override
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
-        List<ExtractedPairsForPatternDetection> multiplePairs = new ArrayList<>();
         intermediateResults = dbConnector.getEventsFromSingleTableGroupedByTraceID(qpdw.getLog_name(),
                 qpdw.getPattern().getEventTypes());
 
