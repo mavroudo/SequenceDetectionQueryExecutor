@@ -15,7 +15,6 @@ import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
