@@ -54,11 +54,13 @@ public class SparkConfiguration {
 
     @Bean
     public SparkSession sparkSession() {
+        String externalJars = "./export/siesta-query-processor-2.0.jar";
         SparkSession spark= SparkSession
                 .builder()
                 .sparkContext(this.javaSparkContext().sc())
                 .appName("siesta 2")
                 .getOrCreate();
+        spark.sparkContext().addJar(externalJars);
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.endpoint", s3endpoint);
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.access.key", s3user);
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.secret.key", s3key);

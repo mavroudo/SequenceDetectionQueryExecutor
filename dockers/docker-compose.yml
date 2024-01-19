@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  spark-master:
+    image: bitnami/spark:3.0.0
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - siesta-net
+
+  spark-worker:
+    image: bitnami/spark:3.0.0
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=8G
+      - SPARK_WORKER_CORES=4
+      - SPARK_RPC_ENV_ENABLED=true
+    depends_on:
+      - spark-master
+    networks:
+      - siesta-net
+
+networks:
+  siesta-net:
+    name: siesta-net
+    external: true
