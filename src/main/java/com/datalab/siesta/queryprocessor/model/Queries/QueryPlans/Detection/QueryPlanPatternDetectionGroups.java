@@ -1,9 +1,7 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
-import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
-import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
@@ -15,23 +13,19 @@ import com.datalab.siesta.queryprocessor.model.TimeStats;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import scala.Tuple2;
+import org.springframework.web.context.annotation.RequestScope;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The query plan for the detection queries that have the defined the groups
  */
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
 
-    private Map<Integer, List<EventBoth>> middleResults;
+    protected Map<Integer, List<EventBoth>> middleResults;
 
     @Autowired
     public QueryPlanPatternDetectionGroups(DBConnector dbConnector, SaseConnector saseConnector, Utils utils) {
@@ -68,15 +62,11 @@ public class QueryPlanPatternDetectionGroups extends QueryPlanPatternDetection {
 
     @Override
     protected void getMiddleResults(QueryPatternDetectionWrapper qpdw, QueryResponseBadRequestForDetection qr) {
-        boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
-        ExtractedPairsForPatternDetection pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
-        List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), qpdw.getLog_name());
-        List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
-        this.firstParsing(qpdw, pairs.getAllPairs(), combined,qr); // checks if all are correctly set before start querying
-        if (!qr.isEmpty()) {//There was an original error
-            return;
-        }
+        List<ExtractedPairsForPatternDetection> multiplePairs = new ArrayList<>();
+        qr = this.evaluateQuery(multiplePairs,qpdw,qr);
+        if (!qr.isEmpty()) return; //There was an original error
         middleResults = dbConnector.querySingleTableGroups(qpdw.getLog_name(), qpdw.getGroupConfig()
                 .getGroups(), qpdw.getPattern().getEventTypes());
     }
+
 }

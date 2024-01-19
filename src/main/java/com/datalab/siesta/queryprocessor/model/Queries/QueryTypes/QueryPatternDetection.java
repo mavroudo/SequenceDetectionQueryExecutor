@@ -1,14 +1,21 @@
 package com.datalab.siesta.queryprocessor.model.Queries.QueryTypes;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection.QueryPlanPatternDetectionSingle;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanPatternDetection;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanWhyNotMatch;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection.QueryPlanPatternDetection;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection.QueryPlanPatternDetectionGroups;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection.QueryPlanWhyNotMatch;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryPatternDetectionWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Pattern Detection: Based on the characteristics of the query pattern this class determines which query plan will
@@ -17,16 +24,23 @@ import org.springframework.stereotype.Service;
  * correct then the generic QueryPlanPatternDetection will be executed.
  */
 @Service
-public class QueryPatternDetection implements Query{
+@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class QueryPatternDetection implements Query {
 
     private final QueryPlanPatternDetection qppd;
+    private final QueryPlanPatternDetectionGroups qppdg;
     private final QueryPlanWhyNotMatch planWhyNotMatch;
+    private final QueryPlanPatternDetectionSingle qpds;
 
     @Autowired
     public QueryPatternDetection(@Qualifier("queryPlanPatternDetection") QueryPlanPatternDetection qppd,
-                                 QueryPlanWhyNotMatch planWhyNotMatch){
-        this.qppd=qppd;
-        this.planWhyNotMatch=planWhyNotMatch;
+                                 @Qualifier("queryPlanPatternDetectionGroups") QueryPlanPatternDetectionGroups qppdg,
+                                 @Qualifier("queryPlanPatternDetectionSingle") QueryPlanPatternDetectionSingle qpds,
+                                 QueryPlanWhyNotMatch planWhyNotMatch) {
+        this.qppd = qppd;
+        this.qppdg = qppdg;
+        this.qpds = qpds;
+        this.planWhyNotMatch = planWhyNotMatch;
     }
 
     /**
@@ -40,11 +54,24 @@ public class QueryPatternDetection implements Query{
     public QueryPlan createQueryPlan(QueryWrapper qw, Metadata m) {
         QueryPatternDetectionWrapper qpdw = (QueryPatternDetectionWrapper) qw;
 
-        if(qpdw.isWhyNotMatchFlag()){
+        boolean fromOrTillSet = qpdw.getFrom() != null || qpdw.getTill() != null;
+        List<ExtractedPairsForPatternDetection> pairs = qpdw.getPattern().extractPairsForPatternDetection(fromOrTillSet);
+
+        if(pairs.isEmpty() || pairs.get(0).getTruePairs().isEmpty()){ //either is empty or there is no true pairs
+            qpds.setEventTypesInLog(qpdw.getPattern().getEventTypes());
+            qpds.setMetadata(m);
+            return qpds;
+        }
+
+        if (qpdw.isWhyNotMatchFlag()) {
             planWhyNotMatch.setMetadata(m);
             planWhyNotMatch.setEventTypesInLog(qpdw.getPattern().getEventTypes());
             return planWhyNotMatch;
-        }else {
+        } else if (qpdw.isHasGroups()) {
+            qppdg.setMetadata(m);
+            qppdg.setEventTypesInLog(qpdw.getPattern().getEventTypes());
+            return qppdg;
+        } else {
             qppd.setEventTypesInLog(qpdw.getPattern().getEventTypes());
             qppd.setMetadata(m);
             return qppd;

@@ -251,7 +251,26 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
      * @return a JavaRDD<EventBoth> that will be used in querySingleTable and querySingleTableGroups
      */
     protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+        Broadcast<Set<Long>> bTraces = javaSparkContext.broadcast(traceIds);
+        return queryFromSingle(logname,eventTypes).filter((Function<EventBoth, Boolean>) event->
+                bTraces.getValue().contains(event.getTraceID()));
+    }
+
+    protected JavaRDD<EventBoth> queryFromSingle(String logname, Set<String> eventTypes){
         return null;
+    }
+
+    @Override
+    public Map<String, List<EventBoth>> querySingleTable(String logname, Set<String> eventTypes) {
+        JavaRDD<EventBoth> events = queryFromSingle(logname, eventTypes);
+        JavaPairRDD<String, Iterable<EventBoth>> pairs = events.groupBy((Function<EventBoth, String>) Event::getName);
+        return pairs.mapValues((Function<Iterable<EventBoth>, List<EventBoth>>) e -> {
+            List<EventBoth> tempList = new ArrayList<>();
+            for (EventBoth ev : e) {
+                tempList.add(ev);
+            }
+            return tempList;
+        }).collectAsMap();
     }
 
     /**

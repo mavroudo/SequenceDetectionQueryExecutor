@@ -28,15 +28,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
+import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -192,10 +191,36 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
 
+//    @Override
+//    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+//        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+//        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
+//        Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
+//        return sparkSession.read()
+//                .parquet(path)
+//                .toJavaRDD()
+//                .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains(x.getString(1)))
+//                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
+//                    String eventType = row.getString(1);
+//                    List<EventBoth> events = new ArrayList<>();
+//                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
+//                    for (Row occurrence : occurrences) {
+//                        long traceId = occurrence.getLong(0);
+//                        if (bTraceIds.value().contains(traceId)) {
+//                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
+//                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+//                            for (int i = 0; i < times.size(); i++) {
+//                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
+//                            }
+//                        }
+//                    }
+//                    return events.iterator();
+//                });
+//    }
+
     @Override
-    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+    protected JavaRDD<EventBoth> queryFromSingle(String logname, Set<String> eventTypes) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
-        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
         Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
         return sparkSession.read()
                 .parquet(path)
@@ -207,18 +232,15 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
                         long traceId = occurrence.getLong(0);
-                        if (bTraceIds.value().contains(traceId)) {
-                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
-                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
-                            for (int i = 0; i < times.size(); i++) {
-                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
-                            }
+                        List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
+                        List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+                        for (int i = 0; i < times.size(); i++) {
+                            events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
                         }
                     }
                     return events.iterator();
                 });
     }
-
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
@@ -233,22 +255,22 @@ public class S3Connector extends SparkDatabaseRepository {
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
 
         List<String> whereStatements = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if (from != null) {
-            whereStatements.add(String.format("start <= %s ", till));
+            whereStatements.add(String.format("start >= '%s' ", dateFormat.format(new Date(from.getTime()))));
         }
         if (till != null) {
-            whereStatements.add(String.format("end >= %s ", from));
+            whereStatements.add(String.format("end <= '%s' ", dateFormat.format(new Date(till.getTime()))));
         }
         whereStatements.add(
-                pairs.stream().map(x->x.getEventA().getName()).distinct()
-                .map(p -> String.format("eventA = '%s'",p))
+                pairs.stream().map(x -> x.getEventA().getName()).distinct()
+                        .map(p -> String.format("eventA = '%s'", p))
                         .collect(Collectors.joining(" or ")));
 
         for (int i = 0; i < whereStatements.size(); i++) {
             whereStatements.set(i, String.format("( %s )", whereStatements.get(i)));
         }
         String whereStatement = String.join(" and ", whereStatements);
-
 
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> rows = sparkSession.read()
                 .parquet(path)
@@ -258,13 +280,13 @@ public class S3Connector extends SparkDatabaseRepository {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
                     boolean checkContained = false;
-                    for(EventPair ep: bPairs.getValue()){
-                        if(eventA.equals(ep.getEventA().getName())&& eventB.equals(ep.getEventB().getName())){
-                            checkContained=true;
+                    for (EventPair ep : bPairs.getValue()) {
+                        if (eventA.equals(ep.getEventA().getName()) && eventB.equals(ep.getEventB().getName())) {
+                            checkContained = true;
                         }
                     }
                     List<IndexPair> response = new ArrayList<>();
-                    if(checkContained){
+                    if (checkContained) {
                         List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                         for (Row r2 : l) {
                             long tid = r2.getLong(0);
@@ -280,7 +302,7 @@ public class S3Connector extends SparkDatabaseRepository {
                                     Timestamp tsA = Timestamp.valueOf(inner.getString(0));
                                     Timestamp tsB = Timestamp.valueOf(inner.getString(1));
                                     if (!(bTill.value() != null && tsA.after(bTill.value()) ||
-                                    bFrom.value() != null && tsB.before(bFrom.value()))) {
+                                            bFrom.value() != null && tsB.before(bFrom.value()))) {
                                         response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
                                     }
                                 }
@@ -291,52 +313,5 @@ public class S3Connector extends SparkDatabaseRepository {
                 })
                 .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
         return rows;
-
-//        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> df = sparkSession.read()
-//                .parquet(path)
-//                .where(whereStatement)
-//                .toJavaRDD()
-//                .filter((Function<Row, Boolean>) row -> {
-//                    Timestamp start = row.getAs("start");
-//                    Timestamp end = row.getAs("end");
-//                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
-//                    if (bTill.value() != null && bTill.value().before(start)) return false;
-//                    return true;
-//                })
-//                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
-//                    String eventA = row.getAs("eventA");
-//                    String eventB = row.getAs("eventB");
-//                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
-//                    List<IndexPair> response = new ArrayList<>();
-//                    for (Row r2 : l) {
-//                        long tid = r2.getLong(0);
-//                        List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
-//                        if (mode.getValue().equals("positions")) {
-//                            for (Row inner : innerList) {
-//                                int posA = inner.getInt(0);
-//                                int posB = inner.getInt(1);
-//                                response.add(new IndexPair(tid, eventA, eventB, posA, posB));
-//                            }
-//                        } else {
-//                            for (Row inner : innerList) {
-//                                String tsA = inner.getString(0);
-//                                String tsB = inner.getString(1);
-//                                response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
-//                            }
-//                        }
-//                    }
-//                    return response.iterator();
-//                })
-//                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
-//                .filter((Function<IndexPair, Boolean>) p -> {
-//                    if (mode.value().equals("timestamps")) {
-//                        if (bTill.value() != null && p.getTimestampA().after(bTill.value())) return false;
-//                        if (bFrom.value() != null && p.getTimestampB().before(bFrom.value())) return false;
-//                    }
-//                    //If from and till has been set we cannot check it here
-//                    return true;
-//                })
-//                .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
-//        return df;
     }
 }

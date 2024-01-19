@@ -71,108 +71,105 @@ public class ComplexPattern extends SIESTAPattern {
      */
 
 
-//    @JsonIgnore
-//    public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet){
-//        ExtractedPairsForPatternDetection pairs = new ExtractedPairsForPatternDetection();
-//        for(List<EventPos> events : this.splitIntoSimples()){
-//            ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(events,this.getConstraints(),fromOrTillSet);
-//            pairs.addPairs(s.getAllPairs());
-//            pairs.addTruePairs(s.getTruePairs());
-//        }
-//        return pairs;
-//    }
     @JsonIgnore
-    public ExtractedPairsForPatternDetection extractPairsForPatternDetection(boolean fromOrTillSet) {
+    public List<ExtractedPairsForPatternDetection> extractPairsForPatternDetection(boolean fromOrTillSet) {
         List<ExtractedPairsForPatternDetection> elist = new ArrayList<>();
-        for (List<EventSymbol> events : this.splitWithOr()) {
+        Set<List<EventSymbol>> splitWithOr = this.splitWithOr();
+
+        for (List<EventSymbol> events : splitWithOr) {
+            //firstNonEmpty is used in order to be sure that at least one of the events of the * or ! will be present
+            //using A,A is not valid if there is only one A in the pattern
+            Event firstNonEmpty = null;
             List<EventPos> l = new ArrayList<>();
             List<EventPair> allPairs = new ArrayList<>();
             for (int i = 0; i < events.size(); i++) {
                 EventSymbol es = events.get(i);
+                if(firstNonEmpty==null && (es.getSymbol().equals("+")||es.getSymbol().equals("")||es.getSymbol().equals("_"))){
+                    firstNonEmpty=new Event(es.getName());
+                }
                 switch (es.getSymbol()) {
                     case "_":
                     case "":
                         l.add(new EventPos(es.getName(), i));
                         break;
                     case "+":
-                    case "!":
+//                    case "!":
                         l.add(new EventPos(es.getName(), i));
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
+                    case "!":
                     case "*":
+                        if(firstNonEmpty!=null){
+                            allPairs.add(new EventPair(firstNonEmpty, new Event(es.getName())));
+                        }else{
+                            //find the next event that is not null
+                            Event nextNonEmpty = null;
+                            int k = i+1;
+                            while(nextNonEmpty==null && k<events.size()){
+                                EventSymbol eventSymbol = events.get(k);
+                                if(eventSymbol.getSymbol().equals("+")||eventSymbol.getSymbol().equals("")||eventSymbol.getSymbol().equals("_")){
+                                    nextNonEmpty=new Event(eventSymbol.getName());
+                                }
+                            }
+                            if(nextNonEmpty!=null){
+                                allPairs.add(new EventPair(new Event(es.getName()),nextNonEmpty));
+                            }
+
+                        }
                         allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
                         break;
-//                    case "!":
-//                        allPairs.add(new EventPair(new Event(es.getName()), new Event(es.getName())));
-//                        break;
                 }
             }
             ExtractedPairsForPatternDetection s = this.extractPairsForPatternDetection(l, this.getConstraints(), fromOrTillSet);
             s.addPairs(allPairs);
             elist.add(s);
         }
-        ExtractedPairsForPatternDetection all = elist.get(0);
-        if (elist.size() > 1) {
-            for (int i = 1; i < elist.size(); i++) {
-                all.addPairs(elist.get(i).getAllPairs());
-                all.getTruePairs().retainAll(elist.get(i).getTruePairs());
-            }
-        }
-        return all;
+        return elist;
     }
 
-    private Set<List<EventSymbol>> splitWithOr() {
-        Set<List<EventSymbol>> l = new HashSet<>();
-        l.add(new ArrayList<>());
-        int last_pos = -1;
-        for (EventSymbol e : eventsWithSymbols) {
-            if (e.getPosition() == last_pos) { //That means it uses or
-                for (List<EventSymbol> sl : l) {
-                    List<EventSymbol> slnew = new ArrayList<>(sl);
-                    try {
-                        e.setSymbol("_");
-                        slnew.set(last_pos, e);
-                    } catch (IndexOutOfBoundsException exe) {
-                        slnew.add(e);
-                    }
-                    l.add(slnew);
-                }
-            } else {
-                last_pos = e.getPosition();
-                for (List<EventSymbol> sl : l) {
-                    sl.add(e);
-                }
+    private Set<List<EventSymbol>> splitWithOr(){
+        List<Set<EventSymbol>> samePos = new ArrayList<>();
+        // split events to different sets based on their positions in the pattern
+        for(EventSymbol e: this.eventsWithSymbols){
+            EventSymbol es = new EventSymbol(e.getName(),e.getPosition(),e.getSymbol());
+            if(e.getSymbol().equals("||")){
+                es.setSymbol("_");
+            }
+            if(samePos.size()==e.getPosition()){
+                Set<EventSymbol> temp = new HashSet<>();
+                temp.add(es);
+                samePos.add(temp);
+            }else{
+                samePos.get(e.getPosition()).add(es);
             }
         }
-        return l;
+        List<List<EventSymbol>> result = new ArrayList<>();
+        // recursively detect different patterns
+        generateCombinations(samePos, 0, new ArrayList<>(), result);
+        return new HashSet<>(result);
     }
 
-//    private Set<List<EventPos>> splitIntoSimples() {
-//        Set<List<EventPos>> l = new HashSet<>();
-//        l.add(new ArrayList<>());
-//        int last_pos = -1;
-//        for (EventSymbol e : eventsWithSymbols) {
-//            if (e.getPosition() == last_pos) {
-//                for (List<EventPos> sl : l) {
-//                    List<EventPos> slnew = new ArrayList<>(sl);
-//                    try {
-//                        slnew.set(last_pos, e);
-//                    }catch (IndexOutOfBoundsException exe){
-//                        slnew.add(e);
-//                    }
-//                    l.add(slnew);
-//                }
-//            } else if (e.getSymbol().equals("+") || e.getSymbol().equals("")) {
-//                last_pos = e.getPosition();
-//                for (List<EventPos> sl : l) {
-//                    sl.add(e);
-//                }
-//            } else if (e.getSymbol().equals("not") || e.getSymbol().equals("*")) {
-//                last_pos = e.getPosition();
-//            }
-//        }
-//        return l;
-//    }
+    /**
+     * Recursive function that finds the different patterns that are separated by or
+     * @param eventSets a list of sets of events (each set corresponds to events that share the same position)
+     * @param index the index od the set that it is currently explored
+     * @param current list of combinations so far
+     * @param result the list of all the different patterns
+     */
+    private void generateCombinations(List<Set<EventSymbol>> eventSets, int index, List<EventSymbol> current, List<List<EventSymbol>> result) {
+        if (index == eventSets.size()) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        Set<EventSymbol> currentSet = eventSets.get(index);
+        for (EventSymbol event : currentSet) {
+            current.add(event);
+            generateCombinations(eventSets, index + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
 
     @JsonIgnore
     @Override

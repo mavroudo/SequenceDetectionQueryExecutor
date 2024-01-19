@@ -73,24 +73,26 @@ public class CassandraConnectionSignature {
     }
 
     public List<Long> getPossibleTraceIds(ComplexPattern pattern, String logname, Signature s) {
-        String path = String.format("%s_sign_idx", logname);
-        ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
-        Set<Integer> positions1 = s.findPositionsWith1(pattern.getEventTypes(), pairs.getAllPairs());
-        Iterator<Integer> iter = positions1.iterator();
-        List<String> conditions = new ArrayList<>();
-        while (iter.hasNext()) {
-            conditions.add(" signature[" + iter.next().toString() + "]=" + "'1' ");
-        }
-        return sparkSession.read()
-                .format("org.apache.spark.sql.cassandra")
-                .options(Map.of("table", path, "keyspace", "siesta"))
-                .load()
-                .where(String.join("and", conditions))
-                .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, Long>) row -> {
-                    List<String> traces = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    return traces.stream().map(Long::parseLong).collect(Collectors.toList()).iterator();
-                }).collect();
+        return new ArrayList<>();
+        //TODO: removed
+//        String path = String.format("%s_sign_idx", logname);
+//        ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
+//        Set<Integer> positions1 = s.findPositionsWith1(pattern.getEventTypes(), pairs.getAllPairs());
+//        Iterator<Integer> iter = positions1.iterator();
+//        List<String> conditions = new ArrayList<>();
+//        while (iter.hasNext()) {
+//            conditions.add(" signature[" + iter.next().toString() + "]=" + "'1' ");
+//        }
+//        return sparkSession.read()
+//                .format("org.apache.spark.sql.cassandra")
+//                .options(Map.of("table", path, "keyspace", "siesta"))
+//                .load()
+//                .where(String.join("and", conditions))
+//                .toJavaRDD()
+//                .flatMap((FlatMapFunction<Row, Long>) row -> {
+//                    List<String> traces = JavaConverters.seqAsJavaList(row.getSeq(1));
+//                    return traces.stream().map(Long::parseLong).collect(Collectors.toList()).iterator();
+//                }).collect();
     }
 
     public Map<Long, List<Event>> getOriginalTraces(List<Long> traces, String logname) {

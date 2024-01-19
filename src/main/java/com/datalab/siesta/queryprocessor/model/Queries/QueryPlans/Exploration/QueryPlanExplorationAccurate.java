@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Exploration;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
@@ -10,6 +10,8 @@ import com.datalab.siesta.queryprocessor.model.Occurrence;
 import com.datalab.siesta.queryprocessor.model.Occurrences;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.datalab.siesta.queryprocessor.model.Proposition;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection.QueryPlanPatternDetection;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseExploration;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryExploreWrapper;
@@ -17,22 +19,20 @@ import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * The query plan for the accurate detection of continuation for the query pattern
  */
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection implements QueryPlan {
 
 
@@ -44,8 +44,9 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
     /**
      * Using the CountTable, the next possible events are retrieved. Then for each possible next event the pattern detection
      * query runs in order to determine the exact number of traces that contain the complete pattern.
-     * Finally the propositions were added in the response and are sorted from the most frequent next event to the least
+     * Finally, the propositions were added in the response and are sorted from the most frequent next event to the least
      * frequent
+     *
      * @param qw the QueryPatternDetectionWrapper
      * @return the possible next events sorted based on frequency, in the form of propositions
      */
@@ -59,7 +60,7 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
         for (Count freq : freqs) {
             try {
                 SimplePattern sp = (SimplePattern) queryExploreWrapper.getPattern().clone();
-                Proposition p = this.patternDetection(sp, freq.getEventB());
+                Proposition p = this.patternDetection(sp, freq.getEventB(), qw.getLog_name());
                 if (p != null) props.add(p);
             } catch (CloneNotSupportedException e) {
                 throw new RuntimeException(e);
@@ -78,14 +79,17 @@ public class QueryPlanExplorationAccurate extends QueryPlanPatternDetection impl
      * @param next    a count pair that contains the last event of the pattern and one possible extension
      * @return a proposition
      */
-    protected Proposition patternDetection(SimplePattern pattern, String next) {
+    protected Proposition patternDetection(SimplePattern pattern, String next, String logname) {
         List<EventPos> events = pattern.getEvents();
         events.add(new EventPos(next, events.size()));
         pattern.setEvents(events); //create the pattern
         ExtractedPairsForPatternDetection pairs = pattern.extractPairsForPatternDetection(false);
+        //Todo: check if we need all the pairs or simply the consecutive ones
         List<Count> sortedPairs = this.getStats(pairs.getAllPairs(), metadata.getLogname());
         List<Tuple2<EventPair, Count>> combined = this.combineWithPairs(pairs.getAllPairs(), sortedPairs);
         imr = dbConnector.patterDetectionTraceIds(metadata.getLogname(), combined, metadata, pairs, null, null);
+        //retrieve time information from the SequenceTable
+        super.retrieveTimeInformation(pattern, logname, null, null);
         List<Occurrences> occurrences = saseConnector.evaluate(pattern, imr.getEvents(), false);
         occurrences.forEach(x -> x.clearOccurrences(true));
         List<Occurrence> ocs = occurrences.stream().parallel().flatMap(x -> x.getOccurrences().stream()).collect(Collectors.toList());

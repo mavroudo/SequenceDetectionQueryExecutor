@@ -59,6 +59,16 @@ public class Metadata {
      */
     private Long traces;
 
+    /**
+     * The first timestamp of a log database
+     */
+    private String start_ts;
+
+    /**
+     * The last timestamp of a log database
+     */
+    private String last_ts;
+
 
     /**
      * Parse a json row. Utilized in S3, as metadata stored in json format
@@ -141,5 +151,21 @@ public class Metadata {
 
     public Long getTraces() {
         return traces;
+    }
+
+    public String getStart_ts() {
+        return start_ts;
+    }
+
+    public void setStart_ts(String start_ts) {
+        this.start_ts = start_ts;
+    }
+
+    public String getLast_ts() {
+        return last_ts;
+    }
+
+    public void setLast_ts(String last_ts) {
+        this.last_ts = last_ts;
     }
 }
