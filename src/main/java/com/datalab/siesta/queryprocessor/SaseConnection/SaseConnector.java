@@ -50,6 +50,9 @@ public class SaseConnector {
         List<Occurrences> occurrences = new ArrayList<>();
         for (Map.Entry<Long, List<Event>> e : events.entrySet()) {
             ec.initializeEngine();
+            if(e.getValue().isEmpty()){ // in case that events have been removed due to filters
+                continue;
+            }
             Stream s = this.getStream(new ArrayList<>(e.getValue()));
             ec.setInput(s);
             try {
@@ -107,6 +110,40 @@ public class SaseConnector {
     }
 
     /**
+     * Similar to the above method but it is used to evaluate the appearence of a pattern in the events when they
+     * are grouped for different trace-groups
+     * @param pattern the user defined pattern
+     * @param events the required events for each trace in order to determine if pattern occurs
+     * @return where the pattern occur
+     */
+    public List<Occurrences> evaluateSmallPatterns(SIESTAPattern pattern, Map<Long, List<EventBoth>> events){
+        EngineController ec = this.getEngineController(pattern,false);
+        List<Occurrences> occurrences = new ArrayList<>();
+        for (Map.Entry<Long, List<EventBoth>> e : events.entrySet()) {
+            ec.initializeEngine();
+            Stream s = this.getStream(new ArrayList<>(e.getValue()));
+            ec.setInput(s);
+            try {
+                ec.runEngine();
+            } catch (CloneNotSupportedException | EvaluationException exe) {
+                throw new RuntimeException(exe);
+            }
+            if (!ec.getMatches().isEmpty()) {
+                Occurrences ocs = new Occurrences();
+                ocs.setTraceID(e.getKey());
+                for (Match m : ec.getMatches()) {
+                    ocs.addOccurrence(new Occurrence(Arrays.stream(m.getEvents()).parallel()
+                            .map(x -> (SaseEvent) x)
+                            .map(SaseEvent::getEventBoth)
+                            .collect(Collectors.toList())));
+                }
+                occurrences.add(ocs);
+            }
+        }
+        return occurrences;
+    }
+
+    /**
      * Based on the pattern it creates a NFA that contains the states and the transitions of a state machine
      * that will be used to detect the occurrences of the pattern
      * @param pattern the user defined pattern
@@ -122,6 +159,7 @@ public class SaseConnector {
         } else {
             nfaWrapper.setStates(pattern.getNfa());
         }
+        nfaWrapper.setSize(nfaWrapper.getStates().length);
         ec.setNfa(new NFA(nfaWrapper));
         return ec;
     }

@@ -2,9 +2,9 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryTypes;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanExplorationAccurate;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanExplorationFast;
-import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlanExplorationHybrid;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Exploration.QueryPlanExplorationAccurate;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Exploration.QueryPlanExplorationFast;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Exploration.QueryPlanExplorationHybrid;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryExploreWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;

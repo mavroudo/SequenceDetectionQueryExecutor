@@ -32,13 +32,17 @@ public class TimeConstraint extends Constraint implements Cloneable, Serializabl
 
     public boolean isConstraintHolds(Count c) {
         if (method.equals("within")) {
-            return c.getMin_duration() <= this.getConstraint();
+            return c.getMin_duration() <= this.getConstraintInSeconds();
         } else if (method.equals("atleast")) {
-            return this.getConstraint() <= c.getMax_duration();
+            return this.getConstraintInSeconds() <= c.getMax_duration();
         } else return false;
     }
 
     public long getConstraint() {
+        return constraint;
+    }
+
+    public long getConstraintInSeconds(){
         if(granularity.equals("minutes")) return constraint*60;
         else if (granularity.equals("hours")) return constraint*60*60;
         else return constraint;
@@ -72,8 +76,8 @@ public class TimeConstraint extends Constraint implements Cloneable, Serializabl
     public boolean isCorrect(EventBoth a, EventBoth b) {
         if (a.getTimestamp() == null || b.getTimestamp() == null) return false;
         if (this.method.equals("within")) {
-            return (b.getTimestamp().getTime() - a.getTimestamp().getTime()) / 1000 <= this.getConstraint();
-        } else return (b.getTimestamp().getTime() - a.getTimestamp().getTime()) / 1000 >= this.getConstraint();
+            return (b.getTimestamp().getTime() - a.getTimestamp().getTime()) / 1000 <= this.getConstraintInSeconds();
+        } else return (b.getTimestamp().getTime() - a.getTimestamp().getTime()) / 1000 >= this.getConstraintInSeconds();
     }
 
     /**
@@ -83,7 +87,7 @@ public class TimeConstraint extends Constraint implements Cloneable, Serializabl
     public long minimumChangeRequired(EventBoth a, EventBoth b) {
         if (a.getTimestamp() == null || b.getTimestamp() == null) return -1;
         if (this.method.equals("within")) {
-            return (b.getTimestamp().getTime() / 1000) - (a.getTimestamp().getTime() / 1000) - this.getConstraint();
-        } else return (a.getTimestamp().getTime() / 1000) + this.getConstraint() - (b.getTimestamp().getTime() / 1000);
+            return (b.getTimestamp().getTime() / 1000) - (a.getTimestamp().getTime() / 1000) - this.getConstraintInSeconds();
+        } else return (a.getTimestamp().getTime() / 1000) + this.getConstraintInSeconds() - (b.getTimestamp().getTime() / 1000);
     }
 }

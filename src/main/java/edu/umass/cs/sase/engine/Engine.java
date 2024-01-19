@@ -950,7 +950,12 @@ public class Engine {
             newRun.addEvent(e);
             //this.numberOfRuns.update(1);
             Profiling.numberOfRuns++;
-            this.activeRuns.add(newRun);
+
+            if (newRun.checkMatch()) {
+                this.outputMatch(new Match(newRun, this.nfa, this.buffer));
+            } else {
+                this.activeRuns.add(newRun);
+            }
 
         } else if (this.nfa.getStates(0).getStateType().equalsIgnoreCase("kleeneClosure*") ||
                 this.nfa.getStates(0).getStateType().equalsIgnoreCase("negative")) {
@@ -975,6 +980,21 @@ public class Engine {
                 }
             }
         }
+        //check if next state is Kleene*. In that case two runs needs to be added, one that will wait for it to
+        //have a next event and the other that will consider it finished
+        if (this.nfa.getStates(1).getStateType().equalsIgnoreCase("kleeneClosure*")) {
+            Run newRun2 = this.engineRunController.getRun();
+            newRun2.initializeRun(this.nfa);
+            newRun2.addEvent(e); //may need to add to buffer
+            this.checkProceed(newRun2);
+            newRun2.proceed();
+            if (newRun2.checkMatch()) {
+                this.outputMatch(new Match(newRun2, this.nfa, this.buffer));
+            } else {
+                this.activeRuns.add(newRun2);
+            }
+        }
+
     }
 
     /**
@@ -1188,7 +1208,7 @@ public class Engine {
 
         Event previousEvent = this.buffer.getEvent(previousEventId);
         State s = this.nfa.getStates(currentState);
-        if(r.getState()[currentState]==0 && this.nfa.getStates(currentState).getStateType().equalsIgnoreCase("kleeneClosure")){
+        if (r.getState()[currentState] == 0 && this.nfa.getStates(currentState).getStateType().equalsIgnoreCase("kleeneClosure")) {
             return false; // not event there in order to proceed
         }
 
