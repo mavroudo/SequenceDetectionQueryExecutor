@@ -27,7 +27,7 @@ public class AlmostMatch {
         this.trace_id = trace_id;
         this.original = original;
         this.match = match;
-        totalChange=this.match.stream().mapToInt(UncertainTimeEvent::getChange).sum();
+        totalChange = this.match.stream().mapToInt(UncertainTimeEvent::getChange).sum();
     }
 
     public List<Event> getOriginal() {
@@ -57,6 +57,7 @@ public class AlmostMatch {
     /**
      * It constructs a string that describes the modification that is required in the original events in order to
      * appear an occurrence of the query pattern. There is also information about the total amount of modifications needed.
+     *
      * @return a string that describes the required modification in the original events in order for a pattern
      * occurrence to appear
      */
@@ -66,19 +67,56 @@ public class AlmostMatch {
         for (int i = 0; i < this.match.size(); i++) {
             UncertainTimeEvent ut = this.match.get(i);
             if (ut.getChange() != 0) { //only for those that changed
-                if (this.original.get(i) instanceof EventTs) { //changes in timestamp
-                    EventTs et = (EventTs) this.original.get(i);
+                Event e = this.getCorrespondingEvent(ut,i);
+                if (e instanceof EventTs) { //changes in timestamp
+                    EventTs et = (EventTs) e;
                     sb.append(String.format(" event %s timestamp was changed from %s to %s\n", et.getName(), et.getTimestamp(),
                             new Timestamp(ut.getTimestamp() * 1000L)));
-                } else if (this.original.get(i) instanceof EventPos) { //changes in positions
-                    EventPos et = (EventPos) this.original.get(i);
+                } else if (e instanceof EventPos) { //changes in positions
+                    EventPos et = (EventPos) e;
                     sb.append(String.format(" event %s position was changed from %d to %d\n", et.getName(), et.getPosition(),
                             ut.getPosition()));
                 }
             }
 
         }
-        sb.append(String.format("total modification: %d",totalChange));
+        sb.append(String.format("total modification: %s", this.convertSeconds(totalChange)));
         return sb.toString();
     }
+
+    private Event getCorrespondingEvent(UncertainTimeEvent ut, int pos) {
+        for (int i = 0; i < this.original.size(); i++) {
+            Event e = this.original.get(i);
+            if (!e.getName().equals(ut.getEventType())) { // only care for similar
+                continue;
+            }
+            if (e instanceof EventTs) {
+                EventTs et = (EventTs) e;
+                if (Math.abs(et.getTimestamp().getTime() - new Timestamp(ut.getTimestamp() * 1000L).getTime())/1000 == ut.getChange()) {
+                    return et;
+                }
+            } else {
+                EventPos ep = (EventPos) e;
+                if (Math.abs(ep.getPosition() - ut.getPosition()) == ut.getChange()) {
+                    return ep;
+                }
+            }
+        }
+        return this.original.get(pos);
+    }
+
+    private String convertSeconds(int totalSeconds) {
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return hours + " hours " + minutes + " minutes " + seconds + " seconds";
+        } else if (minutes > 0) {
+            return minutes + " minutes " + seconds + " seconds";
+        } else {
+            return seconds + " seconds";
+        }
+    }
+
 }
