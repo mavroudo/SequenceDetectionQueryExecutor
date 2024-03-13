@@ -5,6 +5,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryRespo
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class QueryResponseOrderedRelations implements QueryResponse {
@@ -17,10 +18,18 @@ public class QueryResponseOrderedRelations implements QueryResponse {
     private List<EventPairSupport> notSuccession;
 
     public QueryResponseOrderedRelations() {
+        response=new ArrayList<>();
+        precedence=new ArrayList<>();
+        succession=new ArrayList<>();
+        notSuccession=new ArrayList<>();
     }
 
     public QueryResponseOrderedRelations(String mode) {
         this.mode = mode;
+        response=new ArrayList<>();
+        precedence=new ArrayList<>();
+        succession=new ArrayList<>();
+        notSuccession=new ArrayList<>();
     }
 
     public String getMode() {
@@ -36,7 +45,7 @@ public class QueryResponseOrderedRelations implements QueryResponse {
     }
 
     public void setResponse(List<EventPairSupport> response) {
-        this.response = response;
+        this.response.addAll(response);
     }
 
     public List<EventPairSupport> getPrecedence() {
@@ -44,7 +53,7 @@ public class QueryResponseOrderedRelations implements QueryResponse {
     }
 
     public void setPrecedence(List<EventPairSupport> precedence) {
-        this.precedence = precedence;
+        this.precedence.addAll(precedence);
     }
 
     public List<EventPairSupport> getSuccession() {
@@ -52,7 +61,7 @@ public class QueryResponseOrderedRelations implements QueryResponse {
     }
 
     public void setSuccession(List<EventPairSupport> succession) {
-        this.succession = succession;
+        this.succession.addAll(succession);
     }
 
     public List<EventPairSupport> getNotSuccession() {
@@ -60,6 +69,6 @@ public class QueryResponseOrderedRelations implements QueryResponse {
     }
 
     public void setNotSuccession(List<EventPairSupport> notSuccession) {
-        this.notSuccession = notSuccession;
+        this.notSuccession.addAll(notSuccession);
     }
 }

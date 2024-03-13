@@ -4,6 +4,7 @@ package com.datalab.siesta.queryprocessor.controllers;
 import com.datalab.siesta.queryprocessor.declare.queries.QueryExistence;
 import com.datalab.siesta.queryprocessor.declare.queries.QueryOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.QueryPlanDeclareAll;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.QueryPlanDeclareAll2;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.existence.QueryPlanExistences;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.QueryPlanOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPosition;
@@ -54,6 +55,9 @@ public class DeclareController {
 
     @Autowired
     private QueryPlanDeclareAll queryPlanDeclareAll;
+
+    @Autowired
+    private QueryPlanDeclareAll2 queryPlanDeclareAll2;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -119,8 +123,9 @@ public class DeclareController {
             return new ResponseEntity<>("{\"message\":\"Log database is not found! If it is recently indexed " +
                     "consider executing endpoint /refresh \"", HttpStatus.NOT_FOUND);
         } else {
-            this.queryPlanDeclareAll.setMetadata(m);
-            QueryResponseAll queryResponseAll = this.queryPlanDeclareAll.execute(log_database,support);
+//            this.queryPlanDeclareAll.setMetadata(m);
+            this.queryPlanDeclareAll2.setMetadata(m);
+            QueryResponseAll queryResponseAll = this.queryPlanDeclareAll2.execute(log_database,support);
             return new ResponseEntity<>(objectMapper.writeValueAsString(queryResponseAll), HttpStatus.OK);
         }
     }

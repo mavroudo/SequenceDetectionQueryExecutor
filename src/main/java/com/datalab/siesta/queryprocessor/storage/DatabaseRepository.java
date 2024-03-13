@@ -6,9 +6,12 @@ import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import scala.Tuple2;
+import scala.Tuple3;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -138,7 +141,12 @@ public interface DatabaseRepository {
     JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname);
 
     JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname);
+
     JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname);
+
+    JavaPairRDD<Tuple2<String,Long>, List<Integer>> querySingleTableAllDeclare(String logname);
+
+    JavaRDD<Tuple3<String,String,Long>> queryIndexOriginalDeclare(String logname);
 
 
 }

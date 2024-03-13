@@ -339,6 +339,7 @@ public class CassConnector extends SparkDatabaseRepository {
                 });
     }
 
+
     @Override
     public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
         String path = String.format("%s_index", logname);
@@ -371,6 +372,7 @@ public class CassConnector extends SparkDatabaseRepository {
             String evB = row.getString(1);
             List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
             List<IndexPair> indexPairs = new ArrayList<>();
+            //assume that we operate only in positions (check if this needs to be modified in the future)
             occurrences.forEach(x -> {
                 Long t = Long.valueOf(x.split("\\|\\|")[0]);
                 String[] ocs = x.split("\\|\\|")[1].split(",");
@@ -383,4 +385,16 @@ public class CassConnector extends SparkDatabaseRepository {
         });
         return indexPairsRDD;
     }
+
+    @Override
+    public JavaPairRDD<Tuple2<String, Long>, List<Integer>> querySingleTableAllDeclare(String logname) {
+        //TODO: implement
+        return null;
+    }
+
+    @Override
+    public JavaRDD<Tuple3<String, String, Long>> queryIndexOriginalDeclare(String logname) {
+        return null;
+    }
+
 }

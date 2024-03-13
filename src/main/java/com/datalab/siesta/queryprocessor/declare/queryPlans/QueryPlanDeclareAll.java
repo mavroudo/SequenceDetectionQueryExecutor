@@ -79,14 +79,14 @@ public class QueryPlanDeclareAll {
         Broadcast<Map<String, Long>> bUniqueSingle = javaSparkContext.broadcast(singleUnique);
 
         JavaRDD<UniqueTracesPerEventPair> uPairs = declareDBConnector.queryIndexTableDeclare(logname);
-        uPairs.persist(StorageLevel.MEMORY_AND_DISK());
+//        uPairs.persist(StorageLevel.MEMORY_AND_DISK());
         JavaRDD<Tuple3<String, String, Integer>> joined = this.queryPlanExistences.joinUnionTraces(uPairs);
-        joined.persist(StorageLevel.MEMORY_AND_DISK());
+//        joined.persist(StorageLevel.MEMORY_AND_DISK());
         QueryResponseExistence queryResponseExistence = this.queryPlanExistences.runAll(groupTimes,
                 support, joined, bSupport, bTotalTraces, bUniqueSingle, uEventType);
 
-        joined.unpersist();
-        uPairs.unpersist();
+//        joined.unpersist();
+//        uPairs.unpersist();
         uEventType.unpersist();
 
         JavaRDD<IndexPair> indexPairsRDD = declareDBConnector.queryIndexTableAllDeclare(logname);

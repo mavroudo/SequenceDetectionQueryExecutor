@@ -1,14 +1,18 @@
 package com.datalab.siesta.queryprocessor.declare.queryPlans.existence;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
+import com.datalab.siesta.queryprocessor.declare.DeclareUtilities;
 import com.datalab.siesta.queryprocessor.declare.model.*;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseExistence;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.Optional;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +37,16 @@ public class QueryPlanExistences {
     private QueryResponseExistence queryResponseExistence;
     private Metadata metadata;
 
+    private DeclareUtilities declareUtilities;
+
 
     @Autowired
-    public QueryPlanExistences(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext) {
+    public QueryPlanExistences(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext,
+                               DeclareUtilities declareUtilities) {
         this.declareDBConnector = declareDBConnector;
         this.javaSparkContext = javaSparkContext;
         this.queryResponseExistence = new QueryResponseExistence();
+        this.declareUtilities = declareUtilities;
     }
 
     public QueryResponse execute(String logname, List<String> modes, double support) {
@@ -57,6 +65,9 @@ public class QueryPlanExistences {
         JavaRDD<Tuple3<String, String, Integer>> joined = joinUnionTraces(uPairs);
         joined.persist(StorageLevel.MEMORY_AND_DISK());
 
+        //Todo: move this to a function and use it to the other negative patterns
+        Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes,joined);
+
         for (String m : modes) {
             switch (m) {
                 case "existence":
@@ -69,13 +80,13 @@ public class QueryPlanExistences {
                     exactly(groupTimes, support, metadata.getTraces());
                     break;
                 case "co-existence":
-                    coExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
+                    coExistence(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
                     break;
                 case "choice":
                     choice(uEventType, bSupport, bTotalTraces);
                     break;
                 case "exclusive-choice":
-                    exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces);
+                    exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
                     break;
                 case "responded-existence":
                     respondedExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
@@ -95,12 +106,16 @@ public class QueryPlanExistences {
                                          JavaRDD<Tuple3<String, String, Integer>> joined, Broadcast<Double> bSupport,
                                          Broadcast<Long> bTotalTraces, Broadcast<Map<String, Long>> bUniqueSingle,
                                          JavaRDD<UniqueTracesPerEventType> uEventType) {
+        Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes,joined);
+
+        //all event pairs will contain only those that weren't found in the dataset
+
         existence(groupTimes, support, metadata.getTraces());
         absence(groupTimes, support, metadata.getTraces());
         exactly(groupTimes, support, metadata.getTraces());
-        coExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
+        coExistence(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
         choice(uEventType, bSupport, bTotalTraces);
-        exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces);
+        exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
         respondedExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
         return this.queryResponseExistence;
     }
@@ -163,11 +178,11 @@ public class QueryPlanExistences {
             HashMap<Integer, Long> t = groupTimes.get(et);
             List<Integer> times = new ArrayList<>(t.keySet()).stream().sorted(Comparator.reverseOrder())
                     .collect(Collectors.toList());
-            for (int time : times) {
-                double s = (double) times.stream().filter(x -> x >= time).mapToLong(t::get).sum() / totalTraces;
+            for (int time=3;time>0;time--) {
+                int finalTime = time;
+                double s = (double) times.stream().filter(x -> x >= finalTime).mapToLong(t::get).sum() / totalTraces;
                 if (s >= support) {
                     response.add(new EventN(et, time, s));
-                    break;
                 }
             }
         }
@@ -183,15 +198,12 @@ public class QueryPlanExistences {
             t.put(0, totalTraces - totalSum);
             List<Integer> times = new ArrayList<>(t.keySet()).stream().sorted().collect(Collectors.toList());
             if (!times.contains(2)) times.add(2); //to be sure that it will run at least once
-            for (int time : times) {
-                if (time < 2) {
-                    continue;
-                }
-                double s = (double) times.stream().filter(x -> x < time).map(t::get)
+            for (int time=3;time>=2;time--) {
+                int finalTime = time;
+                double s = (double) times.stream().filter(x -> x < finalTime).map(t::get)
                         .filter(Objects::nonNull).mapToLong(x -> x).sum() / totalTraces;
                 if (s >= support) {
                     response.add(new EventN(et, time, s));
-                    break;
                 }
             }
         }
@@ -215,15 +227,30 @@ public class QueryPlanExistences {
     }
 
     private void coExistence(JavaRDD<Tuple3<String, String, Integer>> joinedUnion,
-                             Broadcast<Map<String, Long>> bUniqueSingle, Broadcast<Double> bSupport, Broadcast<Long> bTotalTraces) {
+                             Broadcast<Map<String, Long>> bUniqueSingle, Broadcast<Double> bSupport,
+                             Broadcast<Long> bTotalTraces, Set<EventPair> notFound) {
         //valid event types can be used as first in a pair (since they have support greater than the user-defined)
 
         List<EventPairSupport> notCoExistence = joinedUnion
+                .filter(x-> !x._1().equals(x._2())) //remove pairs with the same event type
                 .filter(x -> x._1().compareTo(x._2()) <= 0)//filter same pair that appears in both ways
                 .filter(x -> x._3() <= ((1 - bSupport.getValue()) * bTotalTraces.getValue()))
                 .map(x -> new EventPairSupport(x._1(), x._2(), (double) x._3() / bTotalTraces.getValue()))
                 .collect();
-        queryResponseExistence.setNotCoExistence(notCoExistence);
+        Set<EventPairSupport> notCoExist = new HashSet<>();
+        for(EventPair ep:notFound){
+            if(notFound.contains(new EventPair(new Event(ep.getEventB().getName()),new Event(ep.getEventA().getName())))){
+                if(ep.getEventA().getName().compareTo(ep.getEventB().getName())>0) {
+                    notCoExist.add(new EventPairSupport(ep.getEventA().getName(),ep.getEventB().getName(),1));
+                }else{
+                    notCoExist.add(new EventPairSupport(ep.getEventB().getName(),ep.getEventA().getName(),1));
+                }
+            }
+        }
+        List<EventPairSupport> response = new ArrayList<>();
+        response.addAll(notCoExistence);
+        response.addAll(notCoExist);
+        queryResponseExistence.setNotCoExistence(response);
 
         // |A| = |IndexTable(a,b) U IndexTable(b,a)|, i.e., unique traces where a and b co-exist
         // total_traces = |A| + (non-of them exist) + (only a exist) + (only b exist) (1)
@@ -232,6 +259,7 @@ public class QueryPlanExistences {
         // (1)+(2)=> total_traces - (unique traces of a) + |A| - (unique traces of b) + |A| >= support* total_traces
         //  total_traces - (unique traces of a) - (unique traces of b) - |A| >= support* total_traces
         List<EventPairSupport> coExistence = joinedUnion
+                .filter(x-> !x._1().equals(x._2())) //remove pairs with the same event type
                 .filter(x -> x._1().compareTo(x._2()) <= 0)
                 .filter(x -> x._3() >= (bSupport.getValue()) * bTotalTraces.getValue())
                 .map(x -> {
@@ -265,24 +293,57 @@ public class QueryPlanExistences {
     }
 
     private void exclusiveChoice(JavaRDD<Tuple3<String, String, Integer>> joined, Broadcast<Map<String, Long>> bUniqueSingle,
-                                 Broadcast<Double> bSupport, Broadcast<Long> bTotalTraces) {
+                                 Broadcast<Double> bSupport, Broadcast<Long> bTotalTraces, Set<EventPair> notFound) {
+
         List<EventPairSupport> exclusiveChoice = joined.filter(x -> x._1().compareTo(x._2()) < 0)
+                .filter(x->!x._1().equals(x._2()))
                 .map(x -> {
                     double sup = (double) (bUniqueSingle.getValue().get(x._1()) + bUniqueSingle.getValue().get(x._2()) - 2 * x._3()) / bTotalTraces.getValue();
                     return new EventPairSupport(x._1(), x._2(), sup);
                 }).filter(x -> x.getSupport() >= bSupport.getValue())
                 .collect();
-        queryResponseExistence.setExclusiveChoice(exclusiveChoice);
+
+
+        Set<EventPairSupport> notCoExist = new HashSet<>();
+        for(EventPair ep:notFound){
+            if(notFound.contains(new EventPair(new Event(ep.getEventB().getName()),new Event(ep.getEventA().getName())))){
+                if(ep.getEventA().getName().compareTo(ep.getEventB().getName())>0) {
+                    notCoExist.add(new EventPairSupport(ep.getEventA().getName(),ep.getEventB().getName(),1));
+                }else{
+                    notCoExist.add(new EventPairSupport(ep.getEventB().getName(),ep.getEventA().getName(),1));
+                }
+            }
+        }
+
+        List<EventPairSupport> exclusiveChoice2 = notCoExist.stream().map(x->{
+            double sup = (double) (bUniqueSingle.getValue().get(x.getEventA()) + bUniqueSingle.getValue().get(x.getEventB())) / bTotalTraces.getValue();
+            return new EventPairSupport(x.getEventA(), x.getEventB(), sup);
+        }).filter(x -> x.getSupport() >= bSupport.getValue())
+                        .collect(Collectors.toList());
+
+        exclusiveChoice2.addAll(exclusiveChoice);
+
+        queryResponseExistence.setExclusiveChoice(exclusiveChoice2);
     }
 
     private void respondedExistence(JavaRDD<Tuple3<String, String, Integer>> joined, Broadcast<Map<String, Long>> bUniqueSingle,
                                     Broadcast<Double> bSupport, Broadcast<Long> bTotalTraces) {
-        List<EventPairSupport> responseExistence = joined.map(x -> {
+        List<EventPairSupport> responseExistence = joined
+                .filter(x->!x._1().equals(x._2()))
+                .flatMap((FlatMapFunction<Tuple3<String, String, Integer>, EventPairSupport>)x->{
+                    List<EventPairSupport> eps = new ArrayList<>();
                     double sup = ((double) x._3() + bTotalTraces.getValue() - bUniqueSingle.getValue().get(x._1())) / bTotalTraces.getValue();
-                    return new EventPairSupport(x._1(), x._2(), sup);
-                })
+                    eps.add(new EventPairSupport(x._1(), x._2(), sup));
+                    sup = ((double) x._3() + bTotalTraces.getValue() - bUniqueSingle.getValue().get(x._2())) / bTotalTraces.getValue();
+                    eps.add(new EventPairSupport(x._2(), x._1(), sup));
+                    return eps.iterator();
+                } )
                 .filter(x -> x.getSupport() >= bSupport.getValue())
+                .distinct()
                 .collect();
+
+
+
         this.queryResponseExistence.setRespondedExistence(responseExistence);
 
     }

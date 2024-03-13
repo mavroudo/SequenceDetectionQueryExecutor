@@ -2,9 +2,12 @@ package com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.Events.Event;
+import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -43,14 +46,16 @@ public class QueryPlanOrderedRelations {
     }
 
     public void initQueryResponse(){
+
         this.queryResponseOrderedRelations = new QueryResponseOrderedRelations("simple");
+
     }
 
 
     public QueryResponse execute(String logname, String constraint, double support) {
         //query IndexTable
         JavaRDD<IndexPair> indexPairsRDD = declareDBConnector.queryIndexTableAllDeclare(logname);
-        indexPairsRDD.persist(StorageLevel.MEMORY_AND_DISK());
+//        indexPairsRDD.persist(StorageLevel.MEMORY_AND_DISK());
         //join tables using joinTables and flat map to get the single events
         JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined = joinTables(indexPairsRDD);
         //count the occurrences using the evaluate constraints
@@ -63,16 +68,17 @@ public class QueryPlanOrderedRelations {
                 }).keyBy(x -> x._1).mapValues(x -> x._2).collectAsMap();
         Broadcast<Map<String, Long>> bUEventTypes = javaSparkContext.broadcast(uEventType);
         filterBasedOnSupport(c, bUEventTypes, support);
-        indexPairsRDD.unpersist();
+//        indexPairsRDD.unpersist();
         return this.queryResponseOrderedRelations;
     }
 
     public JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joinTables(JavaRDD<IndexPair> indexPairsRDD) {
 
+        //extract the single events and group them based on the event type -> single table
         JavaPairRDD<String, Iterable<IndexPair>> singleGrouped = indexPairsRDD
                 .filter(x -> x.getEventA().equals(x.getEventB()))
                 .groupBy(IndexPair::getEventA);
-
+        //adds all events from the two different event types  in lists (here we go to n^2)
         JavaPairRDD<Tuple2<String, String>, Tuple3<String, String, List<IndexPair>>> singles = singleGrouped
                 .cartesian(singleGrouped)
                 .filter(x -> !x._1._1.equals(x._2._1))
@@ -83,7 +89,7 @@ public class QueryPlanOrderedRelations {
                     return new Tuple3<>(x._1._1, x._2._1, ips);
                 })
                 .keyBy(x -> new Tuple2<>(x._1(), x._2()));
-
+        //group them where they are not the same
         JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> grouped = indexPairsRDD
                 .filter(x -> !x.getEventA().equals(x.getEventB()))
                 .groupBy(x -> new Tuple2<>(x.getEventA(), x.getEventB()));
@@ -239,18 +245,44 @@ public class QueryPlanOrderedRelations {
     protected void setResults(List<EventPairSupport> results, String constraint) {
         switch (constraint) {
             case "response":
-                this.queryResponseOrderedRelations.setResponse(results);
+                queryResponseOrderedRelations.setResponse(results);
                 break;
             case "precedence":
-                this.queryResponseOrderedRelations.setPrecedence(results);
+                queryResponseOrderedRelations.setPrecedence(results);
                 break;
             case "succession":
-                this.queryResponseOrderedRelations.setSuccession(results);
+                queryResponseOrderedRelations.setSuccession(results);
                 break;
             case "not-succession":
-                this.queryResponseOrderedRelations.setNotSuccession(results);
+                queryResponseOrderedRelations.setNotSuccession(results);
                 break;
         }
+    }
+
+    public void extendNotSuccession(Map<String, Long> uEventType,String logname,
+                                    JavaRDD<Tuple4<String, String, String, Integer>> cSimple){
+        if(uEventType==null){
+            uEventType = declareDBConnector.querySingleTableDeclare(logname)
+                    .map(x -> {
+                        long all = x.getOccurrences().stream().mapToLong(y -> y._2).sum();
+                        return new Tuple2<>(x.getEventType(), all);
+                    }).keyBy(x -> x._1).mapValues(x -> x._2).collectAsMap();
+        }
+        Set<EventPair> allEventPairs = new HashSet<>();
+        for (String eventA : uEventType.keySet()) {
+            for (String eventB : uEventType.keySet()) {
+                if (!eventA.equals(eventB)) {
+                    allEventPairs.add(new EventPair(new Event(eventA), new Event(eventB)));
+                }
+            }
+        }
+        List<EventPair> foundEventPairs = cSimple.map(x -> new EventPair(new Event(x._1()), new Event(x._2()))).distinct()
+                .collect();
+        foundEventPairs.forEach(allEventPairs::remove);
+
+        List<EventPairSupport> result = allEventPairs.stream().map(x->new EventPairSupport(x.getEventA().getName(),
+                x.getEventB().getName(),1)).collect(Collectors.toList());
+        this.queryResponseOrderedRelations.setNotSuccession(result);
     }
 
 

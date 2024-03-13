@@ -3,6 +3,7 @@ package com.datalab.siesta.queryprocessor.declare.model;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class EventPairSupport implements Serializable {
 
@@ -40,6 +41,19 @@ public class EventPairSupport implements Serializable {
 
     public double getSupport() {
         return support;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EventPairSupport that = (EventPairSupport) o;
+        return Double.compare(support, that.support) == 0 && Objects.equals(eventA, that.eventA) && Objects.equals(eventB, that.eventB);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(eventA, eventB, support);
     }
 
     public void setSupport(double support) {

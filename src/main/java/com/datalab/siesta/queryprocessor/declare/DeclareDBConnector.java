@@ -4,11 +4,18 @@ import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
+import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.storage.DatabaseRepository;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import scala.Tuple2;
+import scala.Tuple3;
+
+import java.util.List;
 
 @Service
 public class DeclareDBConnector {
@@ -28,6 +35,8 @@ public class DeclareDBConnector {
         return this.db.querySingleTableDeclare(logname);
     }
 
+
+
     public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname){
         return this.db.queryIndexTableDeclare(logname);
     }
@@ -35,4 +44,14 @@ public class DeclareDBConnector {
     public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname){
         return this.db.queryIndexTableAllDeclare(logname);
     }
+
+    public JavaPairRDD<Tuple2<String,Long>, List<Integer>> querySingleTableAllDeclare(String logname){
+        return this.db.querySingleTableAllDeclare(logname);
+    }
+
+    public JavaRDD<Tuple3<String,String,Long>> queryIndexOriginalDeclare(String logname){
+        return this.db.queryIndexOriginalDeclare(logname);
+    }
+
+
 }

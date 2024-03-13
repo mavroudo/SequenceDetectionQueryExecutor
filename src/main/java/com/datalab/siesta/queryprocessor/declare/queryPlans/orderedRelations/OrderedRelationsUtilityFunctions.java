@@ -69,4 +69,21 @@ public class OrderedRelationsUtilityFunctions implements Serializable {
         return new Tuple4<>(line._1(), line._2(), "p", s);
     }
 
+
+    //new implementation
+    public List<Tuple5<String,String,String,Integer,Integer>> countSimple(Tuple5<String,String,Long,List<Integer>,List<Integer>> ocs){
+        List<Tuple5<String,String,String,Integer,Integer>> answer = new ArrayList<>();
+        int s = 0;
+        for (int a : ocs._4()) {
+            if (ocs._5().stream().anyMatch(y -> y > a)) s += 1;
+        }
+        answer.add(new Tuple5<>(ocs._1(), ocs._2(), "r", s, ocs._4().size()));
+        s = 0;
+        for (int a : ocs._5()) {
+            if (ocs._4().stream().anyMatch(y -> y < a)) s += 1;
+        }
+        answer.add(new Tuple5<>(ocs._1(), ocs._2(), "r", s, ocs._4().size()));
+        return answer;
+    }
+
 }
