@@ -1,6 +1,9 @@
 package com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
+import com.datalab.siesta.queryprocessor.declare.DeclareUtilities;
+import com.datalab.siesta.queryprocessor.declare.model.Abstract2OrderConstraint;
+import com.datalab.siesta.queryprocessor.declare.model.EventPairTraceOccurrences;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -12,14 +15,16 @@ import scala.Tuple3;
 import scala.Tuple4;
 import scala.Tuple5;
 
+import java.util.List;
 import java.util.Set;
 
 @Component
 @RequestScope
 public class QueryPlanOrderedRelationsChain extends QueryPlanOrderedRelations{
 
-    public QueryPlanOrderedRelationsChain(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext, OrderedRelationsUtilityFunctions utils) {
-        super(declareDBConnector, javaSparkContext, utils);
+    public QueryPlanOrderedRelationsChain(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext,
+                                          OrderedRelationsUtilityFunctions utils, DeclareUtilities declareUtilities) {
+        super(declareDBConnector, javaSparkContext, utils,declareUtilities);
     }
 
     @Override
@@ -28,8 +33,9 @@ public class QueryPlanOrderedRelationsChain extends QueryPlanOrderedRelations{
     }
 
     @Override
-    public JavaRDD<Tuple4<String, String, String, Integer>> evaluateConstraint(JavaRDD<Tuple5<String, String, Long, Set<Integer>, Set<Integer>>> joined, String constraint) {
-        JavaRDD<Tuple4<String, String, String, Integer>> tuple4JavaRDD;
+    public JavaRDD<Abstract2OrderConstraint> evaluateConstraint(JavaRDD<EventPairTraceOccurrences> joined,
+                                                                String constraint) {
+        JavaRDD<Abstract2OrderConstraint> tuple4JavaRDD;
         switch (constraint) {
             case "response":
                 tuple4JavaRDD = joined.map(utils::countResponseChain);
@@ -42,8 +48,11 @@ public class QueryPlanOrderedRelationsChain extends QueryPlanOrderedRelations{
                 break;
         }
         return tuple4JavaRDD
-                .keyBy(y -> new Tuple3<>(y._1(), y._2(), y._3()))
-                .reduceByKey((x, y) -> new Tuple4<>(x._1(), y._2(), y._3(), x._4() + y._4()))
+                .keyBy(y -> new Tuple3<>(y.getEventA(), y.getEventB(), y.getMode()))
+                .reduceByKey((x, y) -> {
+                    x.setOccurrences(x.getOccurrences() + y.getOccurrences());
+                    return x;
+                })
                 .map(x -> x._2);
     }
 }

@@ -7,6 +7,10 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Starts the query plans that compute the constraints for the order-relation templates
+ * (simple, alternate, chain)
+ */
 @Service
 public class QueryOrderedRelations {
 

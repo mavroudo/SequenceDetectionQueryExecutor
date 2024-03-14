@@ -1,5 +1,9 @@
 package com.datalab.siesta.queryprocessor.declare.model;
 
+/**
+ * Extends event support by adding one more field and it is used in the absence/existence/exactly
+ * templates
+ */
 public class EventN extends EventSupport{
 
     private int n;

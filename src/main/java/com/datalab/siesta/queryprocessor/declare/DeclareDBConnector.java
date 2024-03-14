@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.declare;
 
+import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
@@ -16,6 +18,7 @@ import scala.Tuple2;
 import scala.Tuple3;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DeclareDBConnector {
@@ -49,8 +52,17 @@ public class DeclareDBConnector {
         return this.db.querySingleTableAllDeclare(logname);
     }
 
-    public JavaRDD<Tuple3<String,String,Long>> queryIndexOriginalDeclare(String logname){
+
+    public JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname){
         return this.db.queryIndexOriginalDeclare(logname);
+    }
+
+    public Map<String,Long> extractTotalOccurrencesPerEventType(String logname){
+        return this.querySingleTableDeclare(logname)
+                .map(x -> {
+                    long all = x.getOccurrences().stream().mapToLong(OccurrencesPerTrace::getOccurrences).sum();
+                    return new Tuple2<>(x.getEventType(), all);
+                }).keyBy(x -> x._1).mapValues(x -> x._2).collectAsMap();
     }
 
 

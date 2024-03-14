@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.CassandraRdd;
 
+import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
@@ -10,13 +12,9 @@ import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
 import com.datastax.spark.connector.cql.CassandraConnector;
 import com.datastax.spark.connector.japi.CassandraRow;
-import com.datastax.spark.connector.rdd.ReadConf;
-import com.datastax.spark.connector.types.TypeConverter;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -34,7 +32,6 @@ import scala.Tuple2;
 import scala.Tuple3;
 import scala.collection.JavaConverters;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -333,8 +330,8 @@ public class CassConnector extends SparkDatabaseRepository {
                 })
                 .groupBy(Tuple3::_1)
                 .map(x -> {
-                    List<Tuple2<Long, Integer>> occs = new ArrayList<>();
-                    x._2.forEach(y -> occs.add(new Tuple2<>(y._2(), y._3())));
+                    List<OccurrencesPerTrace> occs = new ArrayList<>();
+                    x._2.forEach(y -> occs.add(new OccurrencesPerTrace(y._2(), y._3())));
                     return new UniqueTracesPerEventType(x._1, occs);
                 });
     }
@@ -386,15 +383,62 @@ public class CassConnector extends SparkDatabaseRepository {
         return indexPairsRDD;
     }
 
+    /**
+     * <String,Long>,List<Integer> = <Event type, Trace_id>, positions of event occurrences
+     * @param logname
+     * @return
+     */
     @Override
     public JavaPairRDD<Tuple2<String, Long>, List<Integer>> querySingleTableAllDeclare(String logname) {
-        //TODO: implement
-        return null;
+
+        String path = String.format("%s_single", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+
+        return rows.map(row -> {
+                    String eventType = row.getString(0);
+                    Long trace_id = row.getAs("trace_id");
+                    List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
+                    List<Integer> positions = new ArrayList<>();
+                    for(String oc:occurrences){
+                        positions.add(Integer.valueOf(oc.split(",")[0]));
+                    }
+                    return new Tuple3<>(eventType, trace_id, positions);
+                })
+                .keyBy(x->new Tuple2<String,Long>(x._1(),x._2()))
+                .mapValues(x->x._3());
+
     }
 
+    /**
+     * <Event type A, Event Type B, Trace_id>
+     *
+     * @param logname
+     * @return
+     */
     @Override
-    public JavaRDD<Tuple3<String, String, Long>> queryIndexOriginalDeclare(String logname) {
-        return null;
+    public JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname) {
+        String path = String.format("%s_index", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+        JavaRDD<EventPairToTrace> indexPairsRDD = rows.flatMap(row -> {
+            String evA = row.getString(0);
+            String evB = row.getString(1);
+            List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
+            List<EventPairToTrace> eventPairToTraces = new ArrayList<>();
+            //assume that we operate only in positions (check if this needs to be modified in the future)
+            occurrences.forEach(x -> {
+                Long t = Long.valueOf(x.split("\\|\\|")[0]);
+                eventPairToTraces.add(new EventPairToTrace(evA,evB,t));
+            });
+            return eventPairToTraces.iterator();
+        });
+        return indexPairsRDD;
+
     }
 
 }

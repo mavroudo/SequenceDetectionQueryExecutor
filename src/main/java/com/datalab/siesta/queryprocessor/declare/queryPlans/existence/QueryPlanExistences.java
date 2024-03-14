@@ -61,7 +61,7 @@ public class QueryPlanExistences {
         JavaRDD<EventPairToNumberOfTrace> joined = joinUnionTraces(uPairs);
         joined.persist(StorageLevel.MEMORY_AND_DISK());
 
-        Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes,joined);
+        Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes.keySet(),joined);
 
         for (String m : modes) {
             switch (m) {
@@ -101,7 +101,7 @@ public class QueryPlanExistences {
                                          JavaRDD<EventPairToNumberOfTrace> joined, Broadcast<Double> bSupport,
                                          Broadcast<Long> bTotalTraces, Broadcast<Map<String, Long>> bUniqueSingle,
                                          JavaRDD<UniqueTracesPerEventType> uEventType) {
-        Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes,joined);
+        Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes.keySet(),joined);
 
         //all event pairs will contain only those that weren't found in the dataset
         existence(groupTimes, support, metadata.getTraces());

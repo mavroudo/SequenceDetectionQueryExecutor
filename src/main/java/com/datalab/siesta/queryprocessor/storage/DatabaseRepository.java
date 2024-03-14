@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.storage;
 
+import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
@@ -146,7 +147,7 @@ public interface DatabaseRepository {
 
     JavaPairRDD<Tuple2<String,Long>, List<Integer>> querySingleTableAllDeclare(String logname);
 
-    JavaRDD<Tuple3<String,String,Long>> queryIndexOriginalDeclare(String logname);
+    JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname);
 
 
 }

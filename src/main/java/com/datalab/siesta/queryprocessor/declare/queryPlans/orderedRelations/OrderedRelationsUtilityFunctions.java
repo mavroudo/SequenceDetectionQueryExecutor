@@ -1,89 +1,105 @@
 package com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations;
 
+import com.datalab.siesta.queryprocessor.declare.model.Abstract2OrderConstraint;
+import com.datalab.siesta.queryprocessor.declare.model.EventPairTraceOccurrences;
 import org.springframework.stereotype.Service;
-import scala.Tuple4;
-import scala.Tuple5;
+
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Contain functions that are utilized to count the occurrences of order-relation constraints.
+ * It is required two list of integers (one for each event type) which contains the positions of
+ * the occurrences within this trace
+ */
 @Service
 public class OrderedRelationsUtilityFunctions implements Serializable {
 
-    public Tuple4<String, String, String, Integer> countResponse(Tuple5<String, String, Long, Set<Integer>, Set<Integer>> line) {
+    /**
+     * Counts the occurrences for the 'response(eventA,eventB)' constraint
+     * @param line a {@link EventPairTraceOccurrences} object
+     * @return # of occurrences for the 'response(eventA,eventB)' constraint
+     */
+    public Abstract2OrderConstraint countResponse(EventPairTraceOccurrences line) {
         int s = 0;
-        for (int a : line._4()) {
-            if (line._5().stream().anyMatch(y -> y > a)) s += 1;
+        for (int a : line.getOccurrencesA()) {
+            if (line.getOccurrencesB().stream().anyMatch(y -> y > a)) s += 1;
         }
-        return new Tuple4<>(line._1(), line._2(), "r", s);
+        return new Abstract2OrderConstraint(line.getEventA(), line.getEventB(), "r", s);
     }
 
-    public Tuple4<String, String, String, Integer> countPrecedence(Tuple5<String, String, Long, Set<Integer>, Set<Integer>> line) {
+    /**
+     * Counts the occurrences for the 'precedence(eventA,eventB)' constraint
+     * @param line a {@link EventPairTraceOccurrences} object
+     * @return # of occurrences for the 'response(eventA,eventB)' constraint
+     */
+    public Abstract2OrderConstraint countPrecedence(EventPairTraceOccurrences line) {
         int s = 0;
-        for (int a : line._5()) {
-            if (line._4().stream().anyMatch(y -> y < a)) s += 1;
+        for (int a : line.getOccurrencesB()) {
+            if (line.getOccurrencesA().stream().anyMatch(y -> y < a)) s += 1;
         }
-        return new Tuple4<>(line._1(), line._2(), "p", s);
+        return new Abstract2OrderConstraint(line.getEventA(), line.getEventB(), "p", s);
     }
 
-    public Tuple4<String, String, String, Integer> countResponseAlternate
-            (Tuple5<String, String, Long, Set<Integer>, Set<Integer>> line) {
+    /**
+     * Counts the occurrences for the 'alternate response(eventA,eventB)' constraint
+     * @param line a {@link EventPairTraceOccurrences} object
+     * @return # of occurrences for the 'response(eventA,eventB)' constraint
+     */
+    public Abstract2OrderConstraint countResponseAlternate(EventPairTraceOccurrences line) {
         int s = 0;
-        List<Integer> aList = line._4().stream().sorted().collect(Collectors.toList());
+        List<Integer> aList = line.getOccurrencesA().stream().sorted().collect(Collectors.toList());
         for (int i = 0; i < aList.size() - 1; i++) {
             int finalI = i;
-            if(line._5().stream().anyMatch(y-> y>aList.get(finalI) && y<aList.get(finalI +1))) s+=1;
+            if(line.getOccurrencesB().stream().anyMatch(y-> y>aList.get(finalI) && y<aList.get(finalI +1))) s+=1;
         }
-        if(line._5().stream().anyMatch(y-> y>aList.get(aList.size()-1))) s+=1;
-        return new Tuple4<>(line._1(), line._2(), "r", s);
+        if(line.getOccurrencesB().stream().anyMatch(y-> y>aList.get(aList.size()-1))) s+=1;
+        return new Abstract2OrderConstraint(line.getEventA(), line.getEventB(), "r", s);
     }
 
-    public Tuple4<String, String, String, Integer> countPrecedenceAlternate
-            (Tuple5<String, String, Long, Set<Integer>, Set<Integer>> line) {
+    /**
+     * Counts the occurrences for the 'alternate precedence(eventA,eventB)' constraint
+     * @param line a {@link EventPairTraceOccurrences} object
+     * @return # of occurrences for the 'response(eventA,eventB)' constraint
+     */
+    public Abstract2OrderConstraint countPrecedenceAlternate(EventPairTraceOccurrences line) {
         int s = 0;
-        List<Integer> bList = line._5().stream().sorted().collect(Collectors.toList());
+        List<Integer> bList = line.getOccurrencesB().stream().sorted().collect(Collectors.toList());
         for (int i = 1; i < bList.size() ; i++) {
             int finalI = i;
-            if(line._4().stream().anyMatch(y-> y<bList.get(finalI) && y>bList.get(finalI -1))) s+=1;
+            if(line.getOccurrencesA().stream().anyMatch(y-> y<bList.get(finalI) && y>bList.get(finalI -1))) s+=1;
         }
-        if(line._4().stream().anyMatch(y-> y<bList.get(0))) s+=1;
-        return new Tuple4<>(line._1(), line._2(), "p", s);
+        if(line.getOccurrencesA().stream().anyMatch(y-> y<bList.get(0))) s+=1;
+        return new Abstract2OrderConstraint(line.getEventA(), line.getEventB(), "p", s);
     }
 
-    public Tuple4<String, String, String, Integer> countResponseChain(Tuple5<String, String, Long, Set<Integer>, Set<Integer>> line) {
+    /**
+     * Counts the occurrences for the 'chain response(eventA,eventB)' constraint
+     * @param line a {@link EventPairTraceOccurrences} object
+     * @return # of occurrences for the 'response(eventA,eventB)' constraint
+     */
+    public Abstract2OrderConstraint countResponseChain(EventPairTraceOccurrences line) {
         int s = 0;
-        for (int a : line._4()) {
-            if (line._5().stream().anyMatch(y -> y == a+1)) s += 1;
+        for (int a : line.getOccurrencesA()) {
+            if (line.getOccurrencesB().stream().anyMatch(y -> y == a+1)) s += 1;
         }
-        return new Tuple4<>(line._1(), line._2(), "r", s);
+        return new Abstract2OrderConstraint(line.getEventA(), line.getEventB(), "r", s);
     }
 
-    public Tuple4<String, String, String, Integer> countPrecedenceChain(Tuple5<String, String, Long, Set<Integer>, Set<Integer>> line) {
+    /**
+     * Counts the occurrences for the 'chain precedence(eventA,eventB)' constraint
+     * @param line a {@link EventPairTraceOccurrences} object
+     * @return # of occurrences for the 'response(eventA,eventB)' constraint
+     */
+    public Abstract2OrderConstraint countPrecedenceChain(EventPairTraceOccurrences line) {
         int s = 0;
-        for (int a : line._5()) {
-            if (line._4().stream().anyMatch(y -> y == a-1)) s += 1;
+        for (int a : line.getOccurrencesB()) {
+            if (line.getOccurrencesA().stream().anyMatch(y -> y == a-1)) s += 1;
         }
-        return new Tuple4<>(line._1(), line._2(), "p", s);
+        return new Abstract2OrderConstraint(line.getEventA(), line.getEventB(), "p", s);
     }
 
-
-    //new implementation
-    public List<Tuple5<String,String,String,Integer,Integer>> countSimple(Tuple5<String,String,Long,List<Integer>,List<Integer>> ocs){
-        List<Tuple5<String,String,String,Integer,Integer>> answer = new ArrayList<>();
-        int s = 0;
-        for (int a : ocs._4()) {
-            if (ocs._5().stream().anyMatch(y -> y > a)) s += 1;
-        }
-        answer.add(new Tuple5<>(ocs._1(), ocs._2(), "r", s, ocs._4().size()));
-        s = 0;
-        for (int a : ocs._5()) {
-            if (ocs._4().stream().anyMatch(y -> y < a)) s += 1;
-        }
-        answer.add(new Tuple5<>(ocs._1(), ocs._2(), "r", s, ocs._4().size()));
-        return answer;
-    }
 
 }
