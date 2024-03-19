@@ -1,5 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
+import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
@@ -303,16 +305,13 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
-        //TODO: implement this. Can also be helpful to rewrite querySeqPrivate with this
         String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
                 .map((Function<Row, Trace>) row -> {
-//                    int trace_id = row.getAs("trace_id");
                     int trace_id = (int) (long) row.getAs("trace_id");
                     List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
-//                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(0));
                     List<EventBoth> results = new ArrayList<>();
                     for (int i = 0; i < evs.size(); i++) {
                         String event_name = evs.get(i).getString(0);
@@ -333,12 +332,12 @@ public class S3Connector extends SparkDatabaseRepository {
                 .map(row -> {
                     UniqueTracesPerEventType ue = new UniqueTracesPerEventType();
                     ue.setEventType(row.getString(1));
-                    List<Tuple2<Long, Integer>> ocs = new ArrayList<>();
+                    List<OccurrencesPerTrace> ocs = new ArrayList<>();
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
                         long traceId = occurrence.getLong(0);
                         int size = JavaConverters.seqAsJavaList(occurrence.getSeq(2)).size();
-                        ocs.add(new Tuple2<>(traceId, size));
+                        ocs.add(new OccurrencesPerTrace(traceId, size));
                     }
                     ue.setOccurrences(ocs);
                     return ue;
@@ -368,20 +367,20 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
-    public JavaRDD<Tuple3<String, String, Long>> queryIndexOriginalDeclare(String logname) {
+    public JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
 
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, Tuple3<String,String,Long>>) row -> {
+                .flatMap((FlatMapFunction<Row, EventPairToTrace>) row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
-                    List<Tuple3<String,String,Long>> response = new ArrayList<>();
+                    List<EventPairToTrace> response = new ArrayList<>();
                     List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                     for (Row r2 : l) {
                         long tid = r2.getLong(0);
-                        response.add(new Tuple3<>(eventA,eventB,tid));
+                        response.add(new EventPairToTrace(eventA,eventB,tid));
                     }
                     return response.iterator();
                 })
