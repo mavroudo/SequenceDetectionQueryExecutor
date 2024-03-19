@@ -3,6 +3,7 @@ package com.datalab.siesta.queryprocessor.controllers;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponseGroups;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponsePatternDetection;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryExploration;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.QueryPatternDetection;
@@ -107,7 +108,7 @@ public class QueryResponseController {
     }
 
     /**
-     * Returns the stats for each concecutive event-pair. For example for the pattern ABC, it will return the stats
+     * Returns the stats for each consecutive event-pair. For example for the pattern ABC, it will return the stats
      * for the event pairs A-B and B-C. Stats include min,max, average duration and number of completions.
      */
     @RequestMapping(path = "/stats", method = RequestMethod.POST)
@@ -134,7 +135,7 @@ public class QueryResponseController {
         } else {
             QueryPlan qp = qpd.createQueryPlan(qpdw, m);
             QueryResponse qrs = qp.execute(qpdw);
-            if(qrs instanceof QueryResponsePatternDetection) {
+            if(qrs instanceof QueryResponsePatternDetection || qrs instanceof QueryResponseGroups) {
                 return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.OK);
             }else{
                 return new ResponseEntity<>(objectMapper.writeValueAsString(qrs), HttpStatus.BAD_REQUEST);

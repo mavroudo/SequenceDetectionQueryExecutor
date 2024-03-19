@@ -34,15 +34,14 @@ import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.collection.JavaConverters;
+import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -179,24 +178,6 @@ public class S3Connector extends SparkDatabaseRepository {
     protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
         return querySequenceTableDeclare(logname)
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
-//        String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
-//        return sparkSession.read()
-//                .parquet(path)
-//                .toJavaRDD()
-//                .map((Function<Row, Trace>) row -> {
-////                    int trace_id = row.getAs("trace_id");
-//                    int trace_id = (int) (long) row.getAs("trace_id");
-//                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
-////                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(0));
-//                    List<EventBoth> results = new ArrayList<>();
-//                    for (int i = 0; i < evs.size(); i++) {
-//                        String event_name = evs.get(i).getString(0);
-//                        Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
-//                        results.add(new EventBoth(event_name, event_timestamp, i));
-//                    }
-//                    return new Trace(trace_id, results);
-//                })
-//                .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
 
@@ -215,12 +196,10 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
                         long traceId = occurrence.getLong(0);
-                        if (bTraceIds.value().contains(traceId)) {
-                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
-                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
-                            for (int i = 0; i < times.size(); i++) {
-                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
-                            }
+                        List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
+                        List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+                        for (int i = 0; i < times.size(); i++) {
+                            events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
                         }
                     }
                     return events.iterator();
@@ -241,11 +220,12 @@ public class S3Connector extends SparkDatabaseRepository {
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
 
         List<String> whereStatements = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if (from != null) {
-            whereStatements.add(String.format("start <= %s ", till));
+            whereStatements.add(String.format("start >= '%s' ", dateFormat.format(new Date(from.getTime()))));
         }
         if (till != null) {
-            whereStatements.add(String.format("end >= %s ", from));
+            whereStatements.add(String.format("end <= '%s' ", dateFormat.format(new Date(till.getTime()))));
         }
         whereStatements.add(
                 pairs.stream().map(x -> x.getEventA().getName()).distinct()

@@ -113,9 +113,18 @@ public interface DatabaseRepository {
      * @param logname the log database
      * @param traceIds the ids of the traces that wil be retrieved
      * @param eventTypes the events that will we retrieved
-     * @return a list of all the retrieved events (wth their timestamps)
+     * @return a list of all the retrieved events (with their timestamps)
      */
     List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes);
+
+    /**
+     * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
+     * @param logname the log database
+     * @param eventTypes the events that will we retrieved
+     * @return a map of all the retrieved events (with their timestamps) grouped by the traceID
+     */
+    Map<String,List<EventBoth>> querySingleTable(String logname, Set<String> eventTypes);
+
 
     /**
      * Retrieves the appropriate events from the SingleTable, which contains the single inverted index

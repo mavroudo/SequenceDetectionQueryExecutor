@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans;
+package com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.Detection;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseConnector;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
@@ -16,9 +16,8 @@ import com.datalab.siesta.queryprocessor.model.WhyNotMatch.AlmostMatch;
 import com.datalab.siesta.queryprocessor.model.WhyNotMatch.UsingSase.WhyNotMatchSASE;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 
 import java.util.List;
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
  * The query plan for the detection queries that have the explainability setting on
  */
 @Component
-@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequestScope
 public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
 
     /**
@@ -65,7 +64,11 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
             queryResponseBadRequestWhyNotMatch.setSimple(false);
             return queryResponseBadRequestWhyNotMatch;
         }
-        super.checkIfRequiresDataFromSequenceTable(qpdw); //checks if data is required from the sequence table and gets them
+        //checks if data is required from the sequence table and gets them
+        if (super.requiresQueryToDB(qpdw)) { // we need to get from SeqTable
+            super.retrieveTimeInformation(qpdw.getPattern(), qpdw.getLog_name(), qpdw.getFrom(), qpdw.getTill());
+        }
+
         long ts_trace = System.currentTimeMillis();
         List<Occurrences> trueOccurrences = saseConnector.evaluate(qpdw.getPattern(), imr.getEvents(), false);
         trueOccurrences.forEach(x -> x.clearOccurrences(qpdw.isReturnAll()));

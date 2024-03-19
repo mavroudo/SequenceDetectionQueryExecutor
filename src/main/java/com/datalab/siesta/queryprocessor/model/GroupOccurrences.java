@@ -1,8 +1,9 @@
 package com.datalab.siesta.queryprocessor.model;
 
-import com.datalab.siesta.queryprocessor.model.Serializations.EventBothSerializer;
-import com.datalab.siesta.queryprocessor.model.Serializations.GroupOccurrencesSerialization;
+import com.amazonaws.thirdparty.jackson.annotation.JsonProperty;
+
 import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.datalab.siesta.queryprocessor.model.Serializations.CustomGroupOccurrencesSerializer;
 
 import java.util.List;
 
@@ -11,9 +12,10 @@ import java.util.List;
  * defines the group id that the occurrences refer to. The trace id it was set to -1 and due to the
  * GroupOccurrencesSerialization.class it is not a member of the response json
  */
-@JsonSerialize(using = GroupOccurrencesSerialization.class)
+@JsonSerialize(using = CustomGroupOccurrencesSerializer.class)
 public class GroupOccurrences extends Occurrences{
 
+    @JsonProperty("Group ID")
     private int groupId;
 
     public GroupOccurrences() {

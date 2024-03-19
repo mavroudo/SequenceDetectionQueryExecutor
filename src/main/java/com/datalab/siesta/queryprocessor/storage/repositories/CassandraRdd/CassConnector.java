@@ -191,18 +191,42 @@ public class CassConnector extends SparkDatabaseRepository {
         return s;
     }
 
-    /**
-     * Should be overridden by any storage that uses spark
-     *
-     * @param logname    The name of the Log
-     * @param traceIds   The traces we want to detect
-     * @param eventTypes The event types to be collected
-     * @return a JavaRDD<EventBoth> that will be used in querySingleTable and querySingleTableGroups
-     */
+//    /**
+//     * Should be overridden by any storage that uses spark
+//     *
+//     * @param logname    The name of the Log
+//     * @param traceIds   The traces we want to detect
+//     * @param eventTypes The event types to be collected
+//     * @return a JavaRDD<EventBoth> that will be used in querySingleTable and querySingleTableGroups
+//     */
+//    @Override
+//    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+//        String path = String.format("%s_single", logname);
+//        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
+//        Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
+//        return sparkSession.read()
+//                .format("org.apache.spark.sql.cassandra")
+//                .options(Map.of("table", path, "keyspace", "siesta"))
+//                .load().toJavaRDD()
+//                .filter((Function<Row, Boolean>) row -> bEventTypes.value().contains(row.getString(0)))
+//                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
+//                    String eventType = row.getString(0);
+//                    List<EventBoth> events = new ArrayList<>();
+//                    List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
+//                    Long trace_id = row.getAs("trace_id");
+//                    if (bTraceIds.value().contains(trace_id)) {
+//                        for (String occ : occurrences) {
+//                            String[] o = occ.split(",");
+//                            events.add(new EventBoth(eventType, trace_id, Timestamp.valueOf(o[1]), Integer.parseInt(o[0])));
+//                        }
+//                    }
+//                    return events.iterator();
+//                });
+//    }
+
     @Override
-    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+    protected JavaRDD<EventBoth> queryFromSingle(String logname, Set<String> eventTypes) {
         String path = String.format("%s_single", logname);
-        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
         Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
         return sparkSession.read()
                 .format("org.apache.spark.sql.cassandra")
@@ -214,11 +238,9 @@ public class CassConnector extends SparkDatabaseRepository {
                     List<EventBoth> events = new ArrayList<>();
                     List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
                     Long trace_id = row.getAs("trace_id");
-                    if (bTraceIds.value().contains(trace_id)) {
-                        for (String occ : occurrences) {
-                            String[] o = occ.split(",");
-                            events.add(new EventBoth(eventType, trace_id, Timestamp.valueOf(o[1]), Integer.parseInt(o[0])));
-                        }
+                    for (String occ : occurrences) {
+                        String[] o = occ.split(",");
+                        events.add(new EventBoth(eventType, trace_id, Timestamp.valueOf(o[1]), Integer.parseInt(o[0])));
                     }
                     return events.iterator();
                 });
