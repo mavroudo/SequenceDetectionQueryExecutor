@@ -44,7 +44,12 @@ public class SparkConfiguration {
     public SparkConf sparkConf() {
         return new SparkConf()
                 .setAppName(appName)
-                .setMaster(masterUri);
+                .setMaster(masterUri)
+                .set("spark.driver.memory","25g")
+//                .set("spark.driver.memoryOverhead","2g")
+//                .set("spark.memory.fraction","0.8")
+//                .set("spark.memory.storageFraction","0.5")
+                .set("spark.driver.maxResultSize","5g");
     }
 
     @Bean

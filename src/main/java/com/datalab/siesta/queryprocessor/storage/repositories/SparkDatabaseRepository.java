@@ -325,5 +325,9 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
         return response;
     }
 
+    //Below are for Declare//
+
+
+
 
 }
