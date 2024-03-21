@@ -1,5 +1,9 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
+import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -7,6 +11,7 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import org.apache.hadoop.fs.FileSystem;
@@ -27,6 +32,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.JavaConverters;
 import static org.apache.spark.sql.functions.col;
 
@@ -170,57 +176,15 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
-        String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
-        return sparkSession.read()
-                .parquet(path)
-                .toJavaRDD()
-                .map((Function<Row, Trace>) row -> {
-//                    int trace_id = row.getAs("trace_id");
-                    int trace_id = (int) (long) row.getAs("trace_id");
-                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
-//                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(0));
-                    List<EventBoth> results = new ArrayList<>();
-                    for (int i = 0; i < evs.size(); i++) {
-                        String event_name = evs.get(i).getString(0);
-                        Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
-                        results.add(new EventBoth(event_name, event_timestamp, i));
-                    }
-                    return new Trace(trace_id, results);
-                })
+        return querySequenceTableDeclare(logname)
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
 
-//    @Override
-//    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
-//        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
-//        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
-//        Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
-//        return sparkSession.read()
-//                .parquet(path)
-//                .toJavaRDD()
-//                .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains(x.getString(1)))
-//                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
-//                    String eventType = row.getString(1);
-//                    List<EventBoth> events = new ArrayList<>();
-//                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
-//                    for (Row occurrence : occurrences) {
-//                        long traceId = occurrence.getLong(0);
-//                        if (bTraceIds.value().contains(traceId)) {
-//                            List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
-//                            List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
-//                            for (int i = 0; i < times.size(); i++) {
-//                                events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
-//                            }
-//                        }
-//                    }
-//                    return events.iterator();
-//                });
-//    }
-
     @Override
-    protected JavaRDD<EventBoth> queryFromSingle(String logname, Set<String> eventTypes) {
+    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
         Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
         return sparkSession.read()
                 .parquet(path)
@@ -241,6 +205,7 @@ public class S3Connector extends SparkDatabaseRepository {
                     return events.iterator();
                 });
     }
+
 
     @Override
     protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
@@ -271,6 +236,7 @@ public class S3Connector extends SparkDatabaseRepository {
             whereStatements.set(i, String.format("( %s )", whereStatements.get(i)));
         }
         String whereStatement = String.join(" and ", whereStatements);
+
 
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> rows = sparkSession.read()
                 .parquet(path)
@@ -313,5 +279,138 @@ public class S3Connector extends SparkDatabaseRepository {
                 })
                 .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
         return rows;
+    }
+
+    //Below are for declare//
+
+    @Override
+    public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .map((Function<Row, Trace>) row -> {
+                    int trace_id = (int) (long) row.getAs("trace_id");
+                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    List<EventBoth> results = new ArrayList<>();
+                    for (int i = 0; i < evs.size(); i++) {
+                        String event_name = evs.get(i).getString(0);
+                        Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
+                        results.add(new EventBoth(event_name, event_timestamp, i));
+                    }
+                    return new Trace(trace_id, results);
+                });
+    }
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .map(row -> {
+                    UniqueTracesPerEventType ue = new UniqueTracesPerEventType();
+                    ue.setEventType(row.getString(1));
+                    List<OccurrencesPerTrace> ocs = new ArrayList<>();
+                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
+                    for (Row occurrence : occurrences) {
+                        long traceId = occurrence.getLong(0);
+                        int size = JavaConverters.seqAsJavaList(occurrence.getSeq(2)).size();
+                        ocs.add(new OccurrencesPerTrace(traceId, size));
+                    }
+                    ue.setOccurrences(ocs);
+                    return ue;
+                });
+    }
+
+    @Override
+    public JavaPairRDD<Tuple2<String, Long>, List<Integer>> querySingleTableAllDeclare(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .flatMap((FlatMapFunction<Row, Tuple3<String, Long, List<Integer>>>) row -> {
+                    String eventType = row.getString(1);
+                    List<Tuple3<String, Long, List<Integer>>> records = new ArrayList<>();
+                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
+                    for (Row occurrence : occurrences) {
+                        long tid = occurrence.getLong(0);
+                        List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
+                        records.add(new Tuple3<>(eventType, tid, positions));
+                    }
+                    return records.iterator();
+                })
+                .keyBy(r -> new Tuple2<>(r._1(), r._2()))
+                .mapValues(Tuple3::_3);
+    }
+
+    @Override
+    public JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
+
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .flatMap((FlatMapFunction<Row, EventPairToTrace>) row -> {
+                    String eventA = row.getAs("eventA");
+                    String eventB = row.getAs("eventB");
+                    List<EventPairToTrace> response = new ArrayList<>();
+                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    for (Row r2 : l) {
+                        long tid = r2.getLong(0);
+                        response.add(new EventPairToTrace(eventA,eventB,tid));
+                    }
+                    return response.iterator();
+                })
+                .distinct();
+    }
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
+
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .map(row -> {
+                    String eventA = row.getAs("eventA");
+                    String eventB = row.getAs("eventB");
+                    List<Long> uniqueTraces = new ArrayList<>();
+
+                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    for (Row r2 : l) {
+                        long tid = r2.getLong(0);
+                        uniqueTraces.add(tid);
+                    }
+                    return new UniqueTracesPerEventPair(eventA, eventB, uniqueTraces);
+                });
+    }
+
+    @Override
+    public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
+
+        return sparkSession.read()
+                .parquet(path)
+                .toJavaRDD()
+                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
+                    String eventA = row.getAs("eventA");
+                    String eventB = row.getAs("eventB");
+                    List<IndexPair> response = new ArrayList<>();
+
+                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    for (Row r2 : l) {
+                        long tid = r2.getLong(0);
+                        List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
+                        for (Row inner : innerList) {
+                            int posA = inner.getInt(0);
+                            int posB = inner.getInt(1);
+                            response.add(new IndexPair(tid, eventA, eventB, posA, posB));
+                        }
+                    }
+                    return response.iterator();
+                });
     }
 }

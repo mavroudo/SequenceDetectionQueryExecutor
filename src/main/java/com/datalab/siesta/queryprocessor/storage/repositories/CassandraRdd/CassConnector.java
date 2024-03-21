@@ -1,5 +1,9 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.CassandraRdd;
 
+import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
+import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -8,13 +12,9 @@ import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
-import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
 import com.datastax.spark.connector.cql.CassandraConnector;
 import com.datastax.spark.connector.japi.CassandraRow;
-import com.datastax.spark.connector.rdd.ReadConf;
-import com.datastax.spark.connector.types.TypeConverter;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -29,9 +29,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import scala.Tuple2;
+import scala.Tuple3;
 import scala.collection.JavaConverters;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -256,25 +256,7 @@ public class CassConnector extends SparkDatabaseRepository {
      */
     @Override
     protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
-        String path = String.format("%s_seq", logname);
-        return sparkSession.read()
-                .format("org.apache.spark.sql.cassandra")
-                .options(Map.of("table", path, "keyspace", "siesta"))
-                .load().toJavaRDD()
-                .map((Function<Row, Trace>) row -> {
-                    long trace_id = Long.parseLong(row.getAs("sequence_id"));
-                    List<String> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    List<EventBoth> results = new ArrayList<>();
-                    int i = 0;
-                    for (String ev : evs) {
-                        String[] s = ev.split(",");
-                        String event_name = s[1];
-                        Timestamp event_timestamp = Timestamp.valueOf(s[0]);
-                        results.add(new EventBoth(event_name, event_timestamp, i));
-                        i++;
-                    }
-                    return new Trace(trace_id, results);
-                })
+        return this.querySequenceTableDeclare(logname)
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
@@ -331,75 +313,154 @@ public class CassConnector extends SparkDatabaseRepository {
 
     }
 
-//    @Override
-//    protected JavaPairRDD<Tuple2<String, String>, Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs,
-//                                                                                        String logname, Metadata metadata,
-//                                                                                        Timestamp from, Timestamp till) {
-//        String path = String.format("%s_index", logname);
-//        Broadcast<Set<EventPair>> bPairs = javaSparkContext.broadcast(pairs);
-//        Broadcast<String> mode = javaSparkContext.broadcast(metadata.getMode());
-//        Broadcast<Timestamp> bFrom = javaSparkContext.broadcast(from);
-//        Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
-//
-//        CassandraConnector connector = CassandraConnector.apply(sparkSession.sparkContext().getConf());
-//
-//        JavaRDD<IndexRow> ir = javaFunctions(this.sparkSession.sparkContext())
-//                .cassandraTable("siesta",path,mapRowTo(IndexRow.class))
-//                .withConnector(connector)
-//                .filter((Function<IndexRow, Boolean>) row->{
-//                    if (bFrom.value() != null && bFrom.value().after(row.getEnd())) return false;
-//                    if (bTill.value() != null && bTill.value().before(row.getStart())) return false;
-//                    return true;
-//                });
-//
-//        System.out.println(ir.take(5));
-//
-//        return sparkSession.read()
-//                .format("org.apache.spark.sql.cassandra")
-//                .options(Map.of("table", path, "keyspace", "siesta"))
-//                .option("spark.cassandra.connection.connections_per_executor_max_local","2")
-//                .load().toJavaRDD()
-//                .filter((Function<Row, Boolean>) row -> {
-//                    Timestamp start = row.getAs("start");
-//                    Timestamp end = row.getAs("end");
-//                    if (bFrom.value() != null && bFrom.value().after(end)) return false;
-//                    if (bTill.value() != null && bTill.value().before(start)) return false;
-//                    return true;
-//                })
-//                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
-//                    String eventA = row.getAs("event_a");
-//                    String eventB = row.getAs("event_b");
-//                    List<String> ocs = JavaConverters.seqAsJavaList(row.getSeq(4));
-//                    List<IndexPair> indexPairs = new ArrayList<>();
-//                    for (String trace : ocs) {
-//                        String[] split = trace.split("\\|\\|");
-//                        long trace_id = Long.parseLong(split[0]);
-//                        String[] p_split = split[1].split(",");
-//                        for (String p : p_split) {
-//                            String[] f = p.split("\\|");
-//                            if(mode.value().equals("timestamps")) {
-//                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Timestamp.valueOf(f[0]),
-//                                        Timestamp.valueOf(f[1])));
-//                            }else{
-//                                indexPairs.add(new IndexPair(trace_id, eventA, eventB, Integer.parseInt(f[0]),
-//                                        Integer.parseInt(f[1])));
-//                            }
-//
-//                        }
-//                    }
-//                    return indexPairs.iterator();
-//                })
-//                .filter((Function<IndexPair, Boolean>) indexPairs -> indexPairs.validate(bPairs.getValue()))
-//                .filter((Function<IndexPair, Boolean>) p->{
-//                    if(mode.value().equals("timestamps")) {
-//                        if(bTill.value()!=null && p.getTimestampA().after(bTill.value())) return false;
-//                        if(bFrom.value()!=null && p.getTimestampB().before(bFrom.value())) return false;
-//                    }
-//                    //If from and till has been set we cannot check it here
-//                    return true;
-//                })
-//                .groupBy((Function<IndexPair, Tuple2<String, String>>) indexPair -> new Tuple2<>(indexPair.getEventA(), indexPair.getEventB()));
-//    }
+    @Override
+    public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
+        String path = String.format("%s_seq", logname);
+        return sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD()
+                .map((Function<Row, Trace>) row -> {
+                    long trace_id = Long.parseLong(row.getAs("sequence_id"));
+                    List<String> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
+                    List<EventBoth> results = new ArrayList<>();
+                    int i = 0;
+                    for (String ev : evs) {
+                        String[] s = ev.split(",");
+                        String event_name = s[1];
+                        Timestamp event_timestamp = Timestamp.valueOf(s[0]);
+                        results.add(new EventBoth(event_name, event_timestamp, i));
+                        i++;
+                    }
+                    return new Trace(trace_id, results);
+                });
+    }
 
+    @Override
+    public JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname) {
+        String path = String.format("%s_single", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+
+        return rows.map(row -> {
+                    String eventType = row.getString(0);
+                    Long trace_id = row.getAs("trace_id");
+                    List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
+                    return new Tuple3<>(eventType, trace_id, occurrences.size());
+                })
+                .groupBy(Tuple3::_1)
+                .map(x -> {
+                    List<OccurrencesPerTrace> occs = new ArrayList<>();
+                    x._2.forEach(y -> occs.add(new OccurrencesPerTrace(y._2(), y._3())));
+                    return new UniqueTracesPerEventType(x._1, occs);
+                });
+    }
+
+
+    @Override
+    public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
+        String path = String.format("%s_index", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+        return rows.map(row -> {
+            String evA = row.getString(0);
+            String evB = row.getString(1);
+            List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
+            List<Long> uniqueTraces = new ArrayList<>();
+            occurrences.forEach(x -> {
+                Long t = Long.valueOf(x.split("\\|\\|")[0]);
+                uniqueTraces.add(t);
+            });
+            return new UniqueTracesPerEventPair(evA, evB, uniqueTraces);
+        });
+    }
+
+    @Override
+    public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname) {
+        String path = String.format("%s_index", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+        JavaRDD<IndexPair> indexPairsRDD = rows.flatMap(row -> {
+            String evA = row.getString(0);
+            String evB = row.getString(1);
+            List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
+            List<IndexPair> indexPairs = new ArrayList<>();
+            //assume that we operate only in positions (check if this needs to be modified in the future)
+            occurrences.forEach(x -> {
+                Long t = Long.valueOf(x.split("\\|\\|")[0]);
+                String[] ocs = x.split("\\|\\|")[1].split(",");
+                for (int i = 0; i < ocs.length; i++) {
+                    String[] spl = ocs[i].split("\\|");
+                    indexPairs.add(new IndexPair(t, evA, evB, Integer.parseInt(spl[0]), Integer.parseInt(spl[1])));
+                }
+            });
+            return indexPairs.iterator();
+        });
+        return indexPairsRDD;
+    }
+
+    /**
+     * <String,Long>,List<Integer> = <Event type, Trace_id>, positions of event occurrences
+     * @param logname
+     * @return
+     */
+    @Override
+    public JavaPairRDD<Tuple2<String, Long>, List<Integer>> querySingleTableAllDeclare(String logname) {
+
+        String path = String.format("%s_single", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+
+        return rows.map(row -> {
+                    String eventType = row.getString(0);
+                    Long trace_id = row.getAs("trace_id");
+                    List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(2));
+                    List<Integer> positions = new ArrayList<>();
+                    for(String oc:occurrences){
+                        positions.add(Integer.valueOf(oc.split(",")[0]));
+                    }
+                    return new Tuple3<>(eventType, trace_id, positions);
+                })
+                .keyBy(x->new Tuple2<String,Long>(x._1(),x._2()))
+                .mapValues(x->x._3());
+
+    }
+
+    /**
+     * <Event type A, Event Type B, Trace_id>
+     *
+     * @param logname
+     * @return
+     */
+    @Override
+    public JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname) {
+        String path = String.format("%s_index", logname);
+        JavaRDD<Row> rows = sparkSession.read()
+                .format("org.apache.spark.sql.cassandra")
+                .options(Map.of("table", path, "keyspace", "siesta"))
+                .load().toJavaRDD();
+        JavaRDD<EventPairToTrace> indexPairsRDD = rows.flatMap(row -> {
+            String evA = row.getString(0);
+            String evB = row.getString(1);
+            List<String> occurrences = JavaConverters.seqAsJavaList(row.getSeq(4));
+            List<EventPairToTrace> eventPairToTraces = new ArrayList<>();
+            //assume that we operate only in positions (check if this needs to be modified in the future)
+            occurrences.forEach(x -> {
+                Long t = Long.valueOf(x.split("\\|\\|")[0]);
+                eventPairToTraces.add(new EventPairToTrace(evA,evB,t));
+            });
+            return eventPairToTraces.iterator();
+        });
+        return indexPairsRDD;
+
+    }
 
 }
