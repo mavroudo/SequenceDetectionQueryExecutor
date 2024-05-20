@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 /**
  * This class contains the number of occurrences (for a specific event type) within a trace
  * it is combined with the {@link UniqueTracesPerEventType}
@@ -13,7 +15,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OccurrencesPerTrace {
+public class OccurrencesPerTrace implements Serializable {
     private long traceId;
     private int occurrences;
 }
