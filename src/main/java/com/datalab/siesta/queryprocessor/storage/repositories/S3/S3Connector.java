@@ -385,7 +385,13 @@ public class S3Connector extends SparkDatabaseRepository {
                         uniqueTraces.add(tid);
                     }
                     return new UniqueTracesPerEventPair(eventA, eventB, uniqueTraces);
-                });
+                })
+                .keyBy(x->new Tuple2<>(x.getEventA(),x.getEventB()))
+                .reduceByKey((x,y)->{
+                    x.getUniqueTraces().addAll(y.getUniqueTraces());
+                    return x;
+                        }
+                ).map(x->x._2);
     }
 
     @Override

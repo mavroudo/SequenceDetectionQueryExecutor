@@ -77,6 +77,9 @@ public class QueryPlanExistences {
                 case "co-existence":
                     coExistence(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
                     break;
+                case "not-co-existence":
+                    notCoExistence(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
+                    break;
                 case "choice":
                     choice(uEventType, bSupport, bTotalTraces);
                     break;
@@ -121,7 +124,7 @@ public class QueryPlanExistences {
      */
     public List<String> evaluateModes(List<String> modes) {
         List<String> s = new ArrayList<>();
-        List<String> l = Arrays.asList("existence", "absence", "exactly", "co-existence", "choice",
+        List<String> l = Arrays.asList("existence", "absence", "exactly", "co-existence","not-co-existence", "choice",
                 "exclusive-choice", "responded-existence");
         Set<String> correct_ms = new HashSet<>(l);
         for (String m : modes) {
@@ -171,6 +174,7 @@ public class QueryPlanExistences {
      * @return a rdd of the type (eventA, eventB, traceId), i.e., which traces contain a specific event pair
      */
     public JavaRDD<EventPairToNumberOfTrace> joinUnionTraces(JavaRDD<UniqueTracesPerEventPair> uPairs) {
+
         return uPairs
                 .keyBy(UniqueTracesPerEventPair::getKey)
                 .leftOuterJoin(uPairs.keyBy(UniqueTracesPerEventPair::getKeyReverse))
@@ -254,7 +258,7 @@ public class QueryPlanExistences {
             long totalSum = t.values().stream().mapToLong(x -> x).sum();
             if (!t.containsKey(0)) t.put(0, totalTraces - totalSum);
             for (Map.Entry<Integer, Long> x : t.entrySet()) {
-                if (x.getValue() >= (support * totalTraces)) {
+                if (x.getValue() >= (support * totalTraces) && x.getKey()>0) {
                     response.add(new EventN(et, x.getKey(), x.getValue().doubleValue() / totalTraces));
                 }
             }
@@ -275,32 +279,6 @@ public class QueryPlanExistences {
     private void coExistence(JavaRDD<EventPairToNumberOfTrace> joinedUnion,
                              Broadcast<Map<String, Long>> bUniqueSingle, Broadcast<Double> bSupport,
                              Broadcast<Long> bTotalTraces, Set<EventPair> notFound) {
-        //valid event types can be used as first in a pair (since they have support greater than the user-defined)
-        List<EventPairSupport> notCoExistence = joinedUnion
-                .filter(x-> !x.getEventA().equals(x.getEventB())) //remove pairs with the same event type
-                .filter(x -> x.getEventA().compareTo(x.getEventB()) <= 0)//filter same pair that appears in both ways
-                .filter(x -> x.getNumberOfTraces() <= ((1 - bSupport.getValue()) * bTotalTraces.getValue()))//filter based on support
-                .map(x -> new EventPairSupport(x.getEventA(), x.getEventB(),
-                        (double) x.getNumberOfTraces() / bTotalTraces.getValue()))
-                .collect();
-
-        //Add all the pairs in the notFound that their reverse is also in this set. Meaning that these two
-        //events never co-exist in the entire database
-        Set<EventPairSupport> notCoExist = new HashSet<>();
-        for(EventPair ep:notFound){
-            if(notFound.contains(new EventPair(new Event(ep.getEventB().getName()),new Event(ep.getEventA().getName())))){
-                if(ep.getEventA().getName().compareTo(ep.getEventB().getName())>0) {
-                    notCoExist.add(new EventPairSupport(ep.getEventA().getName(),ep.getEventB().getName(),1));
-                }else{
-                    notCoExist.add(new EventPairSupport(ep.getEventB().getName(),ep.getEventA().getName(),1));
-                }
-            }
-        }
-        // add all findings in one list
-        List<EventPairSupport> response = new ArrayList<>();
-        response.addAll(notCoExistence);
-        response.addAll(notCoExist);
-        queryResponseExistence.setNotCoExistence(response);
 
         // |A| = |IndexTable(a,b) U IndexTable(b,a)|, i.e., unique traces where a and b co-exist
         // total_traces = |A| + (non-of them exist) + (only 'a' exist) + (only b exist) (1)
@@ -323,6 +301,37 @@ public class QueryPlanExistences {
                         x.getSupport() / bTotalTraces.value()))
                 .collect(Collectors.toList());
         queryResponseExistence.setCoExistence(coExistence);
+    }
+
+    private void notCoExistence(JavaRDD<EventPairToNumberOfTrace> joinedUnion,
+                             Broadcast<Map<String, Long>> bUniqueSingle, Broadcast<Double> bSupport,
+                             Broadcast<Long> bTotalTraces, Set<EventPair> notFound) {
+        //valid event types can be used as first in a pair (since they have support greater than the user-defined)
+        List<EventPairSupport> notCoExistence = joinedUnion
+                .filter(x-> !x.getEventA().equals(x.getEventB())) //remove pairs with the same event type
+                .filter(x -> x.getEventA().compareTo(x.getEventB()) <= 0)//filter same pair that appears in both ways
+                .filter(x -> x.getNumberOfTraces() <= ((1 - bSupport.getValue()) * bTotalTraces.getValue()))//filter based on support
+                .map(x -> new EventPairSupport(x.getEventA(), x.getEventB(),
+                        1-(double) x.getNumberOfTraces() / bTotalTraces.getValue()))
+                .collect();
+
+        //Add all the pairs in the notFound that their reverse is also in this set. Meaning that these two
+        //events never co-exist in the entire database
+        Set<EventPairSupport> notCoExist = new HashSet<>();
+        for(EventPair ep:notFound){
+            if(notFound.contains(new EventPair(new Event(ep.getEventB().getName()),new Event(ep.getEventA().getName())))){
+                if(ep.getEventA().getName().compareTo(ep.getEventB().getName())>0) {
+                    notCoExist.add(new EventPairSupport(ep.getEventA().getName(),ep.getEventB().getName(),1));
+                }else{
+                    notCoExist.add(new EventPairSupport(ep.getEventB().getName(),ep.getEventA().getName(),1));
+                }
+            }
+        }
+        // add all findings in one list
+        List<EventPairSupport> response = new ArrayList<>();
+        response.addAll(notCoExistence);
+        response.addAll(notCoExist);
+        queryResponseExistence.setNotCoExistence(response);
     }
 
     /**
