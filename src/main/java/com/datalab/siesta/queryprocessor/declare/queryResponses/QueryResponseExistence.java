@@ -3,7 +3,7 @@ package com.datalab.siesta.queryprocessor.declare.queryResponses;
 import com.datalab.siesta.queryprocessor.declare.model.EventN;
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -11,7 +11,6 @@ public class QueryResponseExistence implements QueryResponse {
 
     @JsonProperty("existence")
     private List<EventN> existence;
-
     private List<EventN> absence;
     private List<EventN> exactly;
     @JsonProperty("co-existence")

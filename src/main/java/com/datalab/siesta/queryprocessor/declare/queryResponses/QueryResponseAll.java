@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class QueryResponseAll {
 

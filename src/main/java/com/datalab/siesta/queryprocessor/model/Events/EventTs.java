@@ -2,8 +2,8 @@ package com.datalab.siesta.queryprocessor.model.Events;
 
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
 import java.sql.Timestamp;

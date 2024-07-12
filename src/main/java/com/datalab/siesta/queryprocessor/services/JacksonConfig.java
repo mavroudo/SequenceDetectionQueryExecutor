@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.services;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,7 +14,6 @@ public class JacksonConfig {
 
     @Bean
     public ObjectMapper objectMapper(){
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper;
+        return new ObjectMapper();
     }
 }

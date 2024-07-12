@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.model;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import scala.Tuple2;
 
 import java.util.ArrayList;

@@ -3,7 +3,7 @@ package com.datalab.siesta.queryprocessor.SaseConnection;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import edu.umass.cs.sase.stream.Event;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.joda.time.Instant;
 
 import java.sql.Timestamp;

@@ -3,38 +3,39 @@ package com.datalab.siesta.queryprocessor.model.Serializations;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.Occurrence;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.map.JsonSerializer;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
 
 import java.io.IOException;
 
 public class CustomGroupOccurrencesSerializer extends JsonSerializer<GroupOccurrences> {
 
-
     @Override
-    public void serialize(GroupOccurrences value, org.codehaus.jackson.JsonGenerator gen, org.codehaus.jackson.map.SerializerProvider provider) throws IOException, JsonProcessingException {
-        gen.writeStartObject();
-        gen.writeNumberField("Group ID", value.getGroupId());
+    public void serialize(GroupOccurrences groupOccurrences, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+        jsonGenerator.writeStartObject();
+        jsonGenerator.writeNumberField("Group ID", groupOccurrences.getGroupId());
 
-        gen.writeFieldName("occurrences");
-        gen.writeStartArray();
-        for (Occurrence occurrence : value.getOccurrences()) {
-            gen.writeStartObject(); // Start of Occurrence object
+        jsonGenerator.writeFieldName("occurrences");
+        jsonGenerator.writeStartArray();
+        for (Occurrence occurrence : groupOccurrences.getOccurrences()) {
+            jsonGenerator.writeStartObject(); // Start of Occurrence object
 
             // Serialize each EventBoth in the Occurrence
-            gen.writeArrayFieldStart("occurrence");
+            jsonGenerator.writeArrayFieldStart("occurrence");
             for (EventBoth e : occurrence.getOccurrence()) {
-                gen.writeStartObject(); // Start of EventBoth object
-                gen.writeStringField("name", e.getName());
-                gen.writeStringField("timestamp", e.getTimestamp().toString());
-                gen.writeEndObject(); // End of EventBoth object
+                jsonGenerator.writeStartObject(); // Start of EventBoth object
+                jsonGenerator.writeStringField("name", e.getName());
+                jsonGenerator.writeStringField("timestamp", e.getTimestamp().toString());
+                jsonGenerator.writeEndObject(); // End of EventBoth object
             }
-            gen.writeEndArray(); // End of occurrence array
+            jsonGenerator.writeEndArray(); // End of occurrence array
 
-            gen.writeEndObject(); // End of Occurrence object
+            jsonGenerator.writeEndObject(); // End of Occurrence object
         }
-        gen.writeEndArray();
-        gen.writeEndObject();
+        jsonGenerator.writeEndArray();
+        jsonGenerator.writeEndObject();
     }
 }
 

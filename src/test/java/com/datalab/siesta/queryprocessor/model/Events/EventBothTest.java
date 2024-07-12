@@ -1,10 +1,9 @@
 package com.datalab.siesta.queryprocessor.model.Events;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.Assert;
-
 
 import java.io.IOException;
 import java.sql.Timestamp;
