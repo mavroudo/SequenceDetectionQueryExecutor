@@ -66,8 +66,8 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public Metadata getMetadata(String logname) {
-        Dataset<Row> df = sparkSession.read().json(String.format("%s%s%s", bucket, logname, "/meta.parquet/"));
-        return new Metadata(df.collectAsList().get(0));
+        Dataset<Row> df = sparkSession.read().parquet(String.format("%s%s%s", bucket, logname, "/meta.parquet/"));
+        return new Metadata(df.toJavaRDD().collect().get(0));
     }
 
     @Override

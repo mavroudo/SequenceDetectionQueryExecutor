@@ -3,7 +3,6 @@ package com.datalab.siesta.queryprocessor.model.DBModel;
 
 import org.apache.spark.sql.Row;
 
-
 import java.util.Map;
 
 /**
@@ -42,6 +41,7 @@ public class Metadata {
     private Long lookback;
     /**
      * Takes 2 values positions/timestamps. Shows what information is stored in the IndexTable
+     *
      * @see com.datalab.siesta.queryprocessor.model.DBModel.IndexPair
      */
     private String mode;
@@ -72,27 +72,31 @@ public class Metadata {
 
     /**
      * Parse a json row. Utilized in S3, as metadata stored in json format
+     *
      * @param json metadata in json format
      */
     public Metadata(Row json) {
-        this.compression = (String) json.getAs("compression");
-        this.events = (Long) json.getAs("events");
-        this.filename = (String) json.getAs("filename");
-        this.has_previous_stored = (Boolean) json.getAs("has_previous_stored");
-        this.last_interval = (String) json.getAs("last_interval");
-        this.logname = (String) json.getAs("log_name");
-        this.lookback = (Long) json.getAs("lookback");
-        this.mode = (String) json.getAs("mode");
-        this.pairs = (Long) json.getAs("pairs");
-        this.split_every_days = (Long) json.getAs("split_every_days");
-        this.traces = (Long) json.getAs("traces");
+        this.compression = json.getAs("compression");
+        this.events = json.getAs("events");
+        this.filename = json.getAs("filename");
+        this.has_previous_stored = json.getAs("has_previous_stored");
+        this.last_interval = json.getAs("last_interval");
+        this.logname = json.getAs("log_name");
+        Integer l = json.getAs("lookback");
+        this.lookback = l.longValue();
+        this.mode = json.getAs("mode");
+        this.pairs = json.getAs("pairs");
+        Integer s = json.getAs("split_every_days");
+        this.split_every_days = s.longValue();
+        this.traces = json.getAs("traces");
     }
 
     /**
      * Parse data from a map. Utilized in Cassandra, as metadata stored in a key:value format
+     *
      * @param attributes metadata in map format
      */
-    public Metadata(Map<String,String> attributes){
+    public Metadata(Map<String, String> attributes) {
         this.compression = attributes.get("compression");
         this.events = Long.valueOf(attributes.get("events"));
         this.filename = attributes.get("filename");
