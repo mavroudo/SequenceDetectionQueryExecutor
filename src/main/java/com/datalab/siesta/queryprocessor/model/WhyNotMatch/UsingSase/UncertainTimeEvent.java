@@ -8,7 +8,7 @@ import edu.umass.cs.sase.stream.Event;
  */
 public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent> {
 
-    private long trace_id;
+    private String trace_id;
     private int position;
     private String event_type;
     private int timestamp;
@@ -18,7 +18,7 @@ public class UncertainTimeEvent implements Event, Comparable<UncertainTimeEvent>
     public UncertainTimeEvent() {
     }
 
-    public UncertainTimeEvent(long trace_id, int position, String event_type, int timestamp, boolean isTimeStampSet, int change) {
+    public UncertainTimeEvent(String trace_id, int position, String event_type, int timestamp, boolean isTimeStampSet, int change) {
         this.trace_id = trace_id;
         this.position = position;
         this.event_type = event_type;

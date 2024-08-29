@@ -21,10 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SpringBootTest
@@ -72,7 +69,7 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
         Assertions.assertTrue(detectedInTraces.contains(1L));
         Assertions.assertTrue(detectedInTraces.contains(2L));
         Assertions.assertTrue(detectedInTraces.contains(3L));
@@ -95,11 +92,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(4, ocs.stream().mapToInt(x -> x.getOccurrences().size()).sum());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -116,11 +113,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -138,11 +135,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(4, ocs.stream().mapToInt(x -> x.getOccurrences().size()).sum());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -168,27 +165,27 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
 
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
 
-        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 1).collect(Collectors.toList()).get(0);
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == "1").collect(Collectors.toList()).get(0);
         List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 14:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 15:26:42"), eventsMatch.get(1).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 17:26:42"), eventsMatch.get(2).getTimestamp());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "2").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 14:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 15:26:42"), eventsMatch.get(1).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 19:26:42"), eventsMatch.get(2).getTimestamp());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 12:56:42"), eventsMatch.get(0).getTimestamp());
@@ -217,27 +214,27 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
 
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
 
-        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 1).collect(Collectors.toList()).get(0);
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == "1").collect(Collectors.toList()).get(0);
         List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 14:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 15:26:42"), eventsMatch.get(1).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 17:26:42"), eventsMatch.get(2).getTimestamp());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "2").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 14:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 15:26:42"), eventsMatch.get(1).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 19:26:42"), eventsMatch.get(2).getTimestamp());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 12:56:42"), eventsMatch.get(0).getTimestamp());
@@ -269,14 +266,14 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
 
-        Assertions.assertFalse(detectedInTraces.contains(1L));
-        Assertions.assertFalse(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        Assertions.assertFalse(detectedInTraces.contains("1"));
+        Assertions.assertFalse(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("#"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
 
-        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 07:56:42"), eventsMatch.get(0).getTimestamp());
         Assertions.assertEquals(Timestamp.valueOf("2020-08-15 19:26:42"), eventsMatch.get(1).getTimestamp());
@@ -305,27 +302,27 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
 
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
 
-        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 1).collect(Collectors.toList()).get(0);
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == "1").collect(Collectors.toList()).get(0);
         List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(1, eventsMatch.get(0).getPosition());
         Assertions.assertEquals(2, eventsMatch.get(1).getPosition());
         Assertions.assertEquals(3, eventsMatch.get(2).getPosition());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "2").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
         Assertions.assertEquals(1, eventsMatch.get(1).getPosition());
         Assertions.assertEquals(4, eventsMatch.get(2).getPosition());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(2, eventsMatch.get(0).getPosition());
@@ -355,27 +352,27 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
 
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
 
-        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 1).collect(Collectors.toList()).get(0);
+        Occurrences trace1 = ocs.stream().filter(x -> Objects.equals(x.getTraceID(), "1")).collect(Collectors.toList()).get(0);
         List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(1, eventsMatch.get(0).getPosition());
         Assertions.assertEquals(2, eventsMatch.get(1).getPosition());
         Assertions.assertEquals(3, eventsMatch.get(2).getPosition());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "2").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
         Assertions.assertEquals(1, eventsMatch.get(1).getPosition());
         Assertions.assertEquals(4, eventsMatch.get(2).getPosition());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(2, eventsMatch.get(0).getPosition());
@@ -406,20 +403,20 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(2, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
 
-        Assertions.assertFalse(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        Assertions.assertFalse(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
 
-        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == 3).collect(Collectors.toList()).get(0);
+        Occurrences trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         List<EventBoth> eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
         Assertions.assertEquals(5, eventsMatch.get(1).getPosition());
         Assertions.assertEquals(6, eventsMatch.get(2).getPosition());
 
-        trace1 = ocs.stream().filter(x -> x.getTraceID() == 2).collect(Collectors.toList()).get(0);
+        trace1 = ocs.stream().filter(x -> x.getTraceID() == "3").collect(Collectors.toList()).get(0);
         eventsMatch.clear();
         eventsMatch = trace1.getOccurrences().get(0).getOccurrence();
         Assertions.assertEquals(0, eventsMatch.get(0).getPosition());
@@ -443,11 +440,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertFalse(detectedInTraces.contains(2L));
-        Assertions.assertFalse(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertFalse(detectedInTraces.contains("2"));
+        Assertions.assertFalse(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -465,11 +462,12 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -487,11 +485,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertFalse(detectedInTraces.contains(2L));
-        Assertions.assertFalse(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertFalse(detectedInTraces.contains("2"));
+        Assertions.assertFalse(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -510,11 +508,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertFalse(detectedInTraces.contains(2L));
-        Assertions.assertFalse(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertFalse(detectedInTraces.contains("2"));
+        Assertions.assertFalse(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -532,11 +530,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -554,11 +552,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(1, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertFalse(detectedInTraces.contains(2L));
-        Assertions.assertFalse(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertFalse(detectedInTraces.contains("2"));
+        Assertions.assertFalse(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
     @Test
@@ -575,11 +573,11 @@ public class PatternDetectionQueryTest {
         QueryResponsePatternDetection queryResponse = (QueryResponsePatternDetection) plan.execute(qpdw);
         List<Occurrences> ocs = queryResponse.getOccurrences();
         Assertions.assertEquals(3, ocs.size());
-        List<Long> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(detectedInTraces.contains(1L));
-        Assertions.assertTrue(detectedInTraces.contains(2L));
-        Assertions.assertTrue(detectedInTraces.contains(3L));
-        Assertions.assertFalse(detectedInTraces.contains(4L));
+        List<String> detectedInTraces = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(detectedInTraces.contains("1"));
+        Assertions.assertTrue(detectedInTraces.contains("2"));
+        Assertions.assertTrue(detectedInTraces.contains("3"));
+        Assertions.assertFalse(detectedInTraces.contains("4"));
     }
 
 }

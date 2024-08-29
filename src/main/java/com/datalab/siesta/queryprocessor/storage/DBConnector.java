@@ -105,7 +105,7 @@ public class DBConnector {
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      * timestamps)
      */
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes, Timestamp from, Timestamp till) {
+    public Map<String, List<EventBoth>> querySeqTable(String logname, List<String> traceIds, Set<String> eventTypes, Timestamp from, Timestamp till) {
         return db.querySeqTable(logname, traceIds, eventTypes, from, till);
     }
 
@@ -116,7 +116,7 @@ public class DBConnector {
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      *      * timestamps)
      */
-    public Map<Long, List<EventBoth>> querySeqTable(String logname, List<Long> traceIds) {
+    public Map<String, List<EventBoth>> querySeqTable(String logname, List<String> traceIds) {
         return db.querySeqTable(logname, traceIds);
     }
 
@@ -128,7 +128,7 @@ public class DBConnector {
      * @param eventTypes the events that will we retrieved
      * @return a list of all the retrieved events (wth their timestamps)
      */
-    public List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+    public List<EventBoth> querySingleTable(String logname, Set<String> traceIds, Set<String> eventTypes) {
         return db.querySingleTable(logname, traceIds, eventTypes);
     }
 
@@ -138,9 +138,9 @@ public class DBConnector {
      * @param eventTypes the eventTypes that we want to retrieve
      * @return a Map of the ids of the traces and the events that belong to this
      */
-    public Map<Long,List<EventBoth>> getEventsFromSingleTableGroupedByTraceID(String logname, Set<String> eventTypes){
+    public Map<String,List<EventBoth>> getEventsFromSingleTableGroupedByTraceID(String logname, Set<String> eventTypes){
         Map<String,List<EventBoth>> retrieved = db.querySingleTable(logname,eventTypes);
-        Map<Long,List<EventBoth>> answer = new HashMap<>();
+        Map<String,List<EventBoth>> answer = new HashMap<>();
         retrieved.forEach((name,eventList)->{
             for(EventBoth e: eventList){
                 if(answer.containsKey(e.getTraceID())){
@@ -169,7 +169,7 @@ public class DBConnector {
      * @return a map where the key is the group id and the value is a list of the retrieved events (with their t
      * imestamps)
      */
-    public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes) {
+    public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<String>> groups, Set<String> eventTypes) {
         return db.querySingleTableGroups(logname, groups, eventTypes);
     }
 }

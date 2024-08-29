@@ -17,7 +17,7 @@ public class Event implements Serializable, Comparable, Cloneable {
 
     protected String name;
 
-    protected long traceID;
+    protected String traceID;
 
     public Event() {
         this.name="";
@@ -27,7 +27,7 @@ public class Event implements Serializable, Comparable, Cloneable {
         this.name = name;
     }
 
-    public Event(String name, long traceID) {
+    public Event(String name, String traceID) {
         this.name = name;
         this.traceID = traceID;
     }
@@ -60,11 +60,11 @@ public class Event implements Serializable, Comparable, Cloneable {
         return Objects.hash(name);
     }
 
-    public long getTraceID() {
+    public String getTraceID() {
         return traceID;
     }
 
-    public void setTraceID(long traceID) {
+    public void setTraceID(String traceID) {
         this.traceID = traceID;
     }
 
@@ -84,7 +84,7 @@ public class Event implements Serializable, Comparable, Cloneable {
         SaseEvent se= new SaseEvent();
         se.setEventType(this.name);
         se.setId(position);
-        se.setTrace_id((int)this.traceID);
+        se.setTrace_id(this.traceID);
         se.setTimestamp(position);
         se.setTimestampSet(false);
         return se;

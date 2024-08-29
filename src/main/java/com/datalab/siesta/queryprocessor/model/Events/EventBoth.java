@@ -29,7 +29,7 @@ public class EventBoth extends EventTs implements Comparable{
         this.position=pos;
     }
 
-    public EventBoth(String name, long traceID, Timestamp timestamp, int position) {
+    public EventBoth(String name, String traceID, Timestamp timestamp, int position) {
         super(name, traceID, timestamp);
         this.position = position;
     }

@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.DBModel;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
+import lombok.Getter;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -12,16 +13,17 @@ import java.util.stream.Collectors;
 /**
  * A sequence of events. It is represented by a trace id and a list of the events it contains in the correct order.
  */
+
 public class Trace implements Serializable {
 
-    private long traceID;
+    private String traceID;
 
     private List<EventBoth> events;
 
     public Trace() {
     }
 
-    public Trace(long traceID, List<EventBoth> events) {
+    public Trace(String traceID, List<EventBoth> events) {
         this.traceID = traceID;
         this.events = events;
     }
@@ -32,11 +34,11 @@ public class Trace implements Serializable {
                 .collect(Collectors.toList());
     }
 
-    public long getTraceID() {
+    public String getTraceID() {
         return traceID;
     }
 
-    public void setTraceID(long traceID) {
+    public void setTraceID(String traceID) {
         this.traceID = traceID;
     }
 

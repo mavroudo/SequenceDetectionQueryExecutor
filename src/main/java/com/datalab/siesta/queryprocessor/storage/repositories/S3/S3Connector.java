@@ -175,16 +175,16 @@ public class S3Connector extends SparkDatabaseRepository {
 
 
     @Override
-    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<Long>> bTraceIds) {
+    protected JavaRDD<Trace> querySequenceTablePrivate(String logname, Broadcast<Set<String>> bTraceIds) {
         return querySequenceTableDeclare(logname)
                 .filter((Function<Trace, Boolean>) trace -> bTraceIds.getValue().contains(trace.getTraceID()));
     }
 
 
     @Override
-    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<Long> traceIds, Set<String> eventTypes) {
+    protected JavaRDD<EventBoth> getFromSingle(String logname, Set<String> traceIds, Set<String> eventTypes) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
-        Broadcast<Set<Long>> bTraceIds = javaSparkContext.broadcast(traceIds);
+        Broadcast<Set<String>> bTraceIds = javaSparkContext.broadcast(traceIds);
         Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
         return sparkSession.read()
                 .parquet(path)
@@ -195,7 +195,7 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<EventBoth> events = new ArrayList<>();
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
-                        long traceId = occurrence.getLong(0);
+                        String traceId = occurrence.getString(0);
                         List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
                         List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
                         for (int i = 0; i < times.size(); i++) {
@@ -255,7 +255,7 @@ public class S3Connector extends SparkDatabaseRepository {
                     if (checkContained) {
                         List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                         for (Row r2 : l) {
-                            long tid = r2.getLong(0);
+                            String tid = r2.getString(0);
                             List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
                             if (mode.getValue().equals("positions")) {
                                 for (Row inner : innerList) {
@@ -290,7 +290,7 @@ public class S3Connector extends SparkDatabaseRepository {
                 .parquet(path)
                 .toJavaRDD()
                 .map((Function<Row, Trace>) row -> {
-                    int trace_id = (int) (long) row.getAs("trace_id");
+                    String trace_id = row.getAs("trace_id");
                     List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
                     List<EventBoth> results = new ArrayList<>();
                     for (int i = 0; i < evs.size(); i++) {
@@ -408,7 +408,7 @@ public class S3Connector extends SparkDatabaseRepository {
 
                     List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                     for (Row r2 : l) {
-                        long tid = r2.getLong(0);
+                        String tid = r2.getString(0);
                         List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
                         for (Row inner : innerList) {
                             int posA = inner.getInt(0);

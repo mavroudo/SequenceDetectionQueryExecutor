@@ -77,9 +77,9 @@ public class QueryPlanWhyNotMatch extends QueryPlanPatternDetection {
 
 
         //Keep the traces that do not contain any occurrences
-        Set<Long> foundOccurrences = trueOccurrences.stream().parallel()
+        Set<String> foundOccurrences = trueOccurrences.stream().parallel()
                 .map(Occurrences::getTraceID).collect(Collectors.toSet());
-        Map<Long, List<Event>> restTraces = imr.getEvents().entrySet().stream()
+        Map<String, List<Event>> restTraces = imr.getEvents().entrySet().stream()
                 .filter(entry -> !foundOccurrences.contains(entry.getKey()))
                 .map(x -> new Tuple2<>(x.getKey(), x.getValue()))
                 .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));

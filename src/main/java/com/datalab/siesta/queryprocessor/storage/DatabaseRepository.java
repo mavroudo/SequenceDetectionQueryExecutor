@@ -64,7 +64,7 @@ public interface DatabaseRepository {
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      * timestamps)
      */
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes,Timestamp from, Timestamp till);
+    Map<String,List<EventBoth>> querySeqTable(String logname, List<String> traceIds, Set<String> eventTypes,Timestamp from, Timestamp till);
 
     /**
      * Retrieves the appropriate events from the SequenceTable, which contains the original traces
@@ -73,7 +73,7 @@ public interface DatabaseRepository {
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      *      * timestamps)
      */
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds);
+    Map<String,List<EventBoth>> querySeqTable(String logname, List<String> traceIds);
 
     /**
      * Detects the traces that contain all the given event pairs
@@ -115,7 +115,7 @@ public interface DatabaseRepository {
      * @param eventTypes the events that will we retrieved
      * @return a list of all the retrieved events (with their timestamps)
      */
-    List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes);
+    List<EventBoth> querySingleTable(String logname, Set<String> traceIds, Set<String> eventTypes);
 
     /**
      * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
@@ -134,7 +134,7 @@ public interface DatabaseRepository {
      * @return a map where the key is the group id and the value is a list of the retrieved events (with their t
      * imestamps)
      */
-    Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes);
+    Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<String>> groups, Set<String> eventTypes);
 
     /**
      * For a given event type inside a log database, returns all the possible next events. That is, since Count

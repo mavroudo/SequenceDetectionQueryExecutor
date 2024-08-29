@@ -28,7 +28,7 @@ public class EventTs extends Event implements Serializable, Cloneable {
         this.timestamp=ts;
     }
 
-    public EventTs(String name, long traceID, Timestamp timestamp) {
+    public EventTs(String name, String traceID, Timestamp timestamp) {
         super(name, traceID);
         this.timestamp = timestamp;
     }

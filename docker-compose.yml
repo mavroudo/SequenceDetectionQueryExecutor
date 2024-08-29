@@ -3,6 +3,7 @@ networks:
   cluster_net:
     external: true
     name: siesta-net
+
 services:
   funnel:
     build: .

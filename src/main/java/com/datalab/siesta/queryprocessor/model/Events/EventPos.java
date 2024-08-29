@@ -19,7 +19,7 @@ public class EventPos extends Event implements Serializable, Comparable, Cloneab
 
     public EventPos() {
         this.position=-1;
-        this.traceID=-1;
+        this.traceID="";
     }
 
     public EventPos(String name, int pos) {
@@ -27,7 +27,7 @@ public class EventPos extends Event implements Serializable, Comparable, Cloneab
         this.position=pos;
     }
 
-    public EventPos(String name, long traceID, int position) {
+    public EventPos(String name, String traceID, int position) {
         super(name, traceID);
         this.position = position;
     }

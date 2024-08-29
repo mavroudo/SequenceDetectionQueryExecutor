@@ -36,16 +36,16 @@ public class LoadInfo {
         Map<String, Metadata> m = new HashMap<>();
         for (String l : dbConnector.findAllLongNames()) {
 //            TODO: determine a better way to find the starting ts
-            List<Long> list = new ArrayList<>();
-            list.add(0L);
-            list.add(1L);
+            List<String> list = new ArrayList<>();
+            list.add("0");
+            list.add("1");
 
-            Map<Long, List<EventBoth>> x = dbConnector.querySeqTable(l, list);
+            Map<String, List<EventBoth>> x = dbConnector.querySeqTable(l, list);
             Metadata metadata = dbConnector.getMetadata(l);
-            if (x.containsKey(0L)) {
-                metadata.setStart_ts(x.get(0L).get(0).getTimestamp().toString());
-            } else if (x.containsKey(1L)){
-                metadata.setStart_ts(x.get(1L).get(0).getTimestamp().toString());
+            if (x.containsKey("0")) {
+                metadata.setStart_ts(x.get("0").get(0).getTimestamp().toString());
+            } else if (x.containsKey("1")){
+                metadata.setStart_ts(x.get("1").get(0).getTimestamp().toString());
             }
             else {
                 metadata.setStart_ts("");

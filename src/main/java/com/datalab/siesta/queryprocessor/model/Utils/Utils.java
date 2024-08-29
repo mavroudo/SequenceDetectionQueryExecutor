@@ -50,7 +50,7 @@ public class Utils implements Serializable {
         Event fe = events.get(0);
         if(fe instanceof EventTs){ // handling events ts
             long minTs = ((EventTs) fe).getTimestamp().getTime();
-            SaseEvent se = new SaseEvent((int)fe.getTraceID(),0,fe.getName(),0,true);
+            SaseEvent se = new SaseEvent(fe.getTraceID(),0,fe.getName(),0,true);
             se.setMinTs(minTs);
             ses.add(se);
             for(int i =1 ;i<events.size();i++){

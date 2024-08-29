@@ -31,10 +31,10 @@ class WhyNotMatchSASETest {
     @Test
     void testGetUncertainStream() {
         List<Event> events =getEvents();
-        Stream s = whyNotMatchSASE.getUnCertainStream(1, events, 3,1);
+        Stream s = whyNotMatchSASE.getUnCertainStream("1", events, 3,1);
         Assertions.assertEquals(7 * events.size(), s.getSize());
 
-        s = whyNotMatchSASE.getUnCertainStream(2, events, 5,2);
+        s = whyNotMatchSASE.getUnCertainStream("2", events, 5,2);
         Assertions.assertEquals(6 * events.size(), s.getSize());
     }
 
@@ -73,8 +73,8 @@ class WhyNotMatchSASETest {
 
     @Test
     void testEvaluation(){
-        Map<Long,List<Event>> restEvents = new HashMap<>();
-        restEvents.put(1L,this.getEvents());
+        Map<String,List<Event>> restEvents = new HashMap<>();
+        restEvents.put("1",this.getEvents());
         List<AlmostMatch> almostMatches = whyNotMatchSASE.evaluate(this.getSp(),restEvents,3,1,3);
 
         Assertions.assertFalse(almostMatches.isEmpty());
