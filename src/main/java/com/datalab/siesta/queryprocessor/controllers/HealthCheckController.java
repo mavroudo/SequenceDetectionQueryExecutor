@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-
+/**
+ * Health Controller that it is used to check if the server is online.
+ */
 @RestController
 @RequestMapping(path = "/health")
 public class HealthCheckController {
