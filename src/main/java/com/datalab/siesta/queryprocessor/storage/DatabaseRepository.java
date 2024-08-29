@@ -48,6 +48,13 @@ public interface DatabaseRepository {
     List<Count> getCounts(String logname, Set<EventPair> pairs);
 
     /**
+     * Retrieves the event pairs tha appear as keys in the CountTable
+     * @param logname the log database
+     * @return a list of event pairs
+     */
+    List<Count> getEventPairs(String logname);
+
+    /**
      *
      * @param logname the log database
      * @return a list with all the event types stored in it

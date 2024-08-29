@@ -79,6 +79,16 @@ public class DBConnector {
     }
 
     /**
+     * For a given log database, returns all the event pairs found in the log
+     *
+     * @param logname the log database
+     * @return all event pairs found in the log
+     */
+    public List<Count> getEventPairs(String logname) {
+        return db.getEventPairs(logname);
+    }
+
+    /**
      * Detects the traces that contain all the given event pairs
      *
      * @param logname  the log database
@@ -172,4 +182,6 @@ public class DBConnector {
     public Map<Integer, List<EventBoth>> querySingleTableGroups(String logname, List<Set<String>> groups, Set<String> eventTypes) {
         return db.querySingleTableGroups(logname, groups, eventTypes);
     }
+
+
 }
