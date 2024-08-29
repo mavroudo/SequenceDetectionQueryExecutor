@@ -11,7 +11,8 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 /**
- * Contains the configuration of spark in order to connect to s3 database
+ * Contains the configuration of spark in he.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project siesta-query-processor: Fatal error compiling: error: release version 17 not supported -> [Help 1]
+order to connect to s3 database
  */
 @Configuration
 @PropertySource("classpath:application.properties")
