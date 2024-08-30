@@ -83,7 +83,7 @@ public class QueryPlanDeclareAll {
         JavaRDD<EventPairToTrace> indexRDD = declareDBConnector.queryIndexOriginalDeclare(logname)
                 .filter(x->!x.getEventA().equals(x.getEventB()));
 
-        JavaPairRDD<Tuple2<String, Long>, List<Integer>> singleRDD = declareDBConnector.querySingleTableAllDeclare(logname);
+        JavaPairRDD<Tuple2<String, String>, List<Integer>> singleRDD = declareDBConnector.querySingleTableAllDeclare(logname);
         singleRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
 

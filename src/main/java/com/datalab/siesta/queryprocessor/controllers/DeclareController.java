@@ -65,7 +65,7 @@ public class DeclareController {
      * @param position can be 'first' -> for the first,'last'-> for the last and 'both' for both first and last
      * @param support minimum support that a pattern should have in order to be added to the result set
      */
-    @RequestMapping(path = "/positions", method = RequestMethod.GET)
+    @RequestMapping(path = {"/positions", "/positions/"}, method = RequestMethod.GET)
     public ResponseEntity getPositionConstraints(@RequestParam String log_database,
                                                  @RequestParam(required = false, defaultValue = "both") String position,
                                                  @RequestParam(required = false, defaultValue = "0.9") double support) throws IOException {
@@ -87,7 +87,7 @@ public class DeclareController {
      * @param modes a list of all the templates that needs to be extracted (e.g., 'existence', 'exactly' etc.)
      *              a complete list can be found in {@link QueryPlanExistences#execute(String, List, double)}
      */
-    @RequestMapping(path = "/existences", method = RequestMethod.GET)
+    @RequestMapping(path = {"/existences","/existences/"}, method = RequestMethod.GET)
     public ResponseEntity getExistenceConstraints(@RequestParam String log_database,
                                                   @RequestParam(required = false, defaultValue = "0.9") double support,
                                                   @RequestParam List<String> modes) throws IOException {
@@ -116,7 +116,7 @@ public class DeclareController {
      * @param constraint can be set to 'response', 'precedence' or 'succession' (which will also calculate the
      *                   no succession constraints)
      */
-    @RequestMapping(path = "/ordered-relations", method = RequestMethod.GET)
+    @RequestMapping(path = {"/ordered-relations","/ordered-relations/"}, method = RequestMethod.GET)
     public ResponseEntity getOrderedRelationsConstraints(@RequestParam String log_database,
                                                          @RequestParam(required = false, defaultValue = "0.9") double support,
                                                          @RequestParam(required = false, defaultValue = "simple") String mode,

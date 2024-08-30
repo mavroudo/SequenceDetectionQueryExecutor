@@ -20,6 +20,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TimeConstraint.class, name = "timeConstraint"),
         @JsonSubTypes.Type(value = GapConstraint.class, name = "gapConstraint")
 })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class Constraint implements Cloneable, Serializable {
 
     //position of the first event in the Pattern

@@ -48,7 +48,7 @@ public class DeclareDBConnector {
         return this.db.queryIndexTableAllDeclare(logname);
     }
 
-    public JavaPairRDD<Tuple2<String,Long>, List<Integer>> querySingleTableAllDeclare(String logname){
+    public JavaPairRDD<Tuple2<String,String>, List<Integer>> querySingleTableAllDeclare(String logname){
         return this.db.querySingleTableAllDeclare(logname);
     }
 

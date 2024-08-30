@@ -315,7 +315,7 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<OccurrencesPerTrace> ocs = new ArrayList<>();
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
-                        long traceId = occurrence.getLong(0);
+                        String traceId = occurrence.getString(0);
                         int size = JavaConverters.seqAsJavaList(occurrence.getSeq(2)).size();
                         ocs.add(new OccurrencesPerTrace(traceId, size));
                     }
@@ -325,18 +325,18 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
-    public JavaPairRDD<Tuple2<String, Long>, List<Integer>> querySingleTableAllDeclare(String logname) {
+    public JavaPairRDD<Tuple2<String, String>, List<Integer>> querySingleTableAllDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
 
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, Tuple3<String, Long, List<Integer>>>) row -> {
+                .flatMap((FlatMapFunction<Row, Tuple3<String, String, List<Integer>>>) row -> {
                     String eventType = row.getString(1);
-                    List<Tuple3<String, Long, List<Integer>>> records = new ArrayList<>();
+                    List<Tuple3<String, String, List<Integer>>> records = new ArrayList<>();
                     List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
                     for (Row occurrence : occurrences) {
-                        long tid = occurrence.getLong(0);
+                        String tid = occurrence.getString(0);
                         List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
                         records.add(new Tuple3<>(eventType, tid, positions));
                     }
@@ -359,7 +359,7 @@ public class S3Connector extends SparkDatabaseRepository {
                     List<EventPairToTrace> response = new ArrayList<>();
                     List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                     for (Row r2 : l) {
-                        long tid = r2.getLong(0);
+                        String tid = r2.getString(0);
                         response.add(new EventPairToTrace(eventA,eventB,tid));
                     }
                     return response.iterator();
@@ -377,11 +377,11 @@ public class S3Connector extends SparkDatabaseRepository {
                 .map(row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
-                    List<Long> uniqueTraces = new ArrayList<>();
+                    List<String> uniqueTraces = new ArrayList<>();
 
                     List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
                     for (Row r2 : l) {
-                        long tid = r2.getLong(0);
+                        String tid = r2.getString(0);
                         uniqueTraces.add(tid);
                     }
                     return new UniqueTracesPerEventPair(eventA, eventB, uniqueTraces);

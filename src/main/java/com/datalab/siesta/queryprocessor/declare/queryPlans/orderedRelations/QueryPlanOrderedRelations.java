@@ -61,7 +61,7 @@ public class QueryPlanOrderedRelations {
         JavaRDD<EventPairToTrace> indexRDD = declareDBConnector.queryIndexOriginalDeclare(logname)
                 .filter(x -> !x.getEventA().equals(x.getEventB()));
         //query SingleTable
-        JavaPairRDD<Tuple2<String, Long>, List<Integer>> singleRDD = declareDBConnector
+        JavaPairRDD<Tuple2<String, String>, List<Integer>> singleRDD = declareDBConnector
                 .querySingleTableAllDeclare(logname);
 
         //join tables using joinTables and flat map to get the single events
@@ -95,7 +95,7 @@ public class QueryPlanOrderedRelations {
      * @ a rdd of {@link EventPairTraceOccurrences}
      */
     public JavaRDD<EventPairTraceOccurrences> joinTables(JavaRDD<EventPairToTrace> indexRDD,
-                                                         JavaPairRDD<Tuple2<String, Long>, List<Integer>> singleRDD) {
+                                                         JavaPairRDD<Tuple2<String, String>, List<Integer>> singleRDD) {
         //for the traces that contain an occurrence of the event pair (a,b), joins their occurrences of these
         //event types (extracted from the Single Table)
         return indexRDD
@@ -110,7 +110,7 @@ public class QueryPlanOrderedRelations {
                     String eventB = x._2._1._1.getEventB();//event b
                     List<Integer> f = x._2._1._2; // occurrences of the first event
                     List<Integer> s = x._2._2;//occurrences of the second event
-                    long tid = x._1._2; //trace id
+                    String tid = x._1._2; //trace id
                     return new EventPairTraceOccurrences(eventA, eventB, tid, f, s);
                 });
     }

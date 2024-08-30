@@ -154,7 +154,7 @@ public interface DatabaseRepository {
 
     JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname);
 
-    JavaPairRDD<Tuple2<String,Long>, List<Integer>> querySingleTableAllDeclare(String logname);
+    JavaPairRDD<Tuple2<String,String>, List<Integer>> querySingleTableAllDeclare(String logname);
 
     JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname);
 

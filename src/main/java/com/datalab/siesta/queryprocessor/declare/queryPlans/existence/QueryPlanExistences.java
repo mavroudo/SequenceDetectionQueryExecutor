@@ -182,9 +182,9 @@ public class QueryPlanExistences {
                     UniqueTracesPerEventPair right = x._2._2.
                             orElse(new UniqueTracesPerEventPair(x._1._2, x._1._1, new ArrayList<>()));
                     // find union of the 2 lists
-                    Set<Long> set = new LinkedHashSet<>(x._2._1.getUniqueTraces());
+                    Set<String> set = new LinkedHashSet<>(x._2._1.getUniqueTraces());
                     set.addAll(right.getUniqueTraces());
-                    ArrayList<Long> combinedList = new ArrayList<>(set);
+                    ArrayList<String> combinedList = new ArrayList<>(set);
                     return new EventPairToNumberOfTrace(x._1._1, x._1._2, combinedList.size());
                 });
 
@@ -351,7 +351,7 @@ public class QueryPlanExistences {
                 //actual count the traces in which either of them exists (removing the duplicate counts - traces where
                 //both exist)
                 .map(x -> {
-                    LinkedHashSet<Long> listA = x._1._2.getOccurrences().stream()
+                    LinkedHashSet<String> listA = x._1._2.getOccurrences().stream()
                             .map(OccurrencesPerTrace::getTraceId).collect(Collectors.toCollection(LinkedHashSet::new));
                     listA.addAll(x._2._2.getOccurrences().stream().map(OccurrencesPerTrace::getTraceId)
                             .collect(Collectors.toList()));
