@@ -54,6 +54,17 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     }
 
     /**
+     * return all the IndexPairs grouped by the eventA and eventB
+     * needs to be implemented by each different connector
+     * @param pairs set of the pairs
+     * @param logname the log database
+     * @return extract the pairs
+     */
+    protected JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> getAllEventPairs(Set<EventPair> pairs, String logname) {
+        return null;
+    }
+
+    /**
      * Retrieves the appropriate events from the SequenceTable, which contains the original traces
      * @param logname the log database
      * @param traceIds the ids of the traces that will be retrieved
@@ -111,12 +122,11 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
      * Retrieves data from the primary inverted index
      * @param pairs a set of the pairs that we need to retrieve information for
      * @param logname the log database
-     * @param metadata the metadata for this log database
      * @return the corresponding records from the index
      */
     @Override
-    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata) {
-        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs, logname, metadata, null, null)
+    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname) {
+        List<Tuple2<Tuple2<String, String>, Iterable<IndexPair>>> results = this.getAllEventPairs(pairs, logname)
                 .collect();
         return new IndexRecords(results);
     }

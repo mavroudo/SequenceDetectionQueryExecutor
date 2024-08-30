@@ -51,7 +51,7 @@ class S3ConnectorTest {
         pairs.add(new EventPair(new Event("C"),new Event("A")));
         pairs.add(new EventPair(new Event("C"),new Event("B")));
         pairs.add(new EventPair(new Event("C"),new Event("C")));
-        IndexRecords  ir = s3Connector.queryIndexTable(pairs,m.getLogname(),m);
+        IndexRecords  ir = s3Connector.queryIndexTable(pairs,m.getLogname(),m, null, null);
 
         Map<EventTypes,List<IndexPair>> r =  ir.getRecords();
         // <B,A>

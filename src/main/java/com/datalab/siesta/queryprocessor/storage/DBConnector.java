@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.storage;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexMiddleResult;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexRecords;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
@@ -183,5 +184,8 @@ public class DBConnector {
         return db.querySingleTableGroups(logname, groups, eventTypes);
     }
 
+    public IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata, Timestamp from, Timestamp till) {
+        return db.queryIndexTable(pairs, logname, metadata, from, till);
+    }
 
 }

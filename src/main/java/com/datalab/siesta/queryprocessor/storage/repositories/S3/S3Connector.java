@@ -308,6 +308,7 @@ public class S3Connector extends SparkDatabaseRepository {
         return rows;
     }
 
+
     //Below are for declare//
 
     @Override

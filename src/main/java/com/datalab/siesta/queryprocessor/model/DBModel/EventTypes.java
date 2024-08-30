@@ -16,6 +16,15 @@ public class EventTypes{
         this.eventB = eventB;
     }
 
+    public String getEventA() { return eventA; }
+
+    public String getEventB() { return eventB; }
+
+    @Override
+    public String toString() {
+        return eventA + eventB;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

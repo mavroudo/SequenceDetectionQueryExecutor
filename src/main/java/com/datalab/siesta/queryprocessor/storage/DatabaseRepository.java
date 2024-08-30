@@ -99,12 +99,11 @@ public interface DatabaseRepository {
      * Retrieves data from the primary inverted index
      * @param pairs a set of the pairs that we need to retrieve information for
      * @param logname the log database
-     * @param metadata the metadata for this log database
      * @return the corresponding records from the index
      */
-    IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata);
+    IndexRecords queryIndexTable(Set<EventPair> pairs, String logname);
 
-    /**
+   /**
      * Retrieves data from the primary inverted index
      * @param pairs a set of the pairs that we need to retrieve information for
      * @param logname the log database
