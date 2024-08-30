@@ -36,12 +36,13 @@ public class PatternAnalysisController {
 
     @RequestMapping(path = "/violations",method = RequestMethod.GET)
     public ResponseEntity<String> getViolatingPatterns(@RequestParam(required = false, defaultValue = "test") String log_database,
-                                                       @RequestParam(defaultValue = "1,2") String legitimates,
+                                                       @RequestParam(defaultValue = "1") String legitimates,
+                                                       @RequestParam(required = false, defaultValue = "1.2") double time_var_threshold_factor,
 //                                                       @RequestParam(required = false, defaultValue = "false") boolean split_on_resource,
                                                        @RequestParam(required = false, defaultValue = "0.95") double pair_support,
-                                                       @RequestParam(required = false, defaultValue = "0.7") double diverging_factor) {
+                                                       @RequestParam(required = false, defaultValue = "0.7") double diverging_index_factor) {
 
-        var log = splitLogInstances(log_database, legitimates, pair_support, diverging_factor);
+        var log = splitLogInstances(log_database, legitimates, pair_support, diverging_index_factor);
 
         List<IndexPair> l1 = log._1;
         List<IndexPair> l2 = log._2;
@@ -51,17 +52,50 @@ public class PatternAnalysisController {
         Map<String, List<Long>> patternsL2 = extractPatterns(l2);
 
         Map<String, PatternStats> statsL1 = calculateStatistics(patternsL1);
+        Map<String, PatternStats> statsL2 = calculateStatistics(patternsL2);
+
+        System.out.println(printViolatingPatterns(getViolatingPatterns(statsL1, statsL2, time_var_threshold_factor)));
+
+        // Print extended results
         Map<String, List<PatternStats.Deviation>> deviations = calculateDeviations(statsL1, patternsL2, 1800);
+        printExtendedResults(statsL1, deviations);
 
-        // Print results
-        printResults(statsL1, deviations);
-
-        return new ResponseEntity<>("", HttpStatus.OK);
+        return new ResponseEntity<>("Check terminal", HttpStatus.OK);
     }
 
-    private static void printResults(Map<String, PatternStats> statsL1, Map<String, List<PatternStats.Deviation>> deviations) {
+    public static String printViolatingPatterns(Map<String, Tuple2<PatternStats, PatternStats>> o) {
+        StringBuilder result = new StringBuilder();
+        result.append("Patterns frequently violated in L2:\n");
+
+        for (Map.Entry<String, Tuple2<PatternStats, PatternStats>> entry : o.entrySet()) {
+            result.append(String.format("Pattern %s: Mean_L1 = %.4f, Mean_L2 = %.4f, Var_L1= %.4f, Var_L2 = %.4f\n",
+                    entry.getKey(), entry.getValue()._1.mean, entry.getValue()._2.mean, entry.getValue()._1.std, entry.getValue()._2.std));
+        }
+        return result.toString();
+    }
+
+    public static Map<String, Tuple2<PatternStats, PatternStats>> getViolatingPatterns(Map<String, PatternStats> statsL1, Map<String, PatternStats> statsL2, double stdThreshold) {
+        Map<String, Tuple2<PatternStats, PatternStats>> violatingPatterns = new HashMap<>();
+
+        for (Map.Entry<String, PatternStats> entry : statsL2.entrySet()) {
+            String pattern = entry.getKey();
+            PatternStats statsL2Pattern = entry.getValue();
+
+            if (statsL1.containsKey(pattern)) {
+                PatternStats statsL1Pattern = statsL1.get(pattern);
+
+                // Check if the deviation exceeds the threshold
+                if (Math.abs(statsL2Pattern.mean - statsL1Pattern.mean) > stdThreshold * statsL1Pattern.std) {
+                    violatingPatterns.putIfAbsent(pattern, new Tuple2<>(statsL1Pattern,statsL2Pattern));
+                }
+            }
+        }
+        return violatingPatterns;
+    }
+
+    private static void printExtendedResults(Map<String, PatternStats> statsL1, Map<String, List<PatternStats.Deviation>> deviations) {
         for (Map.Entry<String, PatternStats> entry : statsL1.entrySet()) {
-            System.out.println("Pattern " + entry.getKey() + ": Mean = " + entry.getValue().mean + ", Std = " + entry.getValue().std);
+            System.out.println("-----Extended results-----\nPattern " + entry.getKey() + ": Mean = " + entry.getValue().mean + ", Std = " + entry.getValue().std);
         }
 
         System.out.println("\nDeviations in L2:");
