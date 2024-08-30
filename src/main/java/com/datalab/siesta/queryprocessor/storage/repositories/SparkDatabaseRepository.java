@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import scala.Tuple2;
 import scala.Tuple3;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,11 +28,11 @@ import java.util.stream.Stream;
  * This in a class the contains common logic for all databases that utilize spark (like Cassandra and S3)
  * and therefore it is implemented by both of them
  */
-public abstract class SparkDatabaseRepository implements DatabaseRepository {
+public abstract class SparkDatabaseRepository implements DatabaseRepository, Serializable {
 
-    protected SparkSession sparkSession;
+    protected transient SparkSession sparkSession;
 
-    protected JavaSparkContext javaSparkContext;
+    protected transient JavaSparkContext javaSparkContext;
 
     protected Utils utils;
 
@@ -63,10 +64,26 @@ public abstract class SparkDatabaseRepository implements DatabaseRepository {
     @Override
     public Map<String, List<EventBoth>> querySeqTable(String logname, List<String> traceIds) {
         Broadcast<Set<String>> bTraceIds = javaSparkContext.broadcast(new HashSet<>(traceIds));
+
         return this.querySequenceTablePrivate(logname, bTraceIds)
-                .keyBy((Function<Trace, String>) Trace::getTraceID)
-                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
+                .keyBy(new Function<Trace, String>() {
+                    @Override
+                    public String call(Trace trace) throws Exception {
+                        return trace.getTraceID();
+                    }
+                })
+                .mapValues(new Function<Trace, List<EventBoth>>() {
+                    @Override
+                    public List<EventBoth> call(Trace trace) throws Exception {
+                        return trace.getEvents();
+                    }
+                })
                 .collectAsMap();
+
+//        return this.querySequenceTablePrivate(logname, bTraceIds)
+//                .keyBy((Function<Trace, String>) Trace::getTraceID)
+//                .mapValues((Function<Trace, List<EventBoth>>) Trace::getEvents)
+//                .collectAsMap();
     }
 
     /**

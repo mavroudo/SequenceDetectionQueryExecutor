@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -18,7 +19,7 @@ import java.util.*;
  * operations in the database utilizing the methods described in the DatabaseRepository interface.
  */
 @Service
-public class DBConnector {
+public class DBConnector{
 
     /**
      * Database object. Depending on the resources it is either implements the connection with S3 or the connection

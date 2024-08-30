@@ -18,7 +18,12 @@
     <description>SIESTA-QueryProcessor</description>
 
 
+
+
     <properties>
+        <failOnMultipleScalaVersions>true</failOnMultipleScalaVersions>
+        <scalaCompatVersion>2.12</scalaCompatVersion>
+        <scalaVersion>2.12.12</scalaVersion>
         <java.version>17</java.version>
         <spark.version>3.5.1</spark.version>
     </properties>
@@ -99,16 +104,19 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <version>3.3.4</version>
+<!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>3.3.4</version>
+<!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
             <version>3.3.4</version>
+<!--            <scope>provided</scope>-->
         </dependency>
 <!--javax.servlet.UnavailableException: Servlet class org.glassfish.jersey.servlet.ServletContainer is not a javax.servlet.Servlet-->
         <dependency>

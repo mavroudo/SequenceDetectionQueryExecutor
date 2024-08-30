@@ -37,6 +37,7 @@ import scala.collection.JavaConverters;
 import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
@@ -53,7 +54,7 @@ import java.util.stream.Collectors;
         matchIfMissing = true
 )
 @Service
-public class S3Connector extends SparkDatabaseRepository {
+public class S3Connector extends SparkDatabaseRepository{
 
 
     private String bucket = "s3a://siesta/";
@@ -72,24 +73,27 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public Set<String> findAllLongNames() {
-        try {
-            FileSystem fs = FileSystem.get(new URI(this.bucket), sparkSession.sparkContext().hadoopConfiguration());
-            RemoteIterator<LocatedFileStatus> f = fs.listFiles(new Path(this.bucket), true);
-            Pattern pattern = Pattern.compile(String.format("%s[^/]*/", this.bucket));
-            Set<String> files = new HashSet<>();
-            while (f.hasNext()) {
-                LocatedFileStatus fin = f.next();
-                Matcher matcher = pattern.matcher(fin.getPath().toString());
-                if (matcher.find()) {
-                    String logname = matcher.group(0).replace(this.bucket, "").replace("/", "");
-                    files.add(logname);
-                }
-            }
-            return files;
-
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        S3Functions s3Functions = new S3Functions();
+        return S3Functions.findAllLongNames(this.bucket,sparkSession);
+//
+//        try {
+//            FileSystem fs = FileSystem.get(new URI(this.bucket), sparkSession.sparkContext().hadoopConfiguration());
+//            RemoteIterator<LocatedFileStatus> f = fs.listFiles(new Path(this.bucket), true);
+//            Pattern pattern = Pattern.compile(String.format("%s[^/]*/", this.bucket));
+//            Set<String> files = new HashSet<>();
+//            while (f.hasNext()) {
+//                LocatedFileStatus fin = f.next();
+//                Matcher matcher = pattern.matcher(fin.getPath().toString());
+//                if (matcher.find()) {
+//                    String logname = matcher.group(0).replace(this.bucket, "").replace("/", "");
+//                    files.add(logname);
+//                }
+//            }
+//            return files;
+//
+//        } catch (IOException | URISyntaxException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Override

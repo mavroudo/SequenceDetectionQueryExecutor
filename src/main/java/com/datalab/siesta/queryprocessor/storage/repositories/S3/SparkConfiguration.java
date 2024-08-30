@@ -45,11 +45,18 @@ public class SparkConfiguration {
         return new SparkConf()
                 .setAppName(appName)
                 .setMaster(masterUri)
-                .set("spark.driver.memory","25g")
+                .set("spark.jars","target/siesta-query-processor-3.0.jar," +
+                        "target/classes/lib/hadoop-aws-3.3.4.jar," +
+                        "target/classes/lib/aws-java-sdk-bundle-1.12.262.jar," +
+                        "target/classes/lib/spark-connect_2.12-3.5.1.jar")
+                .set("spark.executor.memory","12g")
+                .set("spark.executor.extraJavaOptions","--add-exports=java.base/sun.security.action=ALL-UNNAMED")
+                .set("spark.driver.extraJavaOptions","--add-exports=java.base/sun.security.action=ALL-UNNAMED");
+//                .set("spark.driver.memory","25g")
 //                .set("spark.driver.memoryOverhead","2g")
 //                .set("spark.memory.fraction","0.8")
 //                .set("spark.memory.storageFraction","0.5")
-                .set("spark.driver.maxResultSize","5g");
+//                .set("spark.driver.maxResultSize","5g");
     }
 
     @Bean
@@ -73,7 +80,6 @@ public class SparkConfiguration {
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.connection.ssl.enabled", "true");
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.bucket.create.enabled", "true");
         spark.conf().set("spark.sql.sources.partitionOverwriteMode", "dynamic");
-//        spark.conf().set("spark.executor.memory", "30g");
         return spark;
     }
 
