@@ -108,8 +108,9 @@ public class S3Connector extends SparkDatabaseRepository {
                         long sum_duration = v1.getLong(1);
                         int count = v1.getInt(2);
                         long min_duration = v1.getLong(3);
-                        long max_daration = v1.getLong(4);
-                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_daration));
+                        long max_duration = v1.getLong(4);
+                        double sum_squared = v1.getDouble(5);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
                     }
                     return c.iterator();
                 }).collect();
@@ -135,8 +136,9 @@ public class S3Connector extends SparkDatabaseRepository {
                         long sum_duration = v1.getLong(1);
                         int count = v1.getInt(2);
                         long min_duration = v1.getLong(3);
-                        long max_daration = v1.getLong(4);
-                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_daration));
+                        long max_duration = v1.getLong(4);
+                        double sum_squares = v1.getDouble(5);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
                     }
                     return c.iterator();
                 })
@@ -177,8 +179,9 @@ public class S3Connector extends SparkDatabaseRepository {
                         long sum_duration = v1.getLong(1);
                         int count = v1.getInt(2);
                         long min_duration = v1.getLong(3);
-                        long max_daration = v1.getLong(4);
-                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_daration));
+                        long max_duration = v1.getLong(4);
+                        double sum_squares = v1.getDouble(5);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
                     }
                     return c.iterator();
                 })

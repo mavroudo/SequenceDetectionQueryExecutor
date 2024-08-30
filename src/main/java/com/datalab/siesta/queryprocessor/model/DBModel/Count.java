@@ -21,16 +21,19 @@ public class Count implements Serializable {
 
     private long max_duration;
 
+    private double sum_squares;
+
     public Count() {
     }
 
-    public Count(String eventA, String eventB, long sum_duration, int count, long min_duration, long max_duration) {
+    public Count(String eventA, String eventB, long sum_duration, int count, long min_duration, long max_duration, double sum_squares) {
         this.eventA = eventA;
         this.eventB = eventB;
         this.sum_duration = sum_duration;
         this.count = count;
         this.min_duration = min_duration;
         this.max_duration = max_duration;
+        this.sum_squares = sum_squares;
     }
 
     public Count(String eventA, String[] record) {
@@ -40,6 +43,7 @@ public class Count implements Serializable {
         this.count = Integer.parseInt(record[2]);
         this.min_duration = Long.parseLong(record[3]);
         this.max_duration = Long.parseLong(record[4]);
+        this.sum_squares = Double.parseDouble(record[5]);
     }
 
     public String getEventA() {
@@ -90,6 +94,18 @@ public class Count implements Serializable {
         this.max_duration = max_duration;
     }
 
+    public double getSum_squares() {
+        return sum_squares;
+    }
+
+    public void setSum_squares(double sum_squares) {
+        this.sum_squares = sum_squares;
+    }
+
+    public String getPair() {
+        return this.eventA + this.eventB;
+    }
+
     @Override
     public String toString() {
         return "Count{" +
@@ -99,6 +115,7 @@ public class Count implements Serializable {
                 ", count=" + count +
                 ", min_duration=" + min_duration +
                 ", max_duration=" + max_duration +
+                ", sum_squares=" + sum_squares +
                 '}';
     }
 }
