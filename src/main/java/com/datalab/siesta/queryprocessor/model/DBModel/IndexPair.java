@@ -157,5 +157,5 @@ public class IndexPair implements Serializable {
         return false;
     }
 
-    public long getDuration() {return timestampB.getTime() - timestampA.getTime(); }
+    public long getDuration() { return (timestampB.getTime() - timestampA.getTime()) / 1000; }
 }
