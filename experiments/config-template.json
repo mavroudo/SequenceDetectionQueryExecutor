@@ -1,0 +1,7 @@
+{ "log_database": "test",
+  "std_factor": 2.0,
+  "split_on_resource": false,
+  "pair_support": 0.5,
+  "diverging_index_factor": 0.3,
+  "legitimate_ids": []
+}
