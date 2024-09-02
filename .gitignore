@@ -4,3 +4,4 @@ target/test-classes/*
 target/*
 src/main/resources/lib/*.jar
 siesta-query-processor.iml
+experiments/*
