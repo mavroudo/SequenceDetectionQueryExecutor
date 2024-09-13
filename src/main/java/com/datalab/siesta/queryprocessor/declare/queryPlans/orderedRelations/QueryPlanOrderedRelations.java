@@ -4,9 +4,7 @@ import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.DeclareUtilities;
 import com.datalab.siesta.queryprocessor.declare.model.*;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import lombok.Getter;
@@ -17,14 +15,10 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 import scala.Tuple3;
-import scala.Tuple4;
-import scala.Tuple5;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,11 +93,11 @@ public class QueryPlanOrderedRelations {
         //for the traces that contain an occurrence of the event pair (a,b), joins their occurrences of these
         //event types (extracted from the Single Table)
         return indexRDD
-                .keyBy(r -> new Tuple2<>(r.getEventA(), r.getTraceId()))
+                .keyBy(r -> new Tuple2<>(r.getEventA(), r.getTrace_id()))
                 .join(singleRDD)
                 .map(x -> x._2)
                 //join based on the second event
-                .keyBy(x -> new Tuple2<>(x._1.getEventB(), x._1.getTraceId()))
+                .keyBy(x -> new Tuple2<>(x._1.getEventB(), x._1.getTrace_id()))
                 .join(singleRDD)
                 .map(x -> {
                     String eventA = x._2._1._1.getEventA();//event a

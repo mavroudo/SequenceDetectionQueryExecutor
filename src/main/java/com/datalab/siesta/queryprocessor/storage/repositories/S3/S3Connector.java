@@ -8,12 +8,11 @@ import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
-import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
@@ -24,9 +23,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -34,13 +31,11 @@ import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.collection.JavaConverters;
-import static org.apache.spark.sql.functions.col;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -216,20 +211,14 @@ public class S3Connector extends SparkDatabaseRepository {
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
-                .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains(x.getString(1)))
-                .flatMap((FlatMapFunction<Row, EventBoth>) row -> {
-                    String eventType = row.getString(1);
-                    List<EventBoth> events = new ArrayList<>();
-                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
-                    for (Row occurrence : occurrences) {
-                        String traceId = occurrence.getString(0);
-                        List<String> times = JavaConverters.seqAsJavaList(occurrence.getSeq(1));
-                        List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
-                        for (int i = 0; i < times.size(); i++) {
-                            events.add(new EventBoth(eventType, traceId, Timestamp.valueOf(times.get(i)), positions.get(i)));
-                        }
-                    }
-                    return events.iterator();
+                .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains((String)x.getAs("event_type")))
+                .filter((Function<Row, Boolean>) x -> bTraceIds.value().contains((String)x.getAs("trace_id")))
+                .map((Function<Row, EventBoth>) row->{
+                    String trace_id = row.getAs("trace_id");
+                    String event_type = row.getAs("event_type");
+                    String ts = row.getAs("timestamp");
+                    Integer position = row.getAs("position");
+                    return new EventBoth(event_type,trace_id,Timestamp.valueOf(ts),position);
                 });
     }
 
@@ -247,13 +236,6 @@ public class S3Connector extends SparkDatabaseRepository {
         Broadcast<Timestamp> bTill = javaSparkContext.broadcast(till);
 
         List<String> whereStatements = new ArrayList<>();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        if (from != null) {
-            whereStatements.add(String.format("start >= '%s' ", dateFormat.format(new Date(from.getTime()))));
-        }
-        if (till != null) {
-            whereStatements.add(String.format("end <= '%s' ", dateFormat.format(new Date(till.getTime()))));
-        }
         whereStatements.add(
                 pairs.stream().map(x -> x.getEventA().getName()).distinct()
                         .map(p -> String.format("eventA = '%s'", p))
@@ -263,7 +245,6 @@ public class S3Connector extends SparkDatabaseRepository {
             whereStatements.set(i, String.format("( %s )", whereStatements.get(i)));
         }
         String whereStatement = String.join(" and ", whereStatements);
-
 
         JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> rows = sparkSession.read()
                 .parquet(path)
@@ -276,29 +257,22 @@ public class S3Connector extends SparkDatabaseRepository {
                     for (EventPair ep : bPairs.getValue()) {
                         if (eventA.equals(ep.getEventA().getName()) && eventB.equals(ep.getEventB().getName())) {
                             checkContained = true;
+                            break;
                         }
                     }
                     List<IndexPair> response = new ArrayList<>();
                     if (checkContained) {
-                        List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
-                        for (Row r2 : l) {
-                            String tid = r2.getString(0);
-                            List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
-                            if (mode.getValue().equals("positions")) {
-                                for (Row inner : innerList) {
-                                    int posA = inner.getInt(0);
-                                    int posB = inner.getInt(1);
-                                    response.add(new IndexPair(tid, eventA, eventB, posA, posB));
-                                }
-                            } else {
-                                for (Row inner : innerList) {
-                                    Timestamp tsA = Timestamp.valueOf(inner.getString(0));
-                                    Timestamp tsB = Timestamp.valueOf(inner.getString(1));
-                                    if (!(bTill.value() != null && tsA.after(bTill.value()) ||
-                                            bFrom.value() != null && tsB.before(bFrom.value()))) {
-                                        response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
-                                    }
-                                }
+                        String tid = row.getAs("trace_id");
+                        if (mode.getValue().equals("positions")) {
+                            int posA = row.getAs("positionA");
+                            int posB = row.getAs("positionB");
+                            response.add(new IndexPair(tid, eventA, eventB, posA, posB));
+                        } else {
+                            Timestamp tsA = Timestamp.valueOf((String) row.getAs("timestampA"));
+                            Timestamp tsB = Timestamp.valueOf((String) row.getAs("timestampB"));
+                            if (!(bTill.value() != null && tsA.after(bTill.value()) ||
+                                    bFrom.value() != null && tsB.before(bFrom.value()))) {
+                                response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
                             }
                         }
                     }
@@ -317,17 +291,17 @@ public class S3Connector extends SparkDatabaseRepository {
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
-                .map((Function<Row, Trace>) row -> {
+                .map((Function<Row, EventBoth>) row -> {
                     String trace_id = row.getAs("trace_id");
-                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    List<EventBoth> results = new ArrayList<>();
-                    for (int i = 0; i < evs.size(); i++) {
-                        String event_name = evs.get(i).getString(0);
-                        Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
-                        results.add(new EventBoth(event_name, event_timestamp, i));
-                    }
-                    return new Trace(trace_id, results);
-                });
+                    String event_name = row.getAs("event_type");
+                    Timestamp ts = Timestamp.valueOf((String) row.getAs("timestamp"));
+                    Integer pos = row.getAs("position");
+                    return new EventBoth(event_name, trace_id, ts, pos);
+                })
+                .groupBy((Function<EventBoth, String>) EventBoth::getTraceID)
+                .map((Function<Tuple2<String, Iterable<EventBoth>>, Trace>) t ->
+                        new Trace(t._1(), IteratorUtils.toList(t._2().iterator()))
+                );
     }
 
     @Override
@@ -336,19 +310,18 @@ public class S3Connector extends SparkDatabaseRepository {
 
         return sparkSession.read()
                 .parquet(path)
+                .select("event_type","trace_id")
+                .groupBy("event_type","trace_id")
+                .agg(functions.size(functions.collect_list("event_type")).alias("unique"))
                 .toJavaRDD()
-                .map(row -> {
-                    UniqueTracesPerEventType ue = new UniqueTracesPerEventType();
-                    ue.setEventType(row.getString(1));
-                    List<OccurrencesPerTrace> ocs = new ArrayList<>();
-                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
-                    for (Row occurrence : occurrences) {
-                        String traceId = occurrence.getString(0);
-                        int size = JavaConverters.seqAsJavaList(occurrence.getSeq(2)).size();
-                        ocs.add(new OccurrencesPerTrace(traceId, size));
+                .groupBy((Function<Row, String>) ev->ev.getAs("event_type"))
+                .map((Function<Tuple2<String, Iterable<Row>>,UniqueTracesPerEventType>) ev->{
+                    String event_type = ev._1();
+                    List<OccurrencesPerTrace> opt = new ArrayList<>();
+                    for(Row r: ev._2()){
+                        opt.add(new OccurrencesPerTrace(r.getAs("trace_id"),r.getAs("unique")));
                     }
-                    ue.setOccurrences(ocs);
-                    return ue;
+                    return new UniqueTracesPerEventType(event_type,opt);
                 });
     }
 
@@ -356,22 +329,23 @@ public class S3Connector extends SparkDatabaseRepository {
     public JavaPairRDD<Tuple2<String, String>, List<Integer>> querySingleTableAllDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
 
-        return sparkSession.read()
+        JavaPairRDD<Tuple2<String, String>, List<Integer>> rdd = sparkSession.read()
                 .parquet(path)
+                .select("event_type","trace_id","position")
+                .groupBy("event_type","trace_id")
+                .agg(functions.collect_list("position").alias("positions"))
                 .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, Tuple3<String, String, List<Integer>>>) row -> {
-                    String eventType = row.getString(1);
-                    List<Tuple3<String, String, List<Integer>>> records = new ArrayList<>();
-                    List<Row> occurrences = JavaConverters.seqAsJavaList(row.getSeq(0));
-                    for (Row occurrence : occurrences) {
-                        String tid = occurrence.getString(0);
-                        List<Integer> positions = JavaConverters.seqAsJavaList(occurrence.getSeq(2));
-                        records.add(new Tuple3<>(eventType, tid, positions));
-                    }
-                    return records.iterator();
+                .map(row->{
+                    String eventType = row.getAs("event_type");
+                    String trace_id = row.getAs("trace_id");
+                    List<Integer> positions = JavaConverters.seqAsJavaList(row.getSeq(2));
+                    return new Tuple3<>(eventType,trace_id,positions);
                 })
                 .keyBy(r -> new Tuple2<>(r._1(), r._2()))
                 .mapValues(Tuple3::_3);
+
+        return rdd;
+
     }
 
     @Override
@@ -380,46 +354,28 @@ public class S3Connector extends SparkDatabaseRepository {
 
         return sparkSession.read()
                 .parquet(path)
-                .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, EventPairToTrace>) row -> {
-                    String eventA = row.getAs("eventA");
-                    String eventB = row.getAs("eventB");
-                    List<EventPairToTrace> response = new ArrayList<>();
-                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    for (Row r2 : l) {
-                        String tid = r2.getString(0);
-                        response.add(new EventPairToTrace(eventA,eventB,tid));
-                    }
-                    return response.iterator();
-                })
-                .distinct();
+                .select("eventA","eventB","trace_id")
+                .distinct()
+                .as(Encoders.bean(EventPairToTrace.class))
+                .toJavaRDD();
     }
 
     @Override
     public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/index.parquet/");
 
-        return sparkSession.read()
-                .parquet(path)
+        return sparkSession.read().parquet(path)
+                .select("eventA","eventB","trace_id")
+                .distinct()
                 .toJavaRDD()
-                .map(row -> {
-                    String eventA = row.getAs("eventA");
-                    String eventB = row.getAs("eventB");
+                .groupBy((Function<Row, Tuple2<String,String>>)row->new Tuple2<>(row.getAs("eventA"),row.getAs("eventB")))
+                .map((Function<Tuple2<Tuple2<String,String>, Iterable<Row>>, UniqueTracesPerEventPair>)row->{
                     List<String> uniqueTraces = new ArrayList<>();
-
-                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    for (Row r2 : l) {
-                        String tid = r2.getString(0);
-                        uniqueTraces.add(tid);
+                    for(Row r: row._2()){
+                        uniqueTraces.add(r.getAs("trace_id"));
                     }
-                    return new UniqueTracesPerEventPair(eventA, eventB, uniqueTraces);
-                })
-                .keyBy(x->new Tuple2<>(x.getEventA(),x.getEventB()))
-                .reduceByKey((x,y)->{
-                    x.getUniqueTraces().addAll(y.getUniqueTraces());
-                    return x;
-                        }
-                ).map(x->x._2);
+                    return new UniqueTracesPerEventPair(row._1()._1(),row._1()._2,uniqueTraces);
+                } );
     }
 
     @Override
@@ -429,22 +385,13 @@ public class S3Connector extends SparkDatabaseRepository {
         return sparkSession.read()
                 .parquet(path)
                 .toJavaRDD()
-                .flatMap((FlatMapFunction<Row, IndexPair>) row -> {
+                .map((Function<Row, IndexPair>) row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
-                    List<IndexPair> response = new ArrayList<>();
-
-                    List<Row> l = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    for (Row r2 : l) {
-                        String tid = r2.getString(0);
-                        List<Row> innerList = JavaConverters.seqAsJavaList(r2.getSeq(1));
-                        for (Row inner : innerList) {
-                            int posA = inner.getInt(0);
-                            int posB = inner.getInt(1);
-                            response.add(new IndexPair(tid, eventA, eventB, posA, posB));
-                        }
-                    }
-                    return response.iterator();
+                    String trace_id = row.getAs("trace_id");
+                    int positionA = row.getAs("positionA");
+                    int positionB = row.getAs("positionB");
+                    return new IndexPair(trace_id,eventA,eventB,positionA,positionB);
                 });
     }
 }
