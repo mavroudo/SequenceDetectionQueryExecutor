@@ -328,7 +328,6 @@ public class S3Connector extends SparkDatabaseRepository {
     @Override
     public JavaPairRDD<Tuple2<String, String>, List<Integer>> querySingleTableAllDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
-
         JavaPairRDD<Tuple2<String, String>, List<Integer>> rdd = sparkSession.read()
                 .parquet(path)
                 .select("event_type","trace_id","position")

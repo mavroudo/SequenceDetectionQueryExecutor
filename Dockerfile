@@ -21,5 +21,5 @@ ADD src /code/src
 RUN mvn clean compile package -f pom.xml -DskipTests
 
 
-CMD ["java", "-jar", "target/siesta-query-processor-3.0.jar"]
+CMD ["java", "--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED" , "-jar", "target/siesta-query-processor-3.0.jar"]
 #ENTRYPOINT ["tail", "-f", "/dev/null"]
