@@ -80,14 +80,14 @@ public class Metadata {
         this.events = json.getAs("events");
         this.filename = json.getAs("filename");
         this.has_previous_stored = json.getAs("has_previous_stored");
-        this.last_interval = json.getAs("last_interval");
+//        this.last_interval = json.getAs("last_interval");
         this.logname = json.getAs("log_name");
         Integer l = json.getAs("lookback");
         this.lookback = l.longValue();
         this.mode = json.getAs("mode");
         this.pairs = json.getAs("pairs");
-        Integer s = json.getAs("split_every_days");
-        this.split_every_days = s.longValue();
+//        Integer s = json.getAs("split_every_days");
+//        this.split_every_days = s.longValue();
         this.traces = json.getAs("traces");
     }
 

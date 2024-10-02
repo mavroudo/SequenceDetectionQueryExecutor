@@ -50,7 +50,7 @@ public class LoadInfo {
             else {
                 metadata.setStart_ts("");
             }
-            metadata.setLast_ts(metadata.getLast_interval().split("_")[1]);
+//            metadata.setLast_ts(metadata.getLast_interval().split("_")[1]);
             m.put(l, metadata);
         }
         return new LoadedMetadata(m);

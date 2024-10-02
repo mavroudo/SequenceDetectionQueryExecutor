@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import scala.Tuple2;
 import scala.Tuple3;
+import static org.apache.spark.sql.functions.*;
 import scala.collection.JavaConverters;
 import static org.apache.spark.sql.functions.col;
 
@@ -314,20 +315,26 @@ public class S3Connector extends SparkDatabaseRepository {
     @Override
     public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/seq.parquet/");
-        return sparkSession.read()
-                .parquet(path)
-                .toJavaRDD()
-                .map((Function<Row, Trace>) row -> {
-                    String trace_id = row.getAs("trace_id");
-                    List<Row> evs = JavaConverters.seqAsJavaList(row.getSeq(1));
-                    List<EventBoth> results = new ArrayList<>();
-                    for (int i = 0; i < evs.size(); i++) {
-                        String event_name = evs.get(i).getString(0);
-                        Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
-                        results.add(new EventBoth(event_name, event_timestamp, i));
-                    }
-                    return new Trace(trace_id, results);
-                });
+        Dataset<Row> df = sparkSession.read().parquet(path);
+        // Group by 'trace_id' and collect events as a list
+        Dataset<Row> grouped = df.groupBy("trace_id")
+                .agg(collect_list(struct("event_type", "timestamp")).alias("events"));
+
+        return grouped.toJavaRDD().map((Function<Row, Trace>) row -> {
+            String trace_id = row.getAs("trace_id");
+            // Get the aggregated list of events
+            List<Row> evs = row.getList(row.fieldIndex("events"));
+            List<EventBoth> results = new ArrayList<>();
+
+            for (int i = 0; i < evs.size(); i++) {
+                // Extract event_name and timestamp from each aggregated event
+                String event_name = evs.get(i).getString(0);
+                Timestamp event_timestamp = Timestamp.valueOf(evs.get(i).getString(1));
+                results.add(new EventBoth(event_name, event_timestamp, i));
+            }
+
+            return new Trace(trace_id, results);
+        });
     }
 
     @Override
