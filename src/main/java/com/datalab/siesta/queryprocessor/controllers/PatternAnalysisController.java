@@ -39,6 +39,7 @@ public class PatternAnalysisController {
     @Autowired
     private DBConnector dbConnector;
 
+
     @RequestMapping(path = "/violations", method = RequestMethod.POST, consumes = "multipart/form-data")
     public ResponseEntity<JSONObject> getViolatingPatterns(@RequestParam("config") MultipartFile configFile) {
 
@@ -94,26 +95,58 @@ public class PatternAnalysisController {
         Map<String, List<Long>> patternsL2 = extractPatterns(l2);
 
         Map<String, PatternStats> statsL1 = calculateStatistics(patternsL1);
+//        Map<String, PatternStats> statsL2 = calculateStatistics(patternsL2);
+
 
         // Print results
-        var violations = getViolatingPatterns(statsL1, calculateDeviations(statsL1, patternsL2, std_factor));
+    // Naive
+//        var violations = getViolatingPatterns(statsL1,statsL2,std_factor);
+
+        // Optimized
+        var violations = getViolatingPatterns(statsL1, patternsL2, std_factor);
 
         return new ResponseEntity<>(violations, HttpStatus.OK);
     }
 
-    public static JSONObject getViolatingPatterns(Map<String, PatternStats> statsL1, Map<String, Double> violations) {
+    public static JSONObject getViolatingPatterns(Map<String, PatternStats> statsL1,
+                                                   Map<String, List<Long>> patterns2, Double std_factor) {
         JSONObject resultJson = new JSONObject();
 
         for (Map.Entry<String, PatternStats> entry : statsL1.entrySet()) {
-            JSONObject patternData = new JSONObject();
-            patternData.put("L1_Mean", entry.getValue().mean);
-            patternData.put("L2_Mean", violations.get(entry.getKey()));
-
-            resultJson.put(entry.getKey(), patternData);
+            if (patterns2.containsKey(entry.getKey())) {
+                double count = 0.0;
+                for (Long pd : patterns2.get(entry.getKey())) {
+                     if (Math.abs(pd - entry.getValue().mean) > std_factor * entry.getValue().std) {
+                         count++;
+                     }
+                 }
+                double percentage = count / patterns2.get(entry.getKey()).size() * 100;
+                if (count > 0) {
+                    JSONObject patternData = new JSONObject();
+                    patternData.put("L1_Mean", entry.getValue().mean);
+                    patternData.put("L2_Violation_Percentage", percentage);
+                    resultJson.put(entry.getKey(), patternData);
+                }
+            }
         }
 
         return resultJson;
     }
+
+
+//    public static JSONObject getViolatingPatterns(Map<String, PatternStats> statsL1, Map<String, Double> violations) {
+//        JSONObject resultJson = new JSONObject();
+//
+//        for (Map.Entry<String, PatternStats> entry : statsL1.entrySet()) {
+//            JSONObject patternData = new JSONObject();
+//            patternData.put("L1_Mean", entry.getValue().mean);
+//            patternData.put("L2_Mean", violations.get(entry.getKey()));
+//
+//            resultJson.put(entry.getKey(), patternData);
+//        }
+//
+//        return resultJson;
+//    }
 
     private Tuple2<List<IndexPair>, List<IndexPair>> splitLogInstances(String log_database, List<String> legitimateTraces, double pair_support, double diverging_factor) {
 
@@ -192,9 +225,11 @@ public class PatternAnalysisController {
         }
         return result.toString();
     }
-
-    public static Map<String, Tuple2<PatternStats, PatternStats>> getViolatingPatterns(Map<String, PatternStats> statsL1, Map<String, PatternStats> statsL2, double stdThreshold) {
-        Map<String, Tuple2<PatternStats, PatternStats>> violatingPatterns = new HashMap<>();
+*/
+    public JSONObject getViolatingPatterns(Map<String, PatternStats> statsL1,
+                                                 Map<String, PatternStats> statsL2,
+                                                 double stdThreshold) {
+        JSONObject resultJson = new JSONObject();
 
         for (Map.Entry<String, PatternStats> entry : statsL2.entrySet()) {
             String pattern = entry.getKey();
@@ -205,13 +240,17 @@ public class PatternAnalysisController {
 
                 // Check if the deviation exceeds the threshold
                 if (Math.abs(statsL2Pattern.mean - statsL1Pattern.mean) > stdThreshold * statsL1Pattern.std) {
-                    violatingPatterns.putIfAbsent(pattern, new Tuple2<>(statsL1Pattern,statsL2Pattern));
+                    JSONObject patternData = new JSONObject();
+                    patternData.put("L1_Mean", statsL1Pattern.mean);
+                    patternData.put("L2_Mean", statsL2Pattern.mean);
+
+                    resultJson.put(pattern, patternData);
                 }
             }
         }
-        return violatingPatterns;
+
+        return resultJson;
     }
-    */
 
 
 

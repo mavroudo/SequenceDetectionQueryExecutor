@@ -268,8 +268,8 @@ public class S3Connector extends SparkDatabaseRepository {
                             int posB = row.getAs("positionB");
                             response.add(new IndexPair(tid, eventA, eventB, posA, posB));
                         } else {
-                            Timestamp tsA = Timestamp.valueOf((String) row.getAs("timestampA"));
-                            Timestamp tsB = Timestamp.valueOf((String) row.getAs("timestampB"));
+                            Timestamp tsA = row.getAs("timestampA");
+                            Timestamp tsB = row.getAs("timestampB");
                             if (!(bTill.value() != null && tsA.after(bTill.value()) ||
                                     bFrom.value() != null && tsB.before(bFrom.value()))) {
                                 response.add(new IndexPair(tid, eventA, eventB, tsA, tsB));
