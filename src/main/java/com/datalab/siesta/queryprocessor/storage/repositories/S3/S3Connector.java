@@ -25,6 +25,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
@@ -42,11 +43,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Configuration
-@ConditionalOnProperty(
-        value = "database",
-        havingValue = "s3",
-        matchIfMissing = true
-)
+//@ConditionalOnProperty(
+//        value = "database",
+//        havingValue = "s3",
+//        matchIfMissing = true
+//)
+@ConditionalOnExpression("'${database}' == 's3' and '${delta}' == 'false'")
 @Service
 public class S3Connector extends SparkDatabaseRepository {
 

@@ -11,11 +11,12 @@ services:
     environment:
       master.uri: local[*]
       database: s3 # cassandra-rdd or s3
+      delta: true
       #for s3 (minio)
       s3.endpoint: http://minio:9000
       s3.user: minioadmin
       s3.key: minioadmin
-      s3.timetout: 600000
+      s3.timeout: 600000
       #for cassandra
       cassandra.max_requests_per_local_connection: 32768
       cassandra.max_requests_per_remote_connection: 22000

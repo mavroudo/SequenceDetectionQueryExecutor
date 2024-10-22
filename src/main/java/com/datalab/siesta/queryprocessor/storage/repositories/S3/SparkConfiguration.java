@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,11 +17,12 @@ order to connect to s3 database
  */
 @Configuration
 @PropertySource("classpath:application.properties")
-@ConditionalOnProperty(
-        value = "database",
-        havingValue = "s3",
-        matchIfMissing = true
-)
+//@ConditionalOnProperty(
+//        value = "database",
+//        havingValue = "s3",
+//        matchIfMissing = true
+//)
+@ConditionalOnExpression("'${database}' == 's3' and '${delta}' == 'false'")
 public class SparkConfiguration {
 
     @Value("${app.name:siesta2}")

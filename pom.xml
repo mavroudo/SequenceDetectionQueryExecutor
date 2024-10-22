@@ -217,6 +217,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <dependency>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-core_2.12</artifactId>
+            <version>2.1.0</version>
+        </dependency>
     </dependencies>
 
     <build>
