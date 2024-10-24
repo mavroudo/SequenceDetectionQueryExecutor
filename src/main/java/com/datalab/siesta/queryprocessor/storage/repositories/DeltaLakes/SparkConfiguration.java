@@ -44,6 +44,9 @@ public class SparkConfiguration {
                 .setMaster(masterUri)
                 .set("spark.driver.extraJavaOptions", "--add-opens java.base/sun.security.action=ALL-UNNAMED")
                 .set("spark.executor.extraJavaOptions", "--add-opens java.base/sun.security.action=ALL-UNNAMED")
+                .set("spark.sql.extensions","io.delta.sql.DeltaSparkSessionExtension")
+                .set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+                .set("spark.sql.streaming.statefulOperator.checkCorrectness.enabled", "false")
 //                .set("spark.driver.memory","25g")
 //                .set("spark.driver.memoryOverhead","2g")
 //                .set("spark.memory.fraction","0.8")
@@ -72,6 +75,10 @@ public class SparkConfiguration {
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.connection.ssl.enabled", "true");
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.bucket.create.enabled", "true");
         spark.conf().set("spark.sql.sources.partitionOverwriteMode", "dynamic");
+        spark.conf().set("spark.sql.files.metadata.log.parsing.enabled", "true");
+        spark.conf().set("spark.sql.sources.useV1SourceList", "delta");
+        spark.conf().set("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore");
+        System.out.println("Spark version: ".concat(spark.version()));
 //        spark.conf().set("spark.executor.memory", "30g");
         return spark;
     }

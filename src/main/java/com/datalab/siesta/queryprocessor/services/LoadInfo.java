@@ -34,17 +34,15 @@ public class LoadInfo {
     @Bean
     public LoadedMetadata getAllMetadata() {
         Map<String, Metadata> m = new HashMap<>();
+        System.out.println("Eimai edw lalalalalala");
         for (String l : dbConnector.findAllLongNames()) {
 //            TODO: determine a better way to find the starting ts
             List<String> list = new ArrayList<>();
             list.add("0");
             list.add("1");
 
-            System.out.println("Eftasa prin to SeqTable");
             Map<String, List<EventBoth>> x = dbConnector.querySeqTable(l, list);
-            System.out.println("Ekana to SeqTable");
             Metadata metadata = dbConnector.getMetadata(l);
-            System.out.println("Vrika ta metadata");
             if (x.containsKey("0")) {
                 metadata.setStart_ts(x.get("0").get(0).getTimestamp().toString());
             } else if (x.containsKey("1")){
