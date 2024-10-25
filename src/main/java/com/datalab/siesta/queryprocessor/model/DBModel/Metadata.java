@@ -69,28 +69,30 @@ public class Metadata {
      */
     private String last_ts;
 
-
+    private String value;
     /**
      * Parse a json row. Utilized in S3, as metadata stored in json format
      *
      * @param json metadata in json format
      */
+//    public Metadata(Row json) {
+//        this.compression = json.getAs("compression");
+//        this.events = json.getAs("events");
+//        this.filename = json.getAs("filename");
+//        this.has_previous_stored = json.getAs("has_previous_stored");
+////        this.last_interval = json.getAs("last_interval");
+//        this.logname = json.getAs("log_name");
+//        Integer l = json.getAs("lookback");
+//        this.lookback = l.longValue();
+//        this.mode = json.getAs("mode");
+//        this.pairs = json.getAs("pairs");
+////        Integer s = json.getAs("split_every_days");
+////        this.split_every_days = s.longValue();
+//        this.traces = json.getAs("traces");
+//    }
     public Metadata(Row json) {
-        this.compression = json.getAs("compression");
-        this.events = json.getAs("events");
-        this.filename = json.getAs("filename");
-        this.has_previous_stored = json.getAs("has_previous_stored");
-//        this.last_interval = json.getAs("last_interval");
-        this.logname = json.getAs("log_name");
-        Integer l = json.getAs("lookback");
-        this.lookback = l.longValue();
-        this.mode = json.getAs("mode");
-        this.pairs = json.getAs("pairs");
-//        Integer s = json.getAs("split_every_days");
-//        this.split_every_days = s.longValue();
-        this.traces = json.getAs("traces");
+        this.value = json.getAs("value");
     }
-
     /**
      * Parse data from a map. Utilized in Cassandra, as metadata stored in a key:value format
      *

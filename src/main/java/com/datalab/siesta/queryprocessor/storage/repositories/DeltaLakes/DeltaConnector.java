@@ -62,7 +62,9 @@ public class DeltaConnector extends SparkDatabaseRepository {
     @Override
     public Metadata getMetadata(String logname) {
         String path = String.format(String.format("%s%s%s", bucket, logname, "/meta"));
-        Dataset<Row> df = sparkSession.readStream().format("delta").load(path);
+        Dataset<Row> df = sparkSession.read().format("delta").load(path);
+        System.out.println("Schema: ");
+        df.printSchema();
         return new Metadata(df.toJavaRDD().collect().get(0));
     }
 
@@ -91,7 +93,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
     @Override
     public List<Count> getCountForExploration(String logname, String event) {
         String path = String.format("%s%s%s", bucket, logname, "/count/");
-        List<Count> counts = sparkSession.readStream()
+        List<Count> counts = sparkSession.read()
                 .format("delta")
                 .load(path)
                 .where(String.format("eventA = '%s'", event))
@@ -120,7 +122,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
         String firstFilter = pairs.stream().map(x -> x.getEventA().getName()).collect(Collectors.toSet())
                 .stream().map(x -> String.format("eventA = '%s'", x)).collect(Collectors.joining(" or "));
         Broadcast<Set<EventPair>> b_pairs = javaSparkContext.broadcast(pairs);
-        List<Count> counts = sparkSession.readStream()
+        List<Count> counts = sparkSession.read()
                 .format("delta")
                 .load(path)
                 .where(firstFilter)
@@ -165,7 +167,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
     @Override
     public List<Count> getEventPairs(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/count/");
-        List<Count> counts = sparkSession.readStream()
+        List<Count> counts = sparkSession.read()
                 .format("delta")
                 .load(path)
                 .toJavaRDD()
@@ -191,7 +193,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
     @Override
     public List<String> getEventNames(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/count/");
-        return sparkSession.readStream().format("delta")
+        return sparkSession.read().format("delta")
                 .load(path)
                 .select("eventA")
                 .distinct()
@@ -213,14 +215,14 @@ public class DeltaConnector extends SparkDatabaseRepository {
         String path = String.format("%s%s%s", bucket, logname, "/single/");
         Broadcast<Set<String>> bTraceIds = javaSparkContext.broadcast(traceIds);
         Broadcast<Set<String>> bEventTypes = javaSparkContext.broadcast(eventTypes);
-        return sparkSession.readStream()
+        return sparkSession.read()
                 .format("delta")
                 .load(path)
                 .toJavaRDD()
                 .filter((Function<Row, Boolean>) x -> bEventTypes.value().contains((String)x.getAs("event_type")))
-                .filter((Function<Row, Boolean>) x -> bTraceIds.value().contains((String)x.getAs("trace_id")))
+                .filter((Function<Row, Boolean>) x -> bTraceIds.value().contains((String)x.getAs("trace")))
                 .map((Function<Row, EventBoth>) row->{
-                    String trace_id = row.getAs("trace_id");
+                    String trace_id = row.getAs("trace");
                     String event_type = row.getAs("event_type");
                     String ts = row.getAs("timestamp");
                     Integer position = row.getAs("position");
@@ -252,7 +254,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
         }
         String whereStatement = String.join(" and ", whereStatements);
 
-        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> rows = sparkSession.readStream()
+        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> rows = sparkSession.read()
                 .format("delta")
                 .load(path)
                 .where(whereStatement)
@@ -269,7 +271,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     }
                     List<IndexPair> response = new ArrayList<>();
                     if (checkContained) {
-                        String tid = row.getAs("trace_id");
+                        String tid = row.getAs("trace");
                         if (mode.getValue().equals("positions")) {
                             int posA = row.getAs("positionA");
                             int posB = row.getAs("positionB");
@@ -295,14 +297,14 @@ public class DeltaConnector extends SparkDatabaseRepository {
     @Override
     public JavaRDD<Trace> querySequenceTableDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/seq");
-        return sparkSession.readStream()
+        return sparkSession.read()
                 .format("delta")
                 .load(path)
                 .toJavaRDD()
                 .map((Function<Row, EventBoth>) row -> {
-                    String trace_id = row.getAs("trace_id");
+                    String trace_id = row.getAs("trace");
                     String event_name = row.getAs("event_type");
-                    Timestamp ts = Timestamp.valueOf((String) row.getAs("timestamp"));
+                    Timestamp ts = row.getAs("timestamp");
                     Integer pos = row.getAs("position");
                     return new EventBoth(event_name, trace_id, ts, pos);
                 })
@@ -316,11 +318,11 @@ public class DeltaConnector extends SparkDatabaseRepository {
     public JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single");
 
-        return sparkSession.readStream()
+        return sparkSession.read()
                 .format("delta")
                 .load(path)
-                .select("event_type","trace_id")
-                .groupBy("event_type","trace_id")
+                .select("event_type","trace")
+                .groupBy("event_type","trace")
                 .agg(functions.size(functions.collect_list("event_type")).alias("unique"))
                 .toJavaRDD()
                 .groupBy((Function<Row, String>) ev->ev.getAs("event_type"))
@@ -328,7 +330,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     String event_type = ev._1();
                     List<OccurrencesPerTrace> opt = new ArrayList<>();
                     for(Row r: ev._2()){
-                        opt.add(new OccurrencesPerTrace(r.getAs("trace_id"),r.getAs("unique")));
+                        opt.add(new OccurrencesPerTrace(r.getAs("trace"),r.getAs("unique")));
                     }
                     return new UniqueTracesPerEventType(event_type,opt);
                 });
@@ -337,16 +339,16 @@ public class DeltaConnector extends SparkDatabaseRepository {
     @Override
     public JavaPairRDD<Tuple2<String, String>, List<Integer>> querySingleTableAllDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single");
-        JavaPairRDD<Tuple2<String, String>, List<Integer>> rdd = sparkSession.readStream()
+        JavaPairRDD<Tuple2<String, String>, List<Integer>> rdd = sparkSession.read()
                 .format("delta")
                 .load(path)
-                .select("event_type","trace_id","position")
-                .groupBy("event_type","trace_id")
+                .select("event_type","trace","position")
+                .groupBy("event_type","trace")
                 .agg(functions.collect_list("position").alias("positions"))
                 .toJavaRDD()
                 .map(row->{
                     String eventType = row.getAs("event_type");
-                    String trace_id = row.getAs("trace_id");
+                    String trace_id = row.getAs("trace");
                     List<Integer> positions = JavaConverters.seqAsJavaList(row.getSeq(2));
                     return new Tuple3<>(eventType,trace_id,positions);
                 })
@@ -361,10 +363,10 @@ public class DeltaConnector extends SparkDatabaseRepository {
     public JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/index");
 
-        return sparkSession.readStream()
+        return sparkSession.read()
                 .format("delta")
                 .load(path)
-                .select("eventA","eventB","trace_id")
+                .select("eventA","eventB","trace")
                 .distinct()
                 .as(Encoders.bean(EventPairToTrace.class))
                 .toJavaRDD();
@@ -374,16 +376,16 @@ public class DeltaConnector extends SparkDatabaseRepository {
     public JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/index");
 
-        return sparkSession.readStream().format("delta")
+        return sparkSession.read().format("delta")
                 .load(path)
-                .select("eventA","eventB","trace_id")
+                .select("eventA","eventB","trace")
                 .distinct()
                 .toJavaRDD()
                 .groupBy((Function<Row, Tuple2<String,String>>)row->new Tuple2<>(row.getAs("eventA"),row.getAs("eventB")))
                 .map((Function<Tuple2<Tuple2<String,String>, Iterable<Row>>, UniqueTracesPerEventPair>)row->{
                     List<String> uniqueTraces = new ArrayList<>();
                     for(Row r: row._2()){
-                        uniqueTraces.add(r.getAs("trace_id"));
+                        uniqueTraces.add(r.getAs("trace"));
                     }
                     return new UniqueTracesPerEventPair(row._1()._1(),row._1()._2,uniqueTraces);
                 } );
@@ -393,14 +395,14 @@ public class DeltaConnector extends SparkDatabaseRepository {
     public JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/index");
 
-        return sparkSession.readStream()
+        return sparkSession.read()
                 .format("delta")
                 .load(path)
                 .toJavaRDD()
                 .map((Function<Row, IndexPair>) row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
-                    String trace_id = row.getAs("trace_id");
+                    String trace_id = row.getAs("trace");
                     int positionA = row.getAs("positionA");
                     int positionB = row.getAs("positionB");
                     return new IndexPair(trace_id,eventA,eventB,positionA,positionB);
