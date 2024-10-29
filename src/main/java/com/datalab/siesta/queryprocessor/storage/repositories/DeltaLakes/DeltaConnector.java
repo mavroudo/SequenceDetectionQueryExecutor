@@ -122,24 +122,37 @@ public class DeltaConnector extends SparkDatabaseRepository {
         String firstFilter = pairs.stream().map(x -> x.getEventA().getName()).collect(Collectors.toSet())
                 .stream().map(x -> String.format("eventA = '%s'", x)).collect(Collectors.joining(" or "));
         Broadcast<Set<EventPair>> b_pairs = javaSparkContext.broadcast(pairs);
+
+        Dataset<Row> df = sparkSession.read()
+                .format("delta")
+                .load(path)
+                .where(firstFilter);
+
+        // Print the schema of the DataFrame
+        System.out.println("Schema of the DataFrame:");
+        df.printSchema();
+        System.out.println("Seires: " + df.count());
+        System.out.println("Sthles: " + df.columns().length);
         List<Count> counts = sparkSession.read()
                 .format("delta")
                 .load(path)
                 .where(firstFilter)
                 .toJavaRDD()
                 .flatMap((FlatMapFunction<Row, Count>) row -> {
-                    String eventA = row.getString(1);
-                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
+//                    StringBuilder rowString = new StringBuilder("Row contents: ");
+//                    for (int i = 0; i < row.length(); i++) {
+//                        rowString.append(row.get(i)).append(", ");
+//                    }
+//                    System.out.println("Grammi:" + rowString);
                     List<Count> c = new ArrayList<>();
-                    for (Row v1 : countRecords) {
-                        String eventB = v1.getString(0);
-                        long sum_duration = v1.getLong(1);
-                        int count = v1.getInt(2);
-                        long min_duration = v1.getLong(3);
-                        long max_duration = v1.getLong(4);
-                        double sum_squares = v1.getDouble(5);
-                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
-                    }
+                    String eventA = row.getString(0);
+                    String eventB = row.getString(1);
+                    long sum_duration = row.getLong(2);
+                    int count = row.getInt(3);
+                    long min_duration = row.getLong(4);
+                    long max_duration = row.getLong(5);
+                    double sum_squares = row.getDouble(6);
+                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
                     return c.iterator();
                 })
                 .filter((Function<Count, Boolean>) c -> {

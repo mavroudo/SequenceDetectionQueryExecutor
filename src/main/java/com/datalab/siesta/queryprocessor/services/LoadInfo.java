@@ -40,11 +40,8 @@ public class LoadInfo {
             list.add("0");
             list.add("1");
 
-            System.out.println("Eimai prin to seq table");
             Map<String, List<EventBoth>> x = dbConnector.querySeqTable(l, list);
-            System.out.println("Eimai prin ta metadata");
             Metadata metadata = dbConnector.getMetadata(l);
-            System.out.println("Ta ekana ola");
             if (x.containsKey("0")) {
                 metadata.setStart_ts(x.get("0").get(0).getTimestamp().toString());
             } else if (x.containsKey("1")){
