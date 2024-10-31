@@ -4,7 +4,7 @@ package com.datalab.siesta.queryprocessor.model.DBModel;
 import org.apache.spark.sql.Row;
 
 import java.util.Map;
-
+import java.util.List;
 /**
  * A Metadata object contains all the metadata about a specific log database.
  */
@@ -69,29 +69,48 @@ public class Metadata {
      */
     private String last_ts;
 
+    private String key;
+
     private String value;
+
     /**
      * Parse a json row. Utilized in S3, as metadata stored in json format
      *
      * @param json metadata in json format
      */
-//    public Metadata(Row json) {
-//        this.compression = json.getAs("compression");
-//        this.events = json.getAs("events");
-//        this.filename = json.getAs("filename");
-//        this.has_previous_stored = json.getAs("has_previous_stored");
-////        this.last_interval = json.getAs("last_interval");
-//        this.logname = json.getAs("log_name");
-//        Integer l = json.getAs("lookback");
-//        this.lookback = l.longValue();
-//        this.mode = json.getAs("mode");
-//        this.pairs = json.getAs("pairs");
-////        Integer s = json.getAs("split_every_days");
-////        this.split_every_days = s.longValue();
-//        this.traces = json.getAs("traces");
-//    }
-    public Metadata(Row json) {
-        this.value = json.getAs("value");
+        public Metadata(Row json) {
+        this.compression = json.getAs("compression");
+        this.events = json.getAs("events");
+        this.filename = json.getAs("filename");
+        this.has_previous_stored = json.getAs("has_previous_stored");
+//        this.last_interval = json.getAs("last_interval");
+        this.logname = json.getAs("log_name");
+        Integer l = json.getAs("lookback");
+        this.lookback = l.longValue();
+        this.mode = json.getAs("mode");
+        this.pairs = json.getAs("pairs");
+//        Integer s = json.getAs("split_every_days");
+//        this.split_every_days = s.longValue();
+        this.traces = json.getAs("traces");
+    }
+
+    /**
+     * Parse a map for DeltaLakes that contains metadata since they are saved in a key:value format.
+     * @param attributes metadata from map format
+     * @param flag dummy flag to use for Delta Lakes
+     */
+    public Metadata(Map<String, String> attributes, String flag) {
+        this.compression = attributes.get("compression");
+        this.events = Long.valueOf(attributes.get("events"));
+        this.filename = attributes.get("filename");
+        this.has_previous_stored = (Boolean) Boolean.valueOf(attributes.get("has_previous_stored"));
+//        this.last_interval = attributes.get("last_interval");
+        this.logname = attributes.get("log_name");
+        this.lookback = Long.valueOf(attributes.get("lookback"));
+        this.mode = attributes.get("mode");
+        this.pairs = Long.valueOf(attributes.get("pairs"));
+//        this.split_every_days = Long.valueOf(attributes.get("split_every_days"));
+        this.traces = Long.valueOf(attributes.get("traces"));
     }
     /**
      * Parse data from a map. Utilized in Cassandra, as metadata stored in a key:value format
@@ -173,5 +192,26 @@ public class Metadata {
 
     public void setLast_ts(String last_ts) {
         this.last_ts = last_ts;
+    }
+
+    public String getKey() {return key;}
+
+    public String getValue() {return value;}
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Metadata {")
+                .append("\n  has_previous_stored = ").append(has_previous_stored)
+                .append(",\n  compression = ").append(compression)
+                .append(",\n  filename = ").append(filename)
+                .append(",\n  events = ").append(events)
+                .append(",\n  mode = ").append(mode)
+                .append(",\n  logname = ").append(logname)
+                .append(",\n  pairs = ").append(pairs)
+                .append(",\n  traces = ").append(traces)
+                .append(",\n  lookback = ").append(lookback)
+                .append("\n}");
+        return sb.toString();
     }
 }

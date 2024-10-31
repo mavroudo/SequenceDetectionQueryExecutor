@@ -39,10 +39,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,9 +60,24 @@ public class DeltaConnector extends SparkDatabaseRepository {
     public Metadata getMetadata(String logname) {
         String path = String.format(String.format("%s%s%s", bucket, logname, "/meta"));
         Dataset<Row> df = sparkSession.read().format("delta").load(path);
-        System.out.println("Schema: ");
-        df.printSchema();
-        return new Metadata(df.toJavaRDD().collect().get(0));
+//        System.out.println("Schema: ");
+//        df.printSchema();
+//        System.out.println("to dataframe: ");
+//        df.show();
+//        System.out.println("Megethos: " + df.count());
+        Map<String, String> metadataMap = new HashMap<>();
+        List<Row> rows = df.collectAsList(); // Collect rows as a list
+        for (Row row : rows) {
+            String key = row.getAs("key");
+            String value = row.getAs("value");
+            metadataMap.put(key, value);
+        }
+        System.out.println("Kleidia: ");
+        System.out.println(metadataMap.keySet());
+        for (String key : metadataMap.keySet()) {
+            System.out.println(key + ": " + metadataMap.get(key));
+        }
+        return new Metadata(metadataMap, "delta");
     }
 
     @Override

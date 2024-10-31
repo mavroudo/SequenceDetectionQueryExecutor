@@ -115,12 +115,9 @@ public class QueryResponseController {
     @RequestMapping(path = "/stats", method = RequestMethod.POST)
     public ResponseEntity<MappingJacksonValue> getStats(@RequestBody QueryStatsWrapper qsp) {
         Metadata m = allMetadata.getMetadata(qsp.getLog_name());
-        System.out.println("Eimai sto query stats");
         if (m == null) {
-            System.out.println("Ta metadata htan null");
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
-            System.out.println("Brhka metadata");
             QueryPlan qp = qs.createQueryPlan(qsp, m);
             QueryResponse qrs = qp.execute(qsp);
             MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(qrs);
