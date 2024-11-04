@@ -4,10 +4,12 @@ import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
 import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
-import com.datalab.siesta.queryprocessor.model.DBModel.*;
+import com.datalab.siesta.queryprocessor.model.DBModel.Count;
+import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
-import com.datalab.siesta.queryprocessor.model.ExtractedPairsForPatternDetection;
 import com.datalab.siesta.queryprocessor.model.Utils.Utils;
 import com.datalab.siesta.queryprocessor.storage.repositories.SparkDatabaseRepository;
 import org.apache.commons.collections4.IteratorUtils;
@@ -24,7 +26,6 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.execution.datasources.*;
-import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -110,15 +111,18 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .where(String.format("eventA = '%s'", event))
                 .toJavaRDD()
                 .flatMap((FlatMapFunction<Row, Count>) row -> {
+                    String eventA = row.getString(1);
+                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
                     List<Count> c = new ArrayList<>();
-                    String eventA = row.getString(0);
-                    String eventB = row.getString(1);
-                    long sum_duration = row.getLong(2);
-                    int count = row.getInt(3);
-                    long min_duration = row.getLong(4);
-                    long max_duration = row.getLong(5);
-                    double sum_squared = row.getDouble(6);
-                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
+                    for (Row v1 : countRecords) {
+                        String eventB = v1.getString(0);
+                        long sum_duration = v1.getLong(1);
+                        int count = v1.getInt(2);
+                        long min_duration = v1.getLong(3);
+                        long max_duration = v1.getLong(4);
+                        double sum_squared = v1.getDouble(5);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
+                    }
                     return c.iterator();
                 }).collect();
         return new ArrayList<>(counts);
@@ -136,6 +140,11 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .load(path)
                 .where(firstFilter);
 
+        // Print the schema of the DataFrame
+        System.out.println("Schema of the DataFrame:");
+        df.printSchema();
+        System.out.println("Seires: " + df.count());
+        System.out.println("Sthles: " + df.columns().length);
         List<Count> counts = sparkSession.read()
                 .format("delta")
                 .load(path)
@@ -154,8 +163,8 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     int count = row.getInt(3);
                     long min_duration = row.getLong(4);
                     long max_duration = row.getLong(5);
-                    double sum_squared = row.getDouble(6);
-                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
+                    double sum_squares = row.getDouble(6);
+                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
                     return c.iterator();
                 })
                 .filter((Function<Count, Boolean>) c -> {
@@ -188,15 +197,18 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .load(path)
                 .toJavaRDD()
                 .flatMap((FlatMapFunction<Row, Count>) row -> {
+                    String eventA = row.getString(1);
+                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
                     List<Count> c = new ArrayList<>();
-                    String eventA = row.getString(0);
-                    String eventB = row.getString(1);
-                    long sum_duration = row.getLong(2);
-                    int count = row.getInt(3);
-                    long min_duration = row.getLong(4);
-                    long max_duration = row.getLong(5);
-                    double sum_squared = row.getDouble(6);
-                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
+                    for (Row v1 : countRecords) {
+                        String eventB = v1.getString(0);
+                        long sum_duration = v1.getLong(1);
+                        int count = v1.getInt(2);
+                        long min_duration = v1.getLong(3);
+                        long max_duration = v1.getLong(4);
+                        double sum_squares = v1.getDouble(5);
+                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
+                    }
                     return c.iterator();
                 })
                 .collect();
@@ -284,7 +296,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     }
                     List<IndexPair> response = new ArrayList<>();
                     if (checkContained) {
-                        String tid = row.getAs("id");
+                        String tid = row.getAs("trace");
                         if (mode.getValue().equals("positions")) {
                             int posA = row.getAs("positionA");
                             int posB = row.getAs("positionB");
@@ -415,26 +427,10 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .map((Function<Row, IndexPair>) row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
-                    String trace_id = row.getAs("id");
+                    String trace_id = row.getAs("trace");
                     int positionA = row.getAs("positionA");
                     int positionB = row.getAs("positionB");
                     return new IndexPair(trace_id,eventA,eventB,positionA,positionB);
                 });
-    }
-
-    @Override
-    public IndexMiddleResult patterDetectionTraceIds(String logname, List<Tuple2<EventPair, Count>> combined, Metadata metadata, ExtractedPairsForPatternDetection expairs, Timestamp from, Timestamp till) {
-        System.out.println("Eimai sth delta synarthsh");
-        Set<EventPair> pairs = combined.stream().map(x -> x._1).collect(Collectors.toSet());
-        System.out.println("Phra pairs");
-        JavaPairRDD<Tuple2<String, String>, java.lang.Iterable<IndexPair>> gpairs = this.getAllEventPairs(pairs, logname, metadata, from, till);
-        JavaRDD<IndexPair> indexPairs = this.getPairs(gpairs);
-        System.out.println("Phra g-pairs");
-        indexPairs.persist(StorageLevel.MEMORY_AND_DISK());
-        List<String> traces = this.getCommonIds(indexPairs, expairs.getTruePairs());
-        System.out.println("Phra traces");
-        IndexMiddleResult imr = this.addFilterIds(indexPairs, traces, from, till);
-        indexPairs.unpersist();
-        return imr;
     }
 }
