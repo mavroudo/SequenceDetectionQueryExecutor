@@ -111,18 +111,15 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .where(String.format("eventA = '%s'", event))
                 .toJavaRDD()
                 .flatMap((FlatMapFunction<Row, Count>) row -> {
-                    String eventA = row.getString(1);
-                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
                     List<Count> c = new ArrayList<>();
-                    for (Row v1 : countRecords) {
-                        String eventB = v1.getString(0);
-                        long sum_duration = v1.getLong(1);
-                        int count = v1.getInt(2);
-                        long min_duration = v1.getLong(3);
-                        long max_duration = v1.getLong(4);
-                        double sum_squared = v1.getDouble(5);
-                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
-                    }
+                    String eventA = row.getString(0);
+                    String eventB = row.getString(1);
+                    long sum_duration = row.getLong(2);
+                    int count = row.getInt(3);
+                    long min_duration = row.getLong(4);
+                    long max_duration = row.getLong(5);
+                    double sum_squared = row.getDouble(6);
+                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
                     return c.iterator();
                 }).collect();
         return new ArrayList<>(counts);
@@ -163,8 +160,8 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     int count = row.getInt(3);
                     long min_duration = row.getLong(4);
                     long max_duration = row.getLong(5);
-                    double sum_squares = row.getDouble(6);
-                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
+                    double sum_squared = row.getDouble(6);
+                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
                     return c.iterator();
                 })
                 .filter((Function<Count, Boolean>) c -> {
@@ -197,18 +194,15 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .load(path)
                 .toJavaRDD()
                 .flatMap((FlatMapFunction<Row, Count>) row -> {
-                    String eventA = row.getString(1);
-                    List<Row> countRecords = JavaConverters.seqAsJavaList(row.getSeq(0));
                     List<Count> c = new ArrayList<>();
-                    for (Row v1 : countRecords) {
-                        String eventB = v1.getString(0);
-                        long sum_duration = v1.getLong(1);
-                        int count = v1.getInt(2);
-                        long min_duration = v1.getLong(3);
-                        long max_duration = v1.getLong(4);
-                        double sum_squares = v1.getDouble(5);
-                        c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squares));
-                    }
+                    String eventA = row.getString(0);
+                    String eventB = row.getString(1);
+                    long sum_duration = row.getLong(2);
+                    int count = row.getInt(3);
+                    long min_duration = row.getLong(4);
+                    long max_duration = row.getLong(5);
+                    double sum_squared = row.getDouble(6);
+                    c.add(new Count(eventA, eventB, sum_duration, count, min_duration, max_duration, sum_squared));
                     return c.iterator();
                 })
                 .collect();
@@ -296,7 +290,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     }
                     List<IndexPair> response = new ArrayList<>();
                     if (checkContained) {
-                        String tid = row.getAs("trace");
+                        String tid = row.getAs("id");
                         if (mode.getValue().equals("positions")) {
                             int posA = row.getAs("positionA");
                             int posB = row.getAs("positionB");
@@ -427,7 +421,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
                 .map((Function<Row, IndexPair>) row -> {
                     String eventA = row.getAs("eventA");
                     String eventB = row.getAs("eventB");
-                    String trace_id = row.getAs("trace");
+                    String trace_id = row.getAs("id");
                     int positionA = row.getAs("positionA");
                     int positionB = row.getAs("positionB");
                     return new IndexPair(trace_id,eventA,eventB,positionA,positionB);
