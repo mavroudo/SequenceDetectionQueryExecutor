@@ -36,6 +36,7 @@ import scala.Tuple3;
 import scala.collection.JavaConverters;
 
 import java.io.IOException;
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
@@ -211,10 +212,11 @@ public class DeltaConnector extends SparkDatabaseRepository {
 
     @Override
     public List<String> getEventNames(String logname) {
-        String path = String.format("%s%s%s", bucket, logname, "/count/");
+        String path = String.format("%s%s%s", bucket, logname, "/single/");
+
         return sparkSession.read().format("delta")
                 .load(path)
-                .select("eventA")
+                .select("event_type")
                 .distinct()
                 .toJavaRDD()
                 .map((Function<Row, String>) row -> row.getString(0))
@@ -328,9 +330,12 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     return new EventBoth(event_name, trace_id, ts, pos);
                 })
                 .groupBy((Function<EventBoth, String>) EventBoth::getTraceID)
-                .map((Function<Tuple2<String, Iterable<EventBoth>>, Trace>) t ->
-                        new Trace(t._1(), IteratorUtils.toList(t._2().iterator()))
-                );
+                .map((Function<Tuple2<String, Iterable<EventBoth>>, Trace>) t -> {
+                    String traceID = t._1();
+                    List<EventBoth> sortedEvents = IteratorUtils.toList(t._2().iterator());
+                    sortedEvents.sort(Comparator.comparingInt(EventBoth::getPosition));
+                    return new Trace(traceID, sortedEvents);
+                });
     }
 
     @Override
@@ -385,7 +390,7 @@ public class DeltaConnector extends SparkDatabaseRepository {
         return sparkSession.read()
                 .format("delta")
                 .load(path)
-                .select("eventA","eventB","trace")
+                .select("eventA","eventB","id")
                 .distinct()
                 .as(Encoders.bean(EventPairToTrace.class))
                 .toJavaRDD();
@@ -397,14 +402,14 @@ public class DeltaConnector extends SparkDatabaseRepository {
 
         return sparkSession.read().format("delta")
                 .load(path)
-                .select("eventA","eventB","trace")
+                .select("eventA","eventB","id")
                 .distinct()
                 .toJavaRDD()
                 .groupBy((Function<Row, Tuple2<String,String>>)row->new Tuple2<>(row.getAs("eventA"),row.getAs("eventB")))
                 .map((Function<Tuple2<Tuple2<String,String>, Iterable<Row>>, UniqueTracesPerEventPair>)row->{
                     List<String> uniqueTraces = new ArrayList<>();
                     for(Row r: row._2()){
-                        uniqueTraces.add(r.getAs("trace"));
+                        uniqueTraces.add(r.getAs("id"));
                     }
                     return new UniqueTracesPerEventPair(row._1()._1(),row._1()._2,uniqueTraces);
                 } );
