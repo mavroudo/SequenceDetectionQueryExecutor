@@ -5,3 +5,5 @@ target/*
 src/main/resources/lib/*.jar
 siesta-query-processor.iml
 experiments/*
+
+.vscode/*

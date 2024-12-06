@@ -6,11 +6,12 @@ import com.datalab.siesta.queryprocessor.declare.queryPlans.existence.QueryPlanE
 import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.QueryPlanOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.QueryPlanOrderedRelationsAlternate;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.QueryPlanOrderedRelationsChain;
-import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanBoth;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositions;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseAll;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseExistence;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponsePosition;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryPositionWrapper;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -34,7 +35,7 @@ public class QueryPlanDeclareAll {
     private QueryPlanOrderedRelationsChain queryPlanOrderedRelationsChain;
     private QueryPlanOrderedRelationsAlternate queryPlanOrderedRelationsAlternate;
     private QueryPlanExistences queryPlanExistences;
-    private QueryPlanBoth queryPlanBoth;
+    private QueryPlanPositions queryPlanPositions;
     private JavaSparkContext javaSparkContext;
     private DeclareDBConnector declareDBConnector;
     @Setter
@@ -44,21 +45,22 @@ public class QueryPlanDeclareAll {
     @Autowired
     public QueryPlanDeclareAll(QueryPlanOrderedRelations queryPlanOrderedRelations, QueryPlanOrderedRelationsChain
             queryPlanOrderedRelationsChain, QueryPlanOrderedRelationsAlternate queryPlanOrderedRelationsAlternate,
-                               QueryPlanExistences queryPlanExistences, QueryPlanBoth queryPlanBoth,
+                               QueryPlanExistences queryPlanExistences, QueryPlanPositions queryPlanPositions,
                                JavaSparkContext javaSparkContext, DeclareDBConnector declareDBConnector) {
         this.queryPlanOrderedRelations = queryPlanOrderedRelations;
         this.queryPlanOrderedRelationsAlternate = queryPlanOrderedRelationsAlternate;
         this.queryPlanOrderedRelationsChain = queryPlanOrderedRelationsChain;
         this.queryPlanExistences = queryPlanExistences;
-        this.queryPlanBoth = queryPlanBoth;
+        this.queryPlanPositions = queryPlanPositions;
         this.javaSparkContext = javaSparkContext;
         this.declareDBConnector = declareDBConnector;
     }
 
     public QueryResponseAll execute(String logname, double support) {
         //run positions
-        this.queryPlanBoth.setMetadata(metadata);
-        QueryResponsePosition queryResponsePosition = (QueryResponsePosition) this.queryPlanBoth.execute(logname, support);
+        this.queryPlanPositions.setMetadata(metadata);
+        QueryPositionWrapper qpw = new QueryPositionWrapper(support);
+        QueryResponsePosition queryResponsePosition = (QueryResponsePosition) this.queryPlanPositions.execute(qpw);
         //run existences
         this.queryPlanExistences.setMetadata(metadata);
         this.queryPlanExistences.initResponse();

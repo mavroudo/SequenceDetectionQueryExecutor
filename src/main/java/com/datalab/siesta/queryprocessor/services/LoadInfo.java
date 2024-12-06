@@ -1,14 +1,12 @@
 package com.datalab.siesta.queryprocessor.services;
 
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
-import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,22 +33,11 @@ public class LoadInfo {
     public LoadedMetadata getAllMetadata() {
         Map<String, Metadata> m = new HashMap<>();
         for (String l : dbConnector.findAllLongNames()) {
-//            TODO: determine a better way to find the starting ts
-            List<String> list = new ArrayList<>();
-            list.add("0");
-            list.add("1");
-
-            Map<String, List<EventBoth>> x = dbConnector.querySeqTable(l, list);
             Metadata metadata = dbConnector.getMetadata(l);
-            if (x.containsKey("0")) {
-                metadata.setStart_ts(x.get("0").get(0).getTimestamp().toString());
-            } else if (x.containsKey("1")){
-                metadata.setStart_ts(x.get("1").get(0).getTimestamp().toString());
-            }
-            else {
+            // TODO: determine a way to find the starting ts
+            if(metadata.getStart_ts()==null){
                 metadata.setStart_ts("");
             }
-//            metadata.setLast_ts(metadata.getLast_interval().split("_")[1]);
             m.put(l, metadata);
         }
         return new LoadedMetadata(m);
