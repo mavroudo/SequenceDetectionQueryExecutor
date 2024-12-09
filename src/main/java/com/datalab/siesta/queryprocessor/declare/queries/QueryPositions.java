@@ -2,6 +2,7 @@ package com.datalab.siesta.queryprocessor.declare.queries;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositions;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositionsState;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryPositionWrapper;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryWrapperDeclare;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.Query;
@@ -32,7 +33,6 @@ public class QueryPositions implements Query{
 
     @Override
     public QueryPlan createQueryPlan(QueryWrapper qw, Metadata m) {
-
         QueryPositionWrapper qpw = (QueryPositionWrapper) qw;
         if(!qpw.isStateAvailable()||qpw.isEnforceNormalMining()){ //execute the normal extraction
             queryPlanPositions.setMetadata(m);

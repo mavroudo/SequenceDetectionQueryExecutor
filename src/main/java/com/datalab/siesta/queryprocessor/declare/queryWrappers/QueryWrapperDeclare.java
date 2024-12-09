@@ -26,5 +26,15 @@ public class QueryWrapperDeclare extends QueryWrapper {
         this.enforceNormalMining=false;
     }
 
+    public void setWrapper(QueryWrapperDeclare qwd){
+        this.support = qwd.support;
+        this.setLog_name(qwd.getLog_name());
+        this.enforceNormalMining = qwd.enforceNormalMining;
+        this.indexedEvents = qwd.indexedEvents;
+        this.indexedTraces = qwd.indexedTraces;
+        this.isStateUpToDate = qwd.isStateUpToDate;
+        this.stateAvailable = qwd.stateAvailable;
+    }
+
 
 }

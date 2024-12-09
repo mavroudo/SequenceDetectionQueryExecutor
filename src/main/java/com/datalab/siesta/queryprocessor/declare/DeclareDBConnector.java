@@ -4,6 +4,12 @@ import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
 import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.ExistenceState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.NegativeState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.OrderState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.PositionState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateI;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Trace;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
@@ -64,6 +70,29 @@ public class DeclareDBConnector {
                     return new Tuple2<>(x.getEventType(), all);
                 }).keyBy(x -> x._1).mapValues(x -> x._2).collectAsMap();
     }
+
+    public JavaRDD<PositionState> queryPositionState(String logname){
+        return this.db.queryPositionState(logname);
+    }
+
+    public JavaRDD<ExistenceState> queryExistenceState(String logname){
+        return this.db.queryExistenceState(logname);
+    }
+
+    public JavaRDD<UnorderStateI> queryUnorderStateI(String logname){
+        return this.queryUnorderStateI(logname);
+    }
+    JavaRDD<UnorderStateU> queryUnorderStateU(String logname){
+        return this.queryUnorderStateU(logname);
+    }
+    JavaRDD<OrderState> queryOrderState(String logname){
+        return this.queryOrderState(logname);
+    }
+    JavaRDD<NegativeState> queryNegativeState(String logname){
+        return this.queryNegativeState(logname);
+    }
+
+
 
 
 }

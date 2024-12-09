@@ -8,6 +8,7 @@ import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.Que
 import com.datalab.siesta.queryprocessor.declare.queries.QueryPositions;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseAll;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryPositionWrapper;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryWrapperDeclare;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
@@ -68,15 +69,11 @@ public class DeclareController {
             return new ResponseEntity<>("{\"message\":\"Log database is not found! If it is recently indexed " +
                     "consider executing endpoint /refresh \"", HttpStatus.NOT_FOUND);
         } else {
-            QueryPositionWrapper qpw = new QueryPositionWrapper(support);
-            qpw.setLog_name(log_database);
-            qpw.setMode(position);
-            qpw.setEnforceNormalMining(enforceNormalMining);
-            // TODO: add the other statistics to determine the accuracy of the returned
-            // constraints
-
-            QueryPlan queryPlanPosition = queryPositions.createQueryPlan(qpw, m);
-            QueryResponse qr = queryPlanPosition.execute(qpw);
+            QueryWrapperDeclare qwd = this.createQueryWrapper(m, log_database, support, enforceNormalMining);
+            QueryPositionWrapper qps = new QueryPositionWrapper(support);
+            qps.setWrapper(qwd);
+            QueryPlan queryPlanPosition = queryPositions.createQueryPlan(qps, m);
+            QueryResponse qr = queryPlanPosition.execute(qps);
             return new ResponseEntity<>(objectMapper.writeValueAsString(qr), HttpStatus.OK);
         }
     }
@@ -162,6 +159,16 @@ public class DeclareController {
             QueryResponseAll queryResponseAll = this.queryPlanDeclareAll.execute(log_database, support);
             return new ResponseEntity<>(objectMapper.writeValueAsString(queryResponseAll), HttpStatus.OK);
         }
+    }
+
+    private QueryWrapperDeclare createQueryWrapper(Metadata m, String log_database, double support, boolean enforceNormalMining){
+        QueryWrapperDeclare qwd = new QueryWrapperDeclare(support);
+        qwd.setLog_name(log_database);
+        qwd.setEnforceNormalMining(enforceNormalMining);
+        if(!m.getLast_declare_mined().equals("")){ //there index set
+            qwd.setStateAvailable(true);
+        }
+        return qwd;
     }
 
 }

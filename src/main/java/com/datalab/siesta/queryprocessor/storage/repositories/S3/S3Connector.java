@@ -4,6 +4,12 @@ import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
 import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.ExistenceState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.NegativeState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.OrderState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.PositionState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateI;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -393,4 +399,71 @@ public class S3Connector extends SparkDatabaseRepository {
                     return new IndexPair(trace_id,eventA,eventB,positionA,positionB);
                 });
     }
+
+
+    @Override
+    public JavaRDD<PositionState> queryPositionState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/position.parquet/");
+
+        return sparkSession.read()
+        .parquet(path)
+        .as(Encoders.bean(PositionState.class))
+        .toJavaRDD();
+    }
+
+    @Override
+    public JavaRDD<ExistenceState> queryExistenceState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/existence.parquet/");
+
+        return sparkSession.read()
+        .parquet(path)
+        .as(Encoders.bean(ExistenceState.class))
+        .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<UnorderStateI> queryUnorderStateI(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/unorder/i.parquet/");
+
+        return sparkSession.read()
+        .parquet(path)
+        .as(Encoders.bean(UnorderStateI.class))
+        .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<UnorderStateU> queryUnorderStateU(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/unorder/u.parquet/");
+
+        return sparkSession.read()
+        .parquet(path)
+        .as(Encoders.bean(UnorderStateU.class))
+        .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<OrderState> queryOrderState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/order.parquet");
+
+        return sparkSession.read()
+        .parquet(path)
+        .as(Encoders.bean(OrderState.class))
+        .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<NegativeState> queryNegativeState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/negative.parquet");
+
+        return sparkSession.read()
+        .parquet(path)
+        .as(Encoders.bean(NegativeState.class))
+        .toJavaRDD();
+    }
+
+
 }

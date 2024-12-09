@@ -26,5 +26,4 @@ public class QueryPositionWrapper extends QueryWrapperDeclare {
         this.mode="both";
     }
 
-
 }
