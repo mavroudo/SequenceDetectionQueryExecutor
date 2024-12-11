@@ -31,6 +31,10 @@ public class Metadata {
      */
     private String last_interval;
     /**
+     * If this log database was sent via streaming or batching.
+     */
+    private Boolean streaming;
+    /**
      * Name of the log database
      */
     private String logname;
@@ -83,6 +87,7 @@ public class Metadata {
         this.events = json.getAs("events");
         this.filename = json.getAs("filename");
         this.has_previous_stored = json.getAs("has_previous_stored");
+        this.streaming = json.getAs("streaming");
 //        this.last_interval = json.getAs("last_interval");
         this.logname = json.getAs("log_name");
         Integer l = json.getAs("lookback");
@@ -104,6 +109,7 @@ public class Metadata {
         this.events = Long.valueOf(attributes.get("events"));
         this.filename = attributes.get("filename");
         this.has_previous_stored = (Boolean) Boolean.valueOf(attributes.get("has_previous_stored"));
+        this.streaming = (Boolean) Boolean.valueOf(attributes.get("streaming"));
 //        this.last_interval = attributes.get("last_interval");
         this.logname = attributes.get("log_name");
         this.lookback = Long.valueOf(attributes.get("lookback"));
@@ -122,6 +128,7 @@ public class Metadata {
         this.events = Long.valueOf(attributes.get("events"));
         this.filename = attributes.get("filename");
         this.has_previous_stored = (Boolean) Boolean.valueOf(attributes.get("has_previous_stored"));
+        this.streaming = (Boolean) Boolean.valueOf(attributes.get("streaming"));
         this.last_interval = attributes.get("last_interval");
         this.logname = attributes.get("log_name");
         this.lookback = Long.valueOf(attributes.get("lookback"));
@@ -149,6 +156,8 @@ public class Metadata {
     public Boolean getHas_previous_stored() {
         return has_previous_stored;
     }
+
+    public Boolean getStreaming() {return streaming;}
 
     public String getLast_interval() {
         return last_interval;
@@ -205,6 +214,7 @@ public class Metadata {
                 .append("\n  has_previous_stored = ").append(has_previous_stored)
                 .append(",\n  compression = ").append(compression)
                 .append(",\n  filename = ").append(filename)
+                .append(",\n streaming = ").append(streaming)
                 .append(",\n  events = ").append(events)
                 .append(",\n  mode = ").append(mode)
                 .append(",\n  logname = ").append(logname)
