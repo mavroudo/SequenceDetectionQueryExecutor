@@ -68,11 +68,6 @@ public class DeltaConnector extends SparkDatabaseRepository {
             String value = row.getAs("value");
             metadataMap.put(key, value);
         }
-        System.out.println("Kleidia: ");
-        System.out.println(metadataMap.keySet());
-        for (String key : metadataMap.keySet()) {
-            System.out.println(key + ": " + metadataMap.get(key));
-        }
         return new Metadata(metadataMap, "delta");
     }
 
