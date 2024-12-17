@@ -11,7 +11,7 @@ public class ExistenceState implements Serializable{
 
     private String event_type;
     private int occurrences;
-    private double contained;
+    private long contained;
 
     public ExistenceState(){
         

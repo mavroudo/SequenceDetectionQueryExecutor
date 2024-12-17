@@ -4,6 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -35,6 +36,7 @@ public class QueryPlanState  implements QueryPlan{
      */
     protected Metadata metadata;
 
+    @Autowired
     public QueryPlanState(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext) {
         this.declareDBConnector = declareDBConnector;
         this.javaSparkContext = javaSparkContext;
