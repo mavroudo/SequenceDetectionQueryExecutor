@@ -80,16 +80,16 @@ public class DeclareDBConnector {
     }
 
     public JavaRDD<UnorderStateI> queryUnorderStateI(String logname){
-        return this.queryUnorderStateI(logname);
+        return this.db.queryUnorderStateI(logname);
     }
-    JavaRDD<UnorderStateU> queryUnorderStateU(String logname){
-        return this.queryUnorderStateU(logname);
+    public JavaRDD<UnorderStateU> queryUnorderStateU(String logname){
+        return this.db.queryUnorderStateU(logname);
     }
-    JavaRDD<OrderState> queryOrderState(String logname){
-        return this.queryOrderState(logname);
+    public JavaRDD<OrderState> queryOrderState(String logname){
+        return this.db.queryOrderState(logname);
     }
-    JavaRDD<NegativeState> queryNegativeState(String logname){
-        return this.queryNegativeState(logname);
+    public JavaRDD<NegativeState> queryNegativeState(String logname){
+        return this.db.queryNegativeState(logname);
     }
 
 

@@ -13,10 +13,7 @@ import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryWrapperDecla
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
-import com.datalab.siesta.queryprocessor.services.LoadInfo;
-import com.datalab.siesta.queryprocessor.services.LoadedEventTypes;
 import com.datalab.siesta.queryprocessor.services.LoadedMetadata;
-import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

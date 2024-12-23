@@ -11,24 +11,34 @@ import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.broadcast.Broadcast;
 
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.model.EventN;
+import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
 import com.datalab.siesta.queryprocessor.declare.model.ExistenceConstraint;
 import com.datalab.siesta.queryprocessor.declare.model.declareState.ExistenceState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateI;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.QueryPlanState;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseExistence;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryExistenceWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+import com.datalab.siesta.queryprocessor.storage.DBConnector;
+import com.datalab.siesta.queryprocessor.declare.model.UnorderedHelper;
+import com.datalab.siesta.queryprocessor.declare.model.UnordedConstraint;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.beans.factory.annotation.Autowired;
+
 
 
 import scala.Tuple2;
@@ -37,9 +47,12 @@ import scala.Tuple2;
 @RequestScope
 public class QueryPlanExistancesState extends QueryPlanState {
 
+    private DBConnector dbConnector;
+
     @Autowired
-    public QueryPlanExistancesState(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext) {
+    public QueryPlanExistancesState(DeclareDBConnector declareDBConnector, JavaSparkContext javaSparkContext, DBConnector dbConnector) {
         super(declareDBConnector, javaSparkContext);
+        this.dbConnector = dbConnector;
     }
 
     @Override
@@ -53,10 +66,13 @@ public class QueryPlanExistancesState extends QueryPlanState {
         if(Arrays.stream(existenceConstraints).anyMatch(qew.getModes()::contains)){
             this.calculateExistence(qew.getModes(), qre, bTraces, bSupport);
         }
-
-         
+        
+        String[] unorderedConstraints = {"co-existence","not-co-existence", "choice",
+                "exclusive-choice", "responded-existence"};
+        if(Arrays.stream(unorderedConstraints).anyMatch(qew.getModes()::contains)){
+            this.calculateUnordered(qew.getModes(), qre, bTraces, bSupport);
+        }
         return qre;
-
     }
 
     private void calculateExistence(List<String> modes, QueryResponseExistence qre, Broadcast<Long> bTraces, Broadcast<Double> bSupport){
@@ -134,6 +150,92 @@ public class QueryPlanExistancesState extends QueryPlanState {
         }).map(x->{
             return new EventN(x.getEvent_type(), x.getN(), x.getOccurrences());
         }).collect(Collectors.toList());
+    }
+
+    private void calculateUnordered(List<String> modes, QueryResponseExistence qre, Broadcast<Long> bTraces, Broadcast<Double> bSupport){
+        //get all possible activities from database to create activity matrix
+        List<String> activities = dbConnector.getEventNames(metadata.getLogname());
+        JavaRDD<String> activityRDD = javaSparkContext.parallelize(activities);
+        JavaPairRDD<String,String> activityMatrix = activityRDD.cartesian(activityRDD);
+
+        JavaRDD<UnorderStateI> iTable = declareDBConnector.queryUnorderStateI(metadata.getLogname());
+        JavaRDD<UnorderStateU> uTable = declareDBConnector.queryUnorderStateU(metadata.getLogname());
+
+        // Extract the unordered constraints by merging the activity matrix - iTable - uTable
+        List<UnordedConstraint> unorderedConstraints = activityMatrix
+            .keyBy((Function<Tuple2<String, String>, String>) x-> x._1())
+            .leftOuterJoin(uTable.keyBy((Function<UnorderStateU, String>) x-> x.get_1()))
+            .map(x -> {
+                String eventA = x._2()._1()._1();
+                String eventB = x._2()._1()._2();
+                String key = eventA.compareTo(eventB) < 0 ? eventA + eventB : eventB + eventA;
+                return new UnorderedHelper(eventA, eventB, x._2()._2().orElse(new UnorderStateU("", 0L)).get_2(), 0L, 0L, key);
+            })
+            .keyBy((Function<UnorderedHelper, String>) x-> x.getEventB())
+            .leftOuterJoin(uTable.keyBy((Function<UnorderStateU, String>) x-> x.get_1()))
+            .map(x->{
+                return new UnorderedHelper(x._2()._1().getEventA(), x._2()._1().getEventB(), x._2()._1().getUa(), x._2()._2().orElse(new UnorderStateU("", 0L)).get_2(), 0L, x._2()._1().getKey());
+            })
+            .keyBy((Function<UnorderedHelper, String>) x-> x.getKey())
+            .leftOuterJoin(iTable.keyBy((Function<UnorderStateI, String>) x-> x.get_1() + x.get_2()))
+            .map(x -> {
+                UnorderedHelper p = x._2()._1();
+                return new UnorderedHelper(p.getEventA(), p.getEventB(), p.getUa(), p.getUb(), x._2()._2().orElse(new UnorderStateI("", "", 0L)).get_3(), p.getKey());
+            })
+            .distinct()
+            .flatMap((FlatMapFunction<UnorderedHelper, UnordedConstraint>) x ->{
+                List<UnordedConstraint> l = new ArrayList<>();
+                long r = bTraces.getValue() - x.getUa() + x.getPairs();
+                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "responded-existence"));
+                if(x.getEventA().compareTo(x.getEventB()) < 0){
+                    r = x.getUa() + x.getUb() - x.getPairs();
+                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "choice"));
+                    r = bTraces.getValue() - x.getUa() - x.getUb() + 2 * x.getPairs();
+                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "co-existence"));
+                    //exclusive_choice = total - co-existen
+                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), bTraces.getValue()-r), "exclusive-choice"));
+                    //not-existence : traces where a exist and not b, traces where b exists and not a, traces where neither occur
+                    r = bTraces.getValue() - x.getPairs();
+                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "not-co-existence"));
+                }
+                return l.iterator();
+            } )
+            .filter((Function<UnordedConstraint, Boolean>)  x -> (x.getEventPairSupport().getSupport() / (double) bTraces.getValue()) >= bSupport.getValue())
+            .map(x->{
+                EventPairSupport eps = new EventPairSupport();
+                eps.setEventA(x.getEventPairSupport().getEventA());
+                eps.setEventB(x.getEventPairSupport().getEventB());
+                eps.setSupport(x.getEventPairSupport().getSupport()/(double)bTraces.getValue());
+                return new UnordedConstraint(eps, x.getRule());
+            })
+            .collect();
+
+            if(modes.contains("responded-existence")){
+                qre.setRespondedExistence(getUnorderToResponse("responded-existence", unorderedConstraints));
+            }
+            if(modes.contains("choice")){
+                qre.setChoice(getUnorderToResponse("choice", unorderedConstraints));
+            }
+            if(modes.contains("co-existence")){
+                qre.setCoExistence(getUnorderToResponse("co-existence", unorderedConstraints));
+            }
+            if(modes.contains("exclusive-choice")){
+                qre.setExclusiveChoice(getUnorderToResponse("exclusive-choice", unorderedConstraints));
+            }
+            if(modes.contains("not-co-existence")){
+                qre.setNotCoExistence(getUnorderToResponse("not-co-existence", unorderedConstraints));
+            }
+            
+    }
+
+    private List<EventPairSupport> getUnorderToResponse(String rule, List<UnordedConstraint> constraints){
+        return constraints.stream().filter(x->{
+            return x.getRule().equals(rule);
+        })
+        .map(x->{
+            return x.getEventPairSupport();
+        })
+        .collect(Collectors.toList());
     }
 
 }

@@ -6,4 +6,7 @@ src/main/resources/lib/*.jar
 siesta-query-processor.iml
 experiments/*
 
+# VS code folders
 .vscode/*
+.metals/*
+.bloop/*
