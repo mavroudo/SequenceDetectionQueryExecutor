@@ -28,6 +28,7 @@ import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderState
 import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.QueryPlanState;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseExistence;
+import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseExistenceState;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryExistenceWrapper;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
@@ -58,21 +59,34 @@ public class QueryPlanExistancesState extends QueryPlanState {
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryExistenceWrapper qew = (QueryExistenceWrapper) qw;
+        this.extractStatistics(qew);
+
         Broadcast<Long> bTraces = javaSparkContext.broadcast(metadata.getTraces());
         Broadcast<Double> bSupport = javaSparkContext.broadcast(qew.getSupport());
-        QueryResponseExistence qre = new QueryResponseExistence();
+        QueryResponseExistenceState response = new QueryResponseExistenceState();
 
         String[] existenceConstraints = {"existence","absence","exactly"};
         if(Arrays.stream(existenceConstraints).anyMatch(qew.getModes()::contains)){
-            this.calculateExistence(qew.getModes(), qre, bTraces, bSupport);
+            this.calculateExistence(qew.getModes(), response, bTraces, bSupport);
         }
         
         String[] unorderedConstraints = {"co-existence","not-co-existence", "choice",
                 "exclusive-choice", "responded-existence"};
         if(Arrays.stream(unorderedConstraints).anyMatch(qew.getModes()::contains)){
-            this.calculateUnordered(qew.getModes(), qre, bTraces, bSupport);
+            this.calculateUnordered(qew.getModes(), response, bTraces, bSupport);
         }
-        return qre;
+
+        response.setUpToDate(qew.isStateUpToDate());
+        if(!qew.isStateUpToDate()){
+            response.setEventsPercentage((qew.getIndexedEvents()/metadata.getEvents())*100);
+            response.setTracesPercentage((qew.getIndexedTraces()/metadata.getTraces())*100);
+            response.setMessage("State is not fully updated. Consider re-running the preprocess to get 100% accurate constraints");
+        }else{
+            response.setEventsPercentage(100);
+            response.setTracesPercentage(100);
+        }
+
+        return response;
     }
 
     private void calculateExistence(List<String> modes, QueryResponseExistence qre, Broadcast<Long> bTraces, Broadcast<Double> bSupport){
