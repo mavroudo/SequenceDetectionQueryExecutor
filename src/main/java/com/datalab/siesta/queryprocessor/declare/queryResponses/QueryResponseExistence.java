@@ -1,10 +1,9 @@
 package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.datalab.siesta.queryprocessor.declare.model.EventN;
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
 public class QueryResponseExistence implements QueryResponse {

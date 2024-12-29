@@ -5,12 +5,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_EMPTY) // Exclude null or empty fields
 public class QueryResponseExistenceState extends QueryResponseExistence{
 
     @JsonProperty("state up to date")
