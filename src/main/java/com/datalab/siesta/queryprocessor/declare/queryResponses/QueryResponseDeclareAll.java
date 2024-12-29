@@ -1,9 +1,10 @@
 package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
 
+import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class QueryResponseAll {
+public class QueryResponseDeclareAll implements QueryResponse{
 
     @JsonProperty("existence patterns")
     private QueryResponseExistence queryResponseExistence;
@@ -20,7 +21,7 @@ public class QueryResponseAll {
     @JsonProperty("ordered relations chain")
     private QueryResponseOrderedRelations queryResponseOrderedRelationsChain;
 
-    public QueryResponseAll(QueryResponseExistence queryResponseExistence, QueryResponsePosition queryResponsePosition,
+    public QueryResponseDeclareAll(QueryResponseExistence queryResponseExistence, QueryResponsePosition queryResponsePosition,
                             QueryResponseOrderedRelations queryResponseOrderedRelations, QueryResponseOrderedRelations
                                     queryResponseOrderedRelationsAlternate, QueryResponseOrderedRelations
                                     queryResponseOrderedRelationsChain) {

@@ -1,5 +1,6 @@
 package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.datalab.siesta.queryprocessor.declare.model.EventN;
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
@@ -22,6 +23,20 @@ public class QueryResponseExistence implements QueryResponse {
     private List<EventPairSupport> exclusiveChoice;
     @JsonProperty("responded existence")
     private List<EventPairSupport> respondedExistence;
+
+    @JsonIgnore
+    public QueryResponseExistence getQueryResponseExistence() {
+        QueryResponseExistence queryResponseExistence = new QueryResponseExistence();
+        queryResponseExistence.setExistence(this.getExistence());
+        queryResponseExistence.setAbsence(this.getAbsence());
+        queryResponseExistence.setExactly(this.getExactly());
+        queryResponseExistence.setCoExistence(this.getCoExistence());
+        queryResponseExistence.setNotCoExistence(this.getNotCoExistence());
+        queryResponseExistence.setChoice(this.getChoice());
+        queryResponseExistence.setExclusiveChoice(this.getExclusiveChoice());
+        queryResponseExistence.setRespondedExistence(this.getRespondedExistence());
+        return queryResponseExistence;
+    }
 
     public QueryResponseExistence() {
     }

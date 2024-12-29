@@ -32,11 +32,28 @@ public class QueryPlanPositionsState extends QueryPlanState {
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryPositionWrapper qpw = (QueryPositionWrapper) qw;
-        this.extractStatistics(qpw);
+        
 
         Broadcast<Double> bSupport = this.javaSparkContext.broadcast(qpw.getSupport());
         Broadcast<Long> bTraces = this.javaSparkContext.broadcast(metadata.getTraces());
 
+        QueryResponsePositionState response = this.extractConstraintsFunction(bSupport,bTraces,qpw);
+        
+        this.extractStatistics(qpw);
+        response.setUpToDate(qpw.isStateUpToDate());
+        if(!qpw.isStateUpToDate()){
+            response.setEventsPercentage((qpw.getIndexedEvents()/metadata.getEvents())*100);
+            response.setTracesPercentage((qpw.getIndexedTraces()/metadata.getTraces())*100);
+            response.setMessage("State is not fully updated. Consider re-running the preprocess to get 100% accurate constraints");
+        }else{
+            response.setEventsPercentage(100);
+            response.setTracesPercentage(100);
+        }
+
+        return response;
+    }
+
+    public QueryResponsePositionState extractConstraintsFunction(Broadcast<Double> bSupport, Broadcast<Long> bTraces, QueryPositionWrapper qpw){
         JavaRDD<Tuple3<String,String,Double>> data = this.declareDBConnector.queryPositionState(metadata.getLogname())
             .map((Function<PositionState,Tuple3<String,String,Double>>)x->{
                 return new Tuple3<String,String,Double>(x.getRule(),x.getEvent_type(),x.getOccurrences()/bTraces.getValue());
@@ -67,17 +84,6 @@ public class QueryPlanPositionsState extends QueryPlanState {
             response.setFirstTuple(firsts);
             response.setLastTuple(lasts);
         }
-        
-        response.setUpToDate(qpw.isStateUpToDate());
-        if(!qpw.isStateUpToDate()){
-            response.setEventsPercentage((qpw.getIndexedEvents()/metadata.getEvents())*100);
-            response.setTracesPercentage((qpw.getIndexedTraces()/metadata.getTraces())*100);
-            response.setMessage("State is not fully updated. Consider re-running the preprocess to get 100% accurate constraints");
-        }else{
-            response.setEventsPercentage(100);
-            response.setTracesPercentage(100);
-        }
-
         return response;
     }
     

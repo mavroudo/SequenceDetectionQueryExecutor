@@ -1,13 +1,12 @@
 package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Setter;
 import lombok.Getter;
 
 @Getter
 @Setter
-@JsonInclude(JsonInclude.Include.NON_EMPTY) // Exclude null or empty fields
 public class QueryResponsePositionState extends QueryResponsePosition{
 
     @JsonProperty("state up to date")
@@ -24,5 +23,12 @@ public class QueryResponsePositionState extends QueryResponsePosition{
 
     public QueryResponsePositionState(){}
 
+    @JsonIgnore
+    public QueryResponsePosition getQueryResponsePosition(){
+        QueryResponsePosition queryResponsePosition = new QueryResponsePosition();
+        queryResponsePosition.setFirst(this.getFirst());
+        queryResponsePosition.setLast(this.getLast());
+        return queryResponsePosition;
+    }
 
 }

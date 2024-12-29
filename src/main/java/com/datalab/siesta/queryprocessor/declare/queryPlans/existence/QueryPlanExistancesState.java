@@ -54,23 +54,19 @@ public class QueryPlanExistancesState extends QueryPlanState {
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryExistenceWrapper qew = (QueryExistenceWrapper) qw;
-        this.extractStatistics(qew);
+        
 
         Broadcast<Long> bTraces = javaSparkContext.broadcast(metadata.getTraces());
         Broadcast<Double> bSupport = javaSparkContext.broadcast(qew.getSupport());
-        QueryResponseExistenceState response = new QueryResponseExistenceState();
 
-        String[] existenceConstraints = {"existence","absence","exactly"};
-        if(Arrays.stream(existenceConstraints).anyMatch(qew.getModes()::contains)){
-            this.calculateExistence(qew.getModes(), response, bTraces, bSupport);
-        }
+        //get all possible activities from database to create activity matrix
+        List<String> activities = dbConnector.getEventNames(metadata.getLogname());
+        JavaRDD<String> activityRDD = javaSparkContext.parallelize(activities);
+        JavaPairRDD<String,String> activityMatrix = activityRDD.cartesian(activityRDD);
         
-        String[] unorderedConstraints = {"co-existence","not-co-existence", "choice",
-                "exclusive-choice", "responded-existence"};
-        if(Arrays.stream(unorderedConstraints).anyMatch(qew.getModes()::contains)){
-            this.calculateUnordered(qew.getModes(), response, bTraces, bSupport);
-        }
+        QueryResponseExistenceState response = this.extractConstraintsFunction(bSupport, bTraces, activityMatrix, qew);
 
+        this.extractStatistics(qew);
         response.setUpToDate(qew.isStateUpToDate());
         if(!qew.isStateUpToDate()){
             response.setEventsPercentage((qew.getIndexedEvents()/metadata.getEvents())*100);
@@ -81,6 +77,23 @@ public class QueryPlanExistancesState extends QueryPlanState {
             response.setTracesPercentage(100);
         }
 
+        return response;
+    }
+
+    public QueryResponseExistenceState extractConstraintsFunction(Broadcast<Double> bSupport, Broadcast<Long> bTraces, JavaPairRDD<String,String> activityMatrix, 
+            QueryExistenceWrapper qew){
+        QueryResponseExistenceState response = new QueryResponseExistenceState();
+
+        String[] existenceConstraints = {"existence","absence","exactly"};
+        if(Arrays.stream(existenceConstraints).anyMatch(qew.getModes()::contains)){
+            this.calculateExistence(qew.getModes(), response, bTraces, bSupport);
+        }
+        
+        String[] unorderedConstraints = {"co-existence","not-co-existence", "choice",
+                "exclusive-choice", "responded-existence"};
+        if(Arrays.stream(unorderedConstraints).anyMatch(qew.getModes()::contains)){
+            this.calculateUnordered(qew.getModes(), response, bTraces, bSupport, activityMatrix);
+        }
         return response;
     }
 
@@ -161,11 +174,8 @@ public class QueryPlanExistancesState extends QueryPlanState {
         }).collect(Collectors.toList());
     }
 
-    private void calculateUnordered(List<String> modes, QueryResponseExistence qre, Broadcast<Long> bTraces, Broadcast<Double> bSupport){
-        //get all possible activities from database to create activity matrix
-        List<String> activities = dbConnector.getEventNames(metadata.getLogname());
-        JavaRDD<String> activityRDD = javaSparkContext.parallelize(activities);
-        JavaPairRDD<String,String> activityMatrix = activityRDD.cartesian(activityRDD);
+    private void calculateUnordered(List<String> modes, QueryResponseExistence qre, Broadcast<Long> bTraces, Broadcast<Double> bSupport, JavaPairRDD<String,String> activityMatrix){
+        
 
         JavaRDD<UnorderStateI> iTable = declareDBConnector.queryUnorderStateI(metadata.getLogname());
         JavaRDD<UnorderStateU> uTable = declareDBConnector.queryUnorderStateU(metadata.getLogname());

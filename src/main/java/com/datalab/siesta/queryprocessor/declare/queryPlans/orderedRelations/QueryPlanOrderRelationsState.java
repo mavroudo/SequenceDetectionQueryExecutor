@@ -45,16 +45,19 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
     @Override
     public QueryResponse execute(QueryWrapper qw) {
         QueryOrderRelationWrapper qow = (QueryOrderRelationWrapper) qw;
-        extractAll(qow);
 
+        //create activity matrix from the event names
+        List<String> activities = dbConnector.getEventNames(metadata.getLogname());
+        JavaRDD<String> activityRDD = javaSparkContext.parallelize(activities);
+        JavaPairRDD<String,String> activityMatrix = activityRDD.cartesian(activityRDD);
 
         //Extract All constraints
-        List<PairConstraint> constraints = this.extractAll(qow);
+        Broadcast<Double> bSupport = this.javaSparkContext.broadcast(qow.getSupport());
+        List<PairConstraint> constraints = this.extractAll(bSupport, activityMatrix);
 
         //filter the constraints to create the response
         QueryResponseOrderedRelationsState response = new QueryResponseOrderedRelationsState();
-        this.setConstraints(qow, constraints, response);
-        
+        this.setSpecificConstraints(qow, constraints, response);
         
         this.extractStatistics(qow);
         response.setUpToDate(qow.isStateUpToDate());
@@ -70,11 +73,41 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
         return response;
     }
 
-    public List<PairConstraint> extractAll(QueryOrderRelationWrapper qow){
-        //create activity matrix from the event names
-        List<String> activities = dbConnector.getEventNames(metadata.getLogname());
-        JavaRDD<String> activityRDD = javaSparkContext.parallelize(activities);
-        JavaPairRDD<String,String> activityMatrix = activityRDD.cartesian(activityRDD);
+    public QueryResponseOrderedRelationsState extractConstraintFunction(List<PairConstraint> constraints, String mode){
+        QueryResponseOrderedRelationsState response = new QueryResponseOrderedRelationsState();
+        response.setMode(mode);
+        for(PairConstraint uc:constraints){
+            if (mode.equals("simple")){
+                if(uc.getRule().equals("response")){  
+                    response.getResponse().add(uc.getEventPairSupport());
+                }else if(uc.getRule().equals("precedence") ){
+                    response.getPrecedence().add(uc.getEventPairSupport());
+                }else if(uc.getRule().equals("succession")){
+                    response.getSuccession().add(uc.getEventPairSupport());
+                }else if(uc.getRule().equals("not-succession")){
+                    response.getNotSuccession().add(uc.getEventPairSupport());
+                }
+            }else{
+                if(uc.getRule().contains("response") && uc.getRule().contains(mode)){  
+                    response.getResponse().add(uc.getEventPairSupport());
+                }else if(uc.getRule().contains("precedence") && uc.getRule().contains(mode) ){
+                    response.getPrecedence().add(uc.getEventPairSupport());
+                }else if(uc.getRule().contains("succession") && uc.getRule().contains(mode)){
+                    response.getSuccession().add(uc.getEventPairSupport());
+                }
+                if(mode.equals("alternate") && uc.getRule().equals("not-succession")){
+                    response.getNotSuccession().add(uc.getEventPairSupport());
+                }else if(mode.equals("chain") && uc.getRule().equals("not-chain-succession")){
+                    response.getNotSuccession().add(uc.getEventPairSupport());
+                }
+            }
+            
+        }
+        return response;
+
+    }
+
+    public List<PairConstraint> extractAll(Broadcast<Double> bSupport, JavaPairRDD<String,String> activityMatrix){
         //load order constraints from the database
         JavaRDD<OrderState> orderStateRDD = this.declareDBConnector.queryOrderState(this.metadata.getLogname());
 
@@ -101,8 +134,6 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
             return new Tuple2<>(x.getEvent(),x.getSupport());
         }).collectAsMap();
         Broadcast<Map<String,Double>> bEventOccurrences = javaSparkContext.broadcast(eventOccurrences);
-
-        Broadcast<Double> bSupport = javaSparkContext.broadcast(qow.getSupport());
 
         List<PairConstraint> constraints2 = orderStateRDD.flatMap((FlatMapFunction<OrderState,PairConstraint>)x->{
             List<PairConstraint> l = new ArrayList<>();
@@ -156,7 +187,7 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
 
     }
 
-    private void setConstraints(QueryOrderRelationWrapper qow, List<PairConstraint> constraints,
+    private void setSpecificConstraints(QueryOrderRelationWrapper qow, List<PairConstraint> constraints,
         QueryResponseOrderedRelationsState response){
         response.setMode(qow.getMode());
         // Wrapper has 3 modes simple, alternate and chain. 
