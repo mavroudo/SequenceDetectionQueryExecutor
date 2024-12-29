@@ -9,12 +9,12 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
-public class UnordedConstraint implements Serializable{
+public class PairConstraint implements Serializable{
 
     private EventPairSupport eventPairSupport;
     private String rule;
 
-    public UnordedConstraint(EventPairSupport eventPairSupport, String rule) {
+    public PairConstraint(EventPairSupport eventPairSupport, String rule) {
         this.eventPairSupport = eventPairSupport;
         this.rule = rule;
     }

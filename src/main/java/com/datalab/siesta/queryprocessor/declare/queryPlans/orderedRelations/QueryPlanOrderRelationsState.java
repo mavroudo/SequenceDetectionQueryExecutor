@@ -13,7 +13,7 @@ import org.apache.spark.broadcast.Broadcast;
 import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
 import com.datalab.siesta.queryprocessor.declare.model.EventSupport;
-import com.datalab.siesta.queryprocessor.declare.model.UnordedConstraint;
+import com.datalab.siesta.queryprocessor.declare.model.PairConstraint;
 import com.datalab.siesta.queryprocessor.declare.model.declareState.NegativeState;
 import com.datalab.siesta.queryprocessor.declare.model.declareState.OrderState;
 import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
@@ -49,7 +49,7 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
 
 
         //Extract All constraints
-        List<UnordedConstraint> constraints = this.extractAll(qow);
+        List<PairConstraint> constraints = this.extractAll(qow);
 
         //filter the constraints to create the response
         QueryResponseOrderedRelationsState response = new QueryResponseOrderedRelationsState();
@@ -70,7 +70,7 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
         return response;
     }
 
-    public List<UnordedConstraint> extractAll(QueryOrderRelationWrapper qow){
+    public List<PairConstraint> extractAll(QueryOrderRelationWrapper qow){
         //create activity matrix from the event names
         List<String> activities = dbConnector.getEventNames(metadata.getLogname());
         JavaRDD<String> activityRDD = javaSparkContext.parallelize(activities);
@@ -78,8 +78,8 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
         //load order constraints from the database
         JavaRDD<OrderState> orderStateRDD = this.declareDBConnector.queryOrderState(this.metadata.getLogname());
 
-        List<UnordedConstraint> constraints = new ArrayList<>();
-        List<UnordedConstraint> constraints0 = activityMatrix.filter(x->{
+        List<PairConstraint> constraints = new ArrayList<>();
+        List<PairConstraint> constraints0 = activityMatrix.filter(x->{
             return !x._1().equals(x._2());
         }).keyBy(x->{
             return new Tuple2<>(x._1(),x._2());
@@ -92,7 +92,7 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
                 return new Tuple2<>(x.getEventA(),x.getEventB());
         })).map(x->{
             EventPairSupport eps = new EventPairSupport(x._1()._1(),x._1()._2(),1.0);
-            return new UnordedConstraint(eps,"not-chain-succession");
+            return new PairConstraint(eps,"not-chain-succession");
         }).collect();
         constraints.addAll(constraints0);
         //get unique traces per event type
@@ -104,21 +104,21 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
 
         Broadcast<Double> bSupport = javaSparkContext.broadcast(qow.getSupport());
 
-        List<UnordedConstraint> constraints2 = orderStateRDD.flatMap((FlatMapFunction<OrderState,UnordedConstraint>)x->{
-            List<UnordedConstraint> l = new ArrayList<>();
+        List<PairConstraint> constraints2 = orderStateRDD.flatMap((FlatMapFunction<OrderState,PairConstraint>)x->{
+            List<PairConstraint> l = new ArrayList<>();
             double sup = x.getOccurrences()/bEventOccurrences.getValue().get(x.getEventB());
             if(x.getRule().contains("response")){
                 sup = x.getOccurrences()/bEventOccurrences.getValue().get(x.getEventA());
             }
-            l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),x.getRule()));
+            l.add(new PairConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),x.getRule()));
             if(x.getRule().contains("chain")){
-                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),"chain-succession"));
-                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),1-sup),"not-chain-succession"));
+                l.add(new PairConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),"chain-succession"));
+                l.add(new PairConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),1-sup),"not-chain-succession"));
             }else if(x.getRule().contains("alternate")){
-                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),"alternate-succession"));
+                l.add(new PairConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),"alternate-succession"));
             }else{
-                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),"succession"));
-                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),1-sup),"not-succession"));
+                l.add(new PairConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),sup),"succession"));
+                l.add(new PairConstraint(new EventPairSupport(x.getEventA(),x.getEventB(),1-sup),"not-succession"));
             }
             return l.iterator();
         })
@@ -130,7 +130,7 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
             eps.setEventA(x.getEventPairSupport().getEventA());
             eps.setEventB(x.getEventPairSupport().getEventB());
             eps.setSupport(x.getEventPairSupport().getSupport()*y.getEventPairSupport().getSupport());
-            return new UnordedConstraint(eps,x.getRule());
+            return new PairConstraint(eps,x.getRule());
         })
         .filter(x->{
             return x._2().getEventPairSupport().getSupport()>=bSupport.getValue();
@@ -144,10 +144,10 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
 
         //handle negatives
         JavaRDD<NegativeState> negativeStateRDD = this.declareDBConnector.queryNegativeState(this.metadata.getLogname());
-        List<UnordedConstraint> constraints3 = negativeStateRDD
+        List<PairConstraint> constraints3 = negativeStateRDD
         .map(x->{
             EventPairSupport eps = new EventPairSupport(x.get_1(),x.get_2(),1.0);
-            return new UnordedConstraint(eps,"not-succession");
+            return new PairConstraint(eps,"not-succession");
         })
         .collect();
         constraints.addAll(constraints3);  
@@ -156,12 +156,12 @@ public class QueryPlanOrderRelationsState extends QueryPlanState {
 
     }
 
-    private void setConstraints(QueryOrderRelationWrapper qow, List<UnordedConstraint> constraints,
+    private void setConstraints(QueryOrderRelationWrapper qow, List<PairConstraint> constraints,
         QueryResponseOrderedRelationsState response){
         response.setMode(qow.getMode());
         // Wrapper has 3 modes simple, alternate and chain. 
         // Based on these values this methods keeps the correct constraints.
-        for(UnordedConstraint uc:constraints){
+        for(PairConstraint uc:constraints){
             if(qow.getMode().equals("simple")){
                 if(uc.getRule().equals("response") && uc.getRule().equals(qow.getConstraint())){  
                     response.getResponse().add(uc.getEventPairSupport());

@@ -29,7 +29,7 @@ import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryRespo
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 import com.datalab.siesta.queryprocessor.storage.DBConnector;
 import com.datalab.siesta.queryprocessor.declare.model.UnorderedHelper;
-import com.datalab.siesta.queryprocessor.declare.model.UnordedConstraint;
+import com.datalab.siesta.queryprocessor.declare.model.PairConstraint;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -171,7 +171,7 @@ public class QueryPlanExistancesState extends QueryPlanState {
         JavaRDD<UnorderStateU> uTable = declareDBConnector.queryUnorderStateU(metadata.getLogname());
 
         // Extract the unordered constraints by merging the activity matrix - iTable - uTable
-        List<UnordedConstraint> unorderedConstraints = activityMatrix
+        List<PairConstraint> unorderedConstraints = activityMatrix
             .keyBy((Function<Tuple2<String, String>, String>) x-> x._1())
             .leftOuterJoin(uTable.keyBy((Function<UnorderStateU, String>) x-> x.get_1()))
             .map(x -> {
@@ -192,30 +192,30 @@ public class QueryPlanExistancesState extends QueryPlanState {
                 return new UnorderedHelper(p.getEventA(), p.getEventB(), p.getUa(), p.getUb(), x._2()._2().orElse(new UnorderStateI("", "", 0L)).get_3(), p.getKey());
             })
             .distinct()
-            .flatMap((FlatMapFunction<UnorderedHelper, UnordedConstraint>) x ->{
-                List<UnordedConstraint> l = new ArrayList<>();
+            .flatMap((FlatMapFunction<UnorderedHelper, PairConstraint>) x ->{
+                List<PairConstraint> l = new ArrayList<>();
                 long r = bTraces.getValue() - x.getUa() + x.getPairs();
-                l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "responded-existence"));
+                l.add(new PairConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "responded-existence"));
                 if(x.getEventA().compareTo(x.getEventB()) < 0){
                     r = x.getUa() + x.getUb() - x.getPairs();
-                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "choice"));
+                    l.add(new PairConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "choice"));
                     r = bTraces.getValue() - x.getUa() - x.getUb() + 2 * x.getPairs();
-                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "co-existence"));
+                    l.add(new PairConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "co-existence"));
                     //exclusive_choice = total - co-existen
-                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), bTraces.getValue()-r), "exclusive-choice"));
+                    l.add(new PairConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), bTraces.getValue()-r), "exclusive-choice"));
                     //not-existence : traces where a exist and not b, traces where b exists and not a, traces where neither occur
                     r = bTraces.getValue() - x.getPairs();
-                    l.add(new UnordedConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "not-co-existence"));
+                    l.add(new PairConstraint(new EventPairSupport(x.getEventA(), x.getEventB(), r), "not-co-existence"));
                 }
                 return l.iterator();
             } )
-            .filter((Function<UnordedConstraint, Boolean>)  x -> (x.getEventPairSupport().getSupport() / (double) bTraces.getValue()) >= bSupport.getValue())
+            .filter((Function<PairConstraint, Boolean>)  x -> (x.getEventPairSupport().getSupport() / (double) bTraces.getValue()) >= bSupport.getValue())
             .map(x->{
                 EventPairSupport eps = new EventPairSupport();
                 eps.setEventA(x.getEventPairSupport().getEventA());
                 eps.setEventB(x.getEventPairSupport().getEventB());
                 eps.setSupport(x.getEventPairSupport().getSupport()/(double)bTraces.getValue());
-                return new UnordedConstraint(eps, x.getRule());
+                return new PairConstraint(eps, x.getRule());
             })
             .collect();
 
@@ -237,7 +237,7 @@ public class QueryPlanExistancesState extends QueryPlanState {
             
     }
 
-    private List<EventPairSupport> getUnorderToResponse(String rule, List<UnordedConstraint> constraints){
+    private List<EventPairSupport> getUnorderToResponse(String rule, List<PairConstraint> constraints){
         return constraints.stream().filter(x->{
             return x.getRule().equals(rule);
         })
