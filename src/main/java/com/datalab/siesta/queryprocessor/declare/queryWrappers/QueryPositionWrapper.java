@@ -1,6 +1,5 @@
 package com.datalab.siesta.queryprocessor.declare.queryWrappers;
 
-import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
 
 import lombok.Getter;
 import lombok.Setter;

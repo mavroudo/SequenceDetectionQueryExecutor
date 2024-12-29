@@ -2,7 +2,6 @@ package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;

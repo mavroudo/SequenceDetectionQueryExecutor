@@ -16,4 +16,10 @@ public class OrderState implements Serializable{
     private String eventB;
     private double  occurrences;
 
+    public OrderState(String rule, String eventA, String eventB, double occurrences) {
+        this.rule = rule;
+        this.eventA = eventA;
+        this.eventB = eventB;
+        this.occurrences = occurrences;
+    }
 }

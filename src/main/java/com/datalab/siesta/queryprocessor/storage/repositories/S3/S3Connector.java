@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.S3;
 
 import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.EventSupport;
 import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
@@ -332,6 +333,23 @@ public class S3Connector extends SparkDatabaseRepository {
     }
 
     @Override
+    public JavaRDD<EventSupport> querySingleTable(String logname){
+        String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
+
+        return sparkSession.read()
+                .parquet(path)
+                .select("event_type","trace_id")
+                .groupBy("event_type")
+                .agg(functions.size(functions.collect_list("event_type")).alias("unique"))
+                .toJavaRDD()
+                .map((Function<Row, EventSupport>) row -> {
+                    String event = row.getAs("event_type");
+                    int s = row.getAs("unique");
+                    return new EventSupport(event,s);
+                });
+    }
+
+    @Override
     public JavaPairRDD<Tuple2<String, String>, List<Integer>> querySingleTableAllDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single.parquet/");
         JavaPairRDD<Tuple2<String, String>, List<Integer>> rdd = sparkSession.read()
@@ -457,7 +475,7 @@ public class S3Connector extends SparkDatabaseRepository {
 
     @Override
     public JavaRDD<NegativeState> queryNegativeState(String logname) {
-        String path = String.format("%s%s%s", bucket, logname, "/declare/negative.parquet");
+        String path = String.format("%s%s%s", bucket, logname, "/declare/negatives.parquet");
 
         return sparkSession.read()
         .parquet(path)

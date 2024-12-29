@@ -2,7 +2,6 @@ package com.datalab.siesta.queryprocessor.declare.queries;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositions;
 import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositionsState;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryPositionWrapper;
-import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryWrapperDeclare;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.Query;

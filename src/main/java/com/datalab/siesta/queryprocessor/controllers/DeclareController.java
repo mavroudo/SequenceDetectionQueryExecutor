@@ -8,6 +8,7 @@ import com.datalab.siesta.queryprocessor.declare.queryPlans.orderedRelations.Que
 import com.datalab.siesta.queryprocessor.declare.queries.QueryPositions;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseAll;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryExistenceWrapper;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryOrderRelationWrapper;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryPositionWrapper;
 import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryWrapperDeclare;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -60,6 +61,7 @@ public class DeclareController {
      *                     'both' for both first and last
      * @param support      minimum support that a pattern should have in order to be
      *                     added to the result set
+     * @param enforceNormalMining if true, the normal mining will be enforced
      */
     @RequestMapping(path = { "/positions", "/positions/" }, method = RequestMethod.GET)
     public ResponseEntity getPositionConstraints(@RequestParam String log_database,
@@ -90,6 +92,7 @@ public class DeclareController {
      *                     (e.g., 'existence', 'exactly' etc.)
      *                     a complete list can be found in
      *                     {@link QueryPlanExistences#execute(String, List, double)}
+     * @param enforceNormalMining if true, the normal mining will be enforced
      */
     @RequestMapping(path = { "/existences", "/existences/" }, method = RequestMethod.GET)
     public ResponseEntity getExistenceConstraints(@RequestParam String log_database,
@@ -130,10 +133,12 @@ public class DeclareController {
      * @param constraint   can be set to 'response', 'precedence' or 'succession'
      *                     (which will also calculate the
      *                     no succession constraints)
+     * @param enforceNormalMining if true, the normal mining will be enforced
      */
     @RequestMapping(path = { "/ordered-relations", "/ordered-relations/" }, method = RequestMethod.GET)
     public ResponseEntity getOrderedRelationsConstraints(@RequestParam String log_database,
             @RequestParam(required = false, defaultValue = "0.9") double support,
+            @RequestParam(required = false, defaultValue = "false") boolean enforceNormalMining,
             @RequestParam(required = false, defaultValue = "simple") String mode,
             @RequestParam(required = false, defaultValue = "response") String constraint) throws IOException {
         Metadata m = allMetadata.getMetadata(log_database);
@@ -141,8 +146,14 @@ public class DeclareController {
             return new ResponseEntity<>("{\"message\":\"Log database is not found! If it is recently indexed " +
                     "consider executing endpoint /refresh \"", HttpStatus.NOT_FOUND);
         } else {
-            QueryPlanOrderedRelations queryPlanOrderedRelations = queryOrderedRelations.getQueryPlan(m, mode);
-            QueryResponse qr = queryPlanOrderedRelations.execute(log_database, constraint, support);
+            QueryWrapperDeclare qwd = this.createQueryWrapper(m, log_database, support, enforceNormalMining);
+            QueryOrderRelationWrapper queryOrderRelationWrapper = new QueryOrderRelationWrapper(support);
+            queryOrderRelationWrapper.setWrapper(qwd);
+            queryOrderRelationWrapper.setMode(mode);
+            queryOrderRelationWrapper.setConstraint(constraint);
+
+            QueryPlan qp = queryOrderedRelations.createQueryPlan(queryOrderRelationWrapper,m);
+            QueryResponse qr = qp.execute(queryOrderRelationWrapper);
             return new ResponseEntity<>(objectMapper.writeValueAsString(qr), HttpStatus.OK);
         }
     }
