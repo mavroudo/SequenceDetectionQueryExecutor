@@ -4,10 +4,14 @@ import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.DeclareUtilities;
 import com.datalab.siesta.queryprocessor.declare.model.*;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseExistence;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryExistenceWrapper;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+
 import lombok.Setter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -24,7 +28,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequestScope
-public class QueryPlanExistences {
+public class QueryPlanExistences implements QueryPlan{
 
     private final DeclareDBConnector declareDBConnector;
     private final JavaSparkContext javaSparkContext;
@@ -45,34 +49,36 @@ public class QueryPlanExistences {
         this.declareUtilities = declareUtilities;
     }
 
-    public QueryResponse execute(String logname, List<String> modes, double support) {
-        Broadcast<Double> bSupport = javaSparkContext.broadcast(support);
+    @Override
+    public QueryResponse execute(QueryWrapper qw) {
+        QueryExistenceWrapper qew = (QueryExistenceWrapper) qw;
+        Broadcast<Double> bSupport = javaSparkContext.broadcast(qew.getSupport());
         Broadcast<Long> bTotalTraces = javaSparkContext.broadcast(metadata.getTraces());
 
         //if existence, absence or exactly in modes
-        JavaRDD<UniqueTracesPerEventType> uEventType = declareDBConnector.querySingleTableDeclare(logname);
+        JavaRDD<UniqueTracesPerEventType> uEventType = declareDBConnector.querySingleTableDeclare(metadata.getLogname());
         uEventType.persist(StorageLevel.MEMORY_AND_DISK());
         Map<String, HashMap<Integer, Long>> groupTimes = this.createMapForSingle(uEventType);
         Map<String, Long> singleUnique = this.extractUniqueTracesSingle(groupTimes);
         Broadcast<Map<String, Long>> bUniqueSingle = javaSparkContext.broadcast(singleUnique);
 
-        JavaRDD<UniqueTracesPerEventPair> uPairs = declareDBConnector.queryIndexTableDeclare(logname);
+        JavaRDD<UniqueTracesPerEventPair> uPairs = declareDBConnector.queryIndexTableDeclare(metadata.getLogname());
         uPairs.persist(StorageLevel.MEMORY_AND_DISK());
         JavaRDD<EventPairToNumberOfTrace> joined = joinUnionTraces(uPairs);
         joined.persist(StorageLevel.MEMORY_AND_DISK());
 
         Set<EventPair> notFoundPairs = declareUtilities.extractNotFoundPairs(groupTimes.keySet(),joined);
 
-        for (String m : modes) {
+        for (String m : qew.getModes()) {
             switch (m) {
                 case "existence":
-                    existence(groupTimes, support, metadata.getTraces());
+                    existence(groupTimes, qew.getSupport(), metadata.getTraces());
                     break;
                 case "absence":
-                    absence(groupTimes, support, metadata.getTraces());
+                    absence(groupTimes, qew.getSupport(), metadata.getTraces());
                     break;
                 case "exactly":
-                    exactly(groupTimes, support, metadata.getTraces());
+                    exactly(groupTimes, qew.getSupport(), metadata.getTraces());
                     break;
                 case "co-existence":
                     coExistence(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
@@ -115,24 +121,6 @@ public class QueryPlanExistences {
         exclusiveChoice(joined, bUniqueSingle, bSupport, bTotalTraces,notFoundPairs);
         respondedExistence(joined, bUniqueSingle, bSupport, bTotalTraces);
         return this.queryResponseExistence;
-    }
-
-    /**
-     * Evaluates which of the provided modes are correct
-     * @param modes list of provided modes
-     * @return a list containing the valid modes
-     */
-    public List<String> evaluateModes(List<String> modes) {
-        List<String> s = new ArrayList<>();
-        List<String> l = Arrays.asList("existence", "absence", "exactly", "co-existence","not-co-existence", "choice",
-                "exclusive-choice", "responded-existence");
-        Set<String> correct_ms = new HashSet<>(l);
-        for (String m : modes) {
-            if (!correct_ms.contains(m)) {
-                s.add(m);
-            }
-        }
-        return s;
     }
 
     /**
@@ -452,6 +440,5 @@ public class QueryPlanExistences {
     public void initResponse() {
         this.queryResponseExistence = new QueryResponseExistence();
     }
-
 
 }

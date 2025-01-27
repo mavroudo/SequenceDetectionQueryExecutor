@@ -2,7 +2,7 @@ package com.datalab.siesta.queryprocessor.declare.queryResponses;
 
 import com.datalab.siesta.queryprocessor.declare.model.EventPairSupport;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -30,6 +30,17 @@ public class QueryResponseOrderedRelations implements QueryResponse {
         precedence=new ArrayList<>();
         succession=new ArrayList<>();
         notSuccession=new ArrayList<>();
+    }
+
+    @JsonIgnore
+    public QueryResponseOrderedRelations getQueryResponseOrderedRelations() {
+        QueryResponseOrderedRelations queryResponseOrderedRelations = new QueryResponseOrderedRelations();
+        queryResponseOrderedRelations.setMode(this.getMode());
+        queryResponseOrderedRelations.setResponse(this.getResponse());
+        queryResponseOrderedRelations.setPrecedence(this.getPrecedence());
+        queryResponseOrderedRelations.setSuccession(this.getSuccession());
+        queryResponseOrderedRelations.setNotSuccession(this.getNotSuccession());
+        return queryResponseOrderedRelations;
     }
 
     public String getMode() {

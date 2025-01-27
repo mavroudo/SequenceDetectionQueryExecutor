@@ -4,9 +4,13 @@ import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.DeclareUtilities;
 import com.datalab.siesta.queryprocessor.declare.model.*;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryOrderRelationWrapper;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequestScope
-public class QueryPlanOrderedRelations {
+public class QueryPlanOrderedRelations implements QueryPlan{
 
     @Setter
     protected Metadata metadata;
@@ -50,22 +54,24 @@ public class QueryPlanOrderedRelations {
     }
 
 
-    public QueryResponse execute(String logname, String constraint, double support) {
-        //query IndexTable
-        JavaRDD<EventPairToTrace> indexRDD = declareDBConnector.queryIndexOriginalDeclare(logname)
-                .filter(x -> !x.getEventA().equals(x.getEventB()));
+    @Override
+    public QueryResponse execute(QueryWrapper qw) {
+        QueryOrderRelationWrapper qpw = (QueryOrderRelationWrapper) qw;
+         //query IndexTable
+         JavaRDD<EventPairToTrace> indexRDD = declareDBConnector.queryIndexOriginalDeclare(this.metadata.getLogname())
+         .filter(x -> !x.getEventA().equals(x.getEventB()));
         //query SingleTable
         JavaPairRDD<Tuple2<String, String>, List<Integer>> singleRDD = declareDBConnector
-                .querySingleTableAllDeclare(logname);
+                .querySingleTableAllDeclare(this.metadata.getLogname());
 
         //join tables using joinTables and flat map to get the single events
         JavaRDD<EventPairTraceOccurrences> joined = joinTables(indexRDD, singleRDD);
         joined.persist(StorageLevel.MEMORY_AND_DISK());
 
         //count the occurrences using the evaluate constraints
-        JavaRDD<Abstract2OrderConstraint> c = evaluateConstraint(joined, constraint);
+        JavaRDD<Abstract2OrderConstraint> c = evaluateConstraint(joined, qpw.getConstraint());
         //filter based on the values of the SingleTable and the provided support and write to the response
-        Map<String, Long> uEventType = declareDBConnector.querySingleTableDeclare(logname)
+        Map<String, Long> uEventType = declareDBConnector.querySingleTableDeclare(this.metadata.getLogname())
                 .map(x -> {
                     long all = x.getOccurrences().stream().mapToLong(OccurrencesPerTrace::getOccurrences).sum();
                     return new Tuple2<>(x.getEventType(), all);
@@ -73,9 +79,9 @@ public class QueryPlanOrderedRelations {
         Broadcast<Map<String, Long>> bUEventTypes = javaSparkContext.broadcast(uEventType);
 
         //add the not-succession constraints detected from the event pairs that did not occur in the database log
-        extendNotSuccession(bUEventTypes.getValue(), logname, c);
+        extendNotSuccession(bUEventTypes.getValue(), this.metadata.getLogname(), c);
         //filter based on the user defined support
-        filterBasedOnSupport(c, bUEventTypes, support);
+        filterBasedOnSupport(c, bUEventTypes, qpw.getSupport());
         joined.unpersist();
         return this.queryResponseOrderedRelations;
     }
@@ -272,5 +278,7 @@ public class QueryPlanOrderedRelations {
                 x.getEventB().getName(), 1)).collect(Collectors.toList());
         this.queryResponseOrderedRelations.setNotSuccession(result);
     }
+
+
 
 }

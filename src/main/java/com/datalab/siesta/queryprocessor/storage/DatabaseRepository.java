@@ -1,8 +1,15 @@
 package com.datalab.siesta.queryprocessor.storage;
 
 import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.EventSupport;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.ExistenceState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.NegativeState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.OrderState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.PositionState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateI;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
@@ -151,10 +158,13 @@ public interface DatabaseRepository {
      */
     List<Count> getCountForExploration(String logname, String event);
 
+
     // Below are for Declare //
     JavaRDD<Trace> querySequenceTableDeclare(String logname);
 
     JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname);
+
+    JavaRDD<EventSupport> querySingleTable(String logname);
 
     JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname);
 
@@ -163,6 +173,14 @@ public interface DatabaseRepository {
     JavaPairRDD<Tuple2<String,String>, List<Integer>> querySingleTableAllDeclare(String logname);
 
     JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname);
+
+    //Below are for the states of Declare
+    JavaRDD<PositionState> queryPositionState(String logname);
+    JavaRDD<ExistenceState> queryExistenceState(String logname);
+    JavaRDD<UnorderStateI> queryUnorderStateI(String logname);
+    JavaRDD<UnorderStateU> queryUnorderStateU(String logname);
+    JavaRDD<OrderState> queryOrderState(String logname);
+    JavaRDD<NegativeState> queryNegativeState(String logname);
 
 
 }
