@@ -11,7 +11,7 @@ services:
     environment:
       master.uri: local[*]
       database: s3 # cassandra-rdd or s3
-      delta: true
+      delta: true # True for streaming, False for batching
       #for s3 (minio)
       s3.endpoint: http://minio:9000
       s3.user: minioadmin
@@ -35,3 +35,44 @@ services:
       - '8090:8090'
     networks:
       - cluster_net
+
+#  spark-master:
+#    image: bitnami/spark:3.5.4
+#    container_name: spark-master
+#    environment:
+#      - SPARK_MODE=master
+#      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+#      - SPARK_RPC_ENCRYPTION_ENABLED=no
+#      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+#      - SPARK_SSL_ENABLED=no
+#    ports:
+#      - "7077:7077" # Spark master port
+#      - "8080:8080" # Spark Web UI
+#    networks:
+#      - cluster_net
+#
+#  spark-worker-1:
+#    image: bitnami/spark:3.5.4
+#    container_name: spark-worker-1
+#    environment:
+#      - SPARK_MODE=worker
+#      - SPARK_MASTER_URL=spark://spark-master:7077
+#      - SPARK_WORKER_MEMORY=1G
+#      - SPARK_WORKER_CORES=1
+#    depends_on:
+#      - spark-master
+#    networks:
+#      - cluster_net
+#
+#  spark-worker-2:
+#    image: bitnami/spark:3.5.4
+#    container_name: spark-worker-2
+#    environment:
+#      - SPARK_MODE=worker
+#      - SPARK_MASTER_URL=spark://spark-master:7077
+#      - SPARK_WORKER_MEMORY=1G
+#      - SPARK_WORKER_CORES=1
+#    depends_on:
+#      - spark-master
+#    networks:
+#      - cluster_net

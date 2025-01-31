@@ -20,7 +20,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <spark.version>3.5.1</spark.version>
+        <spark.version>3.5.4</spark.version>
     </properties>
 
     <dependencies>
@@ -227,7 +227,7 @@
         <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-spark_2.12</artifactId>
-            <version>3.2.0</version>
+            <version>3.3.0</version>
         </dependency>
     </dependencies>
 
