@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Wraps information about the performance of the pattern detection queries. More specifically

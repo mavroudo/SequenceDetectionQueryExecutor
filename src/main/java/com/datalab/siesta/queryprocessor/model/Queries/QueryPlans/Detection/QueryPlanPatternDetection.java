@@ -156,7 +156,7 @@ public class QueryPlanPatternDetection implements QueryPlan {
             if (imr == null) {
                 imr = imrTemp;
             } else {
-                Map<Long, List<Event>> merged = mergeMaps(imr.getEvents(), imrTemp.getEvents());
+                Map<String, List<Event>> merged = mergeMaps(imr.getEvents(), imrTemp.getEvents());
                 imr.setTrace_ids(new ArrayList<>(merged.keySet()));
                 imr.setEvents(merged);
             }
@@ -179,8 +179,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
         return this.firstParsing(qpdw, allTruePairs, combinedTrue, qr);
     }
 
-    private Map<Long, List<Event>> mergeMaps(Map<Long, List<Event>> map1, Map<Long, List<Event>> map2) {
-        HashMap<Long, List<Event>> merged = new HashMap<>(map1);
+    private Map<String, List<Event>> mergeMaps(Map<String, List<Event>> map1, Map<String, List<Event>> map2) {
+        HashMap<String, List<Event>> merged = new HashMap<>(map1);
 
         map1.forEach((traceId, eventsList1) -> {
             List<Event> eventsList2 = map2.getOrDefault(traceId, new ArrayList<>());
@@ -233,8 +233,8 @@ public class QueryPlanPatternDetection implements QueryPlan {
         //we first run a quick sase engine to remove all possible mismatches, and then we query the seq for the rest
         long start = System.currentTimeMillis();
         List<Occurrences> ocs = saseConnector.evaluate(pattern, imr.getEvents(), true);
-        List<Long> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
-        Map<Long, List<Event>> e = this.querySeqDB(tracesToQuery, pattern, logname, from, till);
+        List<String> tracesToQuery = ocs.stream().map(Occurrences::getTraceID).collect(Collectors.toList());
+        Map<String, List<Event>> e = this.querySeqDB(tracesToQuery, pattern, logname, from, till);
         imr.setEvents(e);
         Logger logger = LoggerFactory.getLogger(QueryPlanPatternDetection.class);
         logger.info(String.format("Retrieve traces: %d ms", System.currentTimeMillis() - start));
@@ -250,10 +250,10 @@ public class QueryPlanPatternDetection implements QueryPlan {
      * @param till      the ending timestamp
      * @return the retrieved events from the SequenceTable
      */
-    protected Map<Long, List<Event>> querySeqDB(List<Long> trace_ids, SIESTAPattern pattern,
+    protected Map<String, List<Event>> querySeqDB(List<String> trace_ids, SIESTAPattern pattern,
                                                 String logname, Timestamp from, Timestamp till) {
         Set<String> eventTypes = pattern.getEventTypes();
-        Map<Long, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes, from, till);
+        Map<String, List<EventBoth>> fromDB = dbConnector.querySeqTable(logname, trace_ids, eventTypes, from, till);
         return fromDB.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(s -> (Event) s)
                 .collect(Collectors.toList())));

@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class AlmostMatch {
 
-    private long trace_id;
+    private String trace_id;
 
     private List<Event> original;
 
@@ -23,7 +23,7 @@ public class AlmostMatch {
 
     private int totalChange;
 
-    public AlmostMatch(long trace_id, List<Event> original, List<UncertainTimeEvent> match) {
+    public AlmostMatch(String trace_id, List<Event> original, List<UncertainTimeEvent> match) {
         this.trace_id = trace_id;
         this.original = original;
         this.match = match;
@@ -34,11 +34,11 @@ public class AlmostMatch {
         return original;
     }
 
-    public long getTrace_id() {
+    public String getTrace_id() {
         return trace_id;
     }
 
-    public void setTrace_id(long trace_id) {
+    public void setTrace_id(String trace_id) {
         this.trace_id = trace_id;
     }
 

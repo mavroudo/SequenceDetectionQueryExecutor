@@ -2,7 +2,8 @@ package com.datalab.siesta.queryprocessor.model.Queries.QueryResponses;
 
 import com.datalab.siesta.queryprocessor.model.GroupOccurrences;
 import com.datalab.siesta.queryprocessor.model.TimeStats;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 import java.util.List;
 

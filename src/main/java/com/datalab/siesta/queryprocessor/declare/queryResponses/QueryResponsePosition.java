@@ -3,9 +3,8 @@ package com.datalab.siesta.queryprocessor.declare.queryResponses;
 import com.datalab.siesta.queryprocessor.declare.model.EventSupport;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import scala.Tuple2;
 
 import java.util.List;

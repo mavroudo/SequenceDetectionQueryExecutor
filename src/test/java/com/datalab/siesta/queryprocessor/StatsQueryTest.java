@@ -3,7 +3,7 @@ package com.datalab.siesta.queryprocessor;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Patterns.SimplePattern;
 import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryStatsWrapper;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

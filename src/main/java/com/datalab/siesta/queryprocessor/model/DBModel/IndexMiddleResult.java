@@ -15,9 +15,9 @@ import java.util.Map;
 public class IndexMiddleResult {
 
 
-    private List<Long> trace_ids;
+    private List<String> trace_ids;
 
-    private Map<Long, List<Event>> events;
+    private Map<String, List<Event>> events;
 
 
     public IndexMiddleResult() {
@@ -25,24 +25,24 @@ public class IndexMiddleResult {
         this.events = new HashMap<>();
     }
 
-    public IndexMiddleResult(List<Long> trace_ids, Map<Long, List<Event>> events) {
+    public IndexMiddleResult(List<String> trace_ids, Map<String, List<Event>> events) {
         this.trace_ids = trace_ids;
         this.events = events;
     }
 
-    public List<Long> getTrace_ids() {
+    public List<String> getTrace_ids() {
         return trace_ids;
     }
 
-    public void setTrace_ids(List<Long> trace_ids) {
+    public void setTrace_ids(List<String> trace_ids) {
         this.trace_ids = trace_ids;
     }
 
-    public Map<Long, List<Event>> getEvents() {
+    public Map<String, List<Event>> getEvents() {
         return events;
     }
 
-    public void setEvents(Map<Long, List<Event>> events) {
+    public void setEvents(Map<String, List<Event>> events) {
         this.events = events;
     }
 }

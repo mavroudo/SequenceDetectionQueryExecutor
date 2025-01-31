@@ -2,13 +2,13 @@ FROM ubuntu:20.04
 
 #ENV JAVA_HOME="/usr/lib/jvm/default-jvm/"
 
-RUN apt-get update && apt-get install -y openjdk-11-jdk maven
+RUN apt-get update && apt-get install -y openjdk-17-jdk maven
 ENV PATH=$PATH:${JAVA_HOME}/bin
 
 
 
 # Install maven
-RUN #apk add --no-cache maven
+#RUN apk add --no-cache maven
 
 WORKDIR /code
 
@@ -21,5 +21,5 @@ ADD src /code/src
 RUN mvn clean compile package -f pom.xml -DskipTests
 
 
-CMD ["java", "-jar", "target/siesta-query-processor-2.0.jar"]
+CMD ["java", "--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED" , "-jar", "target/siesta-query-processor-3.0.jar"]
 #ENTRYPOINT ["tail", "-f", "/dev/null"]

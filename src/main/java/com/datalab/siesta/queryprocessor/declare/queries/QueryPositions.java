@@ -1,9 +1,12 @@
 package com.datalab.siesta.queryprocessor.declare.queries;
-import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanBoth;
-import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanFirst;
-import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanLast;
-import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPosition;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositions;
+import com.datalab.siesta.queryprocessor.declare.queryPlans.position.QueryPlanPositionsState;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryPositionWrapper;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryTypes.Query;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,29 +17,28 @@ import org.springframework.stereotype.Service;
  *
  */
 @Service
-public class QueryPositions {
+public class QueryPositions implements Query{
 
-    private QueryPlanFirst queryPlanFirst;
-    private QueryPlanLast queryPlanLast;
-    private QueryPlanBoth queryPlanBoth;
+    private QueryPlanPositions queryPlanPositions;
+
+    private QueryPlanPositionsState queryPlanPositionsState;
+
 
     @Autowired
-    public QueryPositions(QueryPlanFirst queryPlanFirst, QueryPlanLast queryPlanLast, QueryPlanBoth queryPlanBoth) {
-        this.queryPlanFirst = queryPlanFirst;
-        this.queryPlanLast = queryPlanLast;
-        this.queryPlanBoth = queryPlanBoth;
+    public QueryPositions(QueryPlanPositions queryPlanPositions, QueryPlanPositionsState queryPlanPositionsState) {
+        this.queryPlanPositions = queryPlanPositions;
+        this.queryPlanPositionsState = queryPlanPositionsState;
     }
 
-    public QueryPlanPosition getQueryPlan(String position, Metadata metadata){
-        if(position.equals("first")){
-            queryPlanFirst.setMetadata(metadata);
-            return queryPlanFirst;
-        }else if(position.equals("last")){
-            queryPlanLast.setMetadata(metadata);
-            return queryPlanLast;
-        }else{
-            queryPlanBoth.setMetadata(metadata);
-            return queryPlanBoth;
+    @Override
+    public QueryPlan createQueryPlan(QueryWrapper qw, Metadata m) {
+        QueryPositionWrapper qpw = (QueryPositionWrapper) qw;
+        if(!qpw.isStateAvailable()||qpw.isEnforceNormalMining()){ //execute the normal extraction
+            queryPlanPositions.setMetadata(m);
+            return queryPlanPositions;
+        }else{ //utilize the built states
+            queryPlanPositionsState.setMetadata(m);
+            return queryPlanPositionsState;
         }
 
     }

@@ -17,7 +17,7 @@ public class QueryResponseWhyNotMatch extends  QueryResponsePatternDetection{
      * A map of the trace id and the a string that describes what changes are required to made in the events' timestamps
      * in order to be a valid match for the query pattern
      */
-    Map<Long,String> almostOccurrences;
+    Map<String,String> almostOccurrences;
 
     public QueryResponseWhyNotMatch() {
     }
@@ -30,11 +30,11 @@ public class QueryResponseWhyNotMatch extends  QueryResponsePatternDetection{
         }};
     }
 
-    public Map<Long, String> getAlmostOccurrences() {
+    public Map<String, String> getAlmostOccurrences() {
         return almostOccurrences;
     }
 
-    public void setAlmostOccurrences(Map<Long, String> almostOccurrences) {
+    public void setAlmostOccurrences(Map<String, String> almostOccurrences) {
         this.almostOccurrences = almostOccurrences;
     }
 

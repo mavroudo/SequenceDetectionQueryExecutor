@@ -27,7 +27,7 @@ import java.util.Map;
 @RequestScope
 public class QueryPlanPatternDetectionSingle extends QueryPlanPatternDetection {
 
-    private Map<Long, List<EventBoth>> intermediateResults;
+    private Map<String, List<EventBoth>> intermediateResults;
 
     public QueryPlanPatternDetectionSingle(DBConnector dbConnector, SaseConnector saseConnector, Utils utils) {
         super(dbConnector, saseConnector, utils);

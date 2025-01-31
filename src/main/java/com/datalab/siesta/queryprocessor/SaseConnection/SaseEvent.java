@@ -3,7 +3,7 @@ package com.datalab.siesta.queryprocessor.SaseConnection;
 
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
 import edu.umass.cs.sase.stream.Event;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.joda.time.Instant;
 
 import java.sql.Timestamp;
@@ -17,7 +17,7 @@ import java.sql.Timestamp;
  */
 public class SaseEvent implements Event {
 
-    private int trace_id;
+    private String trace_id;
     private int position;
 
     private String eventType;
@@ -38,7 +38,7 @@ public class SaseEvent implements Event {
         this.minTs = minTs;
     }
 
-    public SaseEvent(int trace_id, int position, String eventType, int timestamp, boolean isTimestampSet) {
+    public SaseEvent(String trace_id, int position, String eventType, int timestamp, boolean isTimestampSet) {
         this.trace_id = trace_id;
         this.position = position;
         this.eventType = eventType;
@@ -71,11 +71,11 @@ public class SaseEvent implements Event {
         this.timestamp = timestamp;
     }
 
-    public int getTrace_id() {
+    public String getTrace_id() {
         return trace_id;
     }
 
-    public void setTrace_id(int trace_id) {
+    public void setTrace_id(String trace_id) {
         this.trace_id = trace_id;
     }
 
@@ -85,8 +85,8 @@ public class SaseEvent implements Event {
             return position;
         if(attributeName.equalsIgnoreCase("timestamp"))
             return timestamp;
-        if(attributeName.equalsIgnoreCase("trace_id"))
-            return trace_id;
+//        if(attributeName.equalsIgnoreCase("trace_id"))
+//            return trace_id;
         return -1;
     }
 

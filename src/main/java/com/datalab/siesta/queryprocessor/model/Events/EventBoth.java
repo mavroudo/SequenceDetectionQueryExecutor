@@ -3,9 +3,10 @@ package com.datalab.siesta.queryprocessor.model.Events;
 import com.datalab.siesta.queryprocessor.SaseConnection.SaseEvent;
 import com.datalab.siesta.queryprocessor.model.Serializations.EventBothSerializer;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.MappingJacksonViews;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 
 import java.sql.Timestamp;
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class EventBoth extends EventTs implements Comparable{
         this.position=pos;
     }
 
-    public EventBoth(String name, long traceID, Timestamp timestamp, int position) {
+    public EventBoth(String name, String traceID, Timestamp timestamp, int position) {
         super(name, traceID, timestamp);
         this.position = position;
     }

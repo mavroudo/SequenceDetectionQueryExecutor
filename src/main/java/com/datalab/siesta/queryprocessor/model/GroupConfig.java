@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +25,7 @@ public class GroupConfig implements Serializable {
 
 
     @JsonIgnore
-    private List<Set<Long>> groups;
+    private List<Set<String>> groups;
 
     public GroupConfig(){
         this.groupsString="";
@@ -37,19 +34,19 @@ public class GroupConfig implements Serializable {
 
     public GroupConfig(String input) throws RuntimeException {
         this.groupsString=input;
-        this.groups=this.parseGroups(input);
+        this.groups=this.parseGroupsString(input);
     }
 
     public void setGroups(String input) throws RuntimeException {
-        this.groups=this.parseGroups(input);
+        this.groups=this.parseGroupsString(input);
     }
 
-    public void setGroups(List<Set<Long>> groups){
+    public void setGroups(List<Set<String>> groups){
         this.groups=groups;
     }
 
     @JsonIgnore
-    public List<Set<Long>> getGroups() {
+    public List<Set<String>> getGroups() {
         return groups;
     }
 
@@ -60,7 +57,26 @@ public class GroupConfig implements Serializable {
 
     public void setGroupsString(String groupsString) {
         this.groupsString = groupsString;
-        this.groups=parseGroups(groupsString);
+        this.groups=parseGroupsString(groupsString);
+    }
+
+    private List<Set<String>> parseGroupsString(String input){
+        List<Set<String>> response = new ArrayList<>();
+        if(input.isEmpty()){
+            return response;
+        }
+        Matcher m = Pattern.compile("\\(.*?\\)").matcher(input);
+        try{
+            while(m.find()){
+                String s = m.group();
+                String[] ids = s.subSequence(1,s.length()-1).toString().split(",");
+                List<String> n = new ArrayList<>(Arrays.asList(ids));
+                response.add(new HashSet<>(n));
+            }
+            return response;
+        }catch(Exception e){
+            throw new RuntimeException("The groups cannot be parsed");
+        }
     }
 
     /**

@@ -1,9 +1,9 @@
 package com.datalab.siesta.queryprocessor.model;
 
-import com.amazonaws.thirdparty.jackson.annotation.JsonProperty;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 import com.datalab.siesta.queryprocessor.model.Serializations.CustomGroupOccurrencesSerializer;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class GroupOccurrences extends Occurrences{
     public GroupOccurrences(int groupId, List<Occurrence> occurrences) {
         this.groupId = groupId;
         this.occurrences=occurrences;
-        traceID=-1;
+        traceID="";
     }
 
     public int getGroupId() {

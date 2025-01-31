@@ -3,12 +3,13 @@ networks:
   cluster_net:
     external: true
     name: siesta-net
+
 services:
   funnel:
     build: .
     stdin_open: true
     environment:
-      master.uri: local[12] # or local[*]
+      master.uri: local[*]
       database: s3 # cassandra-rdd or s3
       #for s3 (minio)
       s3.endpoint: http://minio:9000

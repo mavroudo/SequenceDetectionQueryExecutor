@@ -4,7 +4,8 @@ import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
 import com.datalab.siesta.queryprocessor.model.Events.EventPos;
 import com.datalab.siesta.queryprocessor.model.Events.EventTs;
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -24,7 +25,7 @@ import java.util.Set;
  */
 public class IndexPair implements Serializable {
 
-    private long traceId;
+    private String traceId;
     private String eventA;
     private String eventB;
     private Timestamp timestampA;
@@ -41,7 +42,7 @@ public class IndexPair implements Serializable {
         this.timestampB = null;
     }
 
-    public IndexPair(long traceId, String eventA, String eventB, Timestamp timestampA, Timestamp timestampB) {
+    public IndexPair(String traceId, String eventA, String eventB, Timestamp timestampA, Timestamp timestampB) {
         this.traceId = traceId;
         this.positionA = -1;
         this.positionB = -1;
@@ -51,7 +52,7 @@ public class IndexPair implements Serializable {
         this.timestampB = timestampB;
     }
 
-    public IndexPair(long traceId, String eventA, String eventB, String timestampA, String timestampB) {
+    public IndexPair(String traceId, String eventA, String eventB, String timestampA, String timestampB) {
         this.traceId = traceId;
         this.positionA = -1;
         this.positionB = -1;
@@ -61,7 +62,7 @@ public class IndexPair implements Serializable {
         this.timestampB = Timestamp.valueOf(timestampB);
     }
 
-    public IndexPair(long traceId, String eventA, String eventB, int positionA, int positionB) {
+    public IndexPair(String traceId, String eventA, String eventB, int positionA, int positionB) {
         this.traceId = traceId;
         this.timestampA = null;
         this.timestampB = null;
@@ -119,11 +120,11 @@ public class IndexPair implements Serializable {
         this.positionB = positionB;
     }
 
-    public long getTraceId() {
+    public String getTraceId() {
         return traceId;
     }
 
-    public void setTraceId(long traceId) {
+    public void setTraceId(String traceId) {
         this.traceId = traceId;
     }
 
@@ -155,4 +156,6 @@ public class IndexPair implements Serializable {
         }
         return false;
     }
+
+    public long getDuration() { return (timestampB.getTime() - timestampA.getTime()) / 1000; }
 }
