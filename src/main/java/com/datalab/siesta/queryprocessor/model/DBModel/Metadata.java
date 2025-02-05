@@ -182,6 +182,10 @@ public class Metadata {
         return pairs;
     }
 
+//    public Long getSplit_every_days() {
+//        return split_every_days;
+//    }
+
     public Long getTraces() {
         return traces;
     }
