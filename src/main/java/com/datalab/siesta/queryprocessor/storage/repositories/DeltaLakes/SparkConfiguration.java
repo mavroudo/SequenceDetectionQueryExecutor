@@ -1,4 +1,4 @@
-package com.datalab.siesta.queryprocessor.storage.repositories.S3;
+package com.datalab.siesta.queryprocessor.storage.repositories.DeltaLakes;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -13,16 +13,11 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 /**
  * Contains the configuration of spark in he.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project siesta-query-processor: Fatal error compiling: error: release version 17 not supported -> [Help 1]
-order to connect to s3 database
+ order to connect to s3 database
  */
 @Configuration
 @PropertySource("classpath:application.properties")
-//@ConditionalOnProperty(
-//        value = "database",
-//        havingValue = "s3",
-//        matchIfMissing = true
-//)
-@ConditionalOnExpression("'${database}' == 's3' and '${delta}' == 'false'")
+@ConditionalOnExpression("'${database}' == 's3' and '${delta}' == 'true'")
 public class SparkConfiguration {
 
     @Value("${app.name:siesta2}")
@@ -43,13 +38,15 @@ public class SparkConfiguration {
     @Value("${s3.endpoint:http://127.0.0.1:9000}")
     private String s3endpoint;
 
-    @Bean
     public SparkConf sparkConf() {
         return new SparkConf()
                 .setAppName(appName)
                 .setMaster(masterUri)
                 .set("spark.driver.extraJavaOptions", "--add-opens java.base/sun.security.action=ALL-UNNAMED")
                 .set("spark.executor.extraJavaOptions", "--add-opens java.base/sun.security.action=ALL-UNNAMED")
+                .set("spark.sql.extensions","io.delta.sql.DeltaSparkSessionExtension")
+                .set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+                .set("spark.sql.streaming.statefulOperator.checkCorrectness.enabled", "false")
 //                .set("spark.driver.memory","25g")
 //                .set("spark.driver.memoryOverhead","2g")
 //                .set("spark.memory.fraction","0.8")
@@ -78,6 +75,10 @@ public class SparkConfiguration {
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.connection.ssl.enabled", "true");
         spark.sparkContext().hadoopConfiguration().set("fs.s3a.bucket.create.enabled", "true");
         spark.conf().set("spark.sql.sources.partitionOverwriteMode", "dynamic");
+        spark.conf().set("spark.sql.files.metadata.log.parsing.enabled", "true");
+        spark.conf().set("spark.sql.sources.useV1SourceList", "delta");
+        spark.conf().set("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore");
+        System.out.println("Spark version: ".concat(spark.version()));
 //        spark.conf().set("spark.executor.memory", "30g");
         return spark;
     }
