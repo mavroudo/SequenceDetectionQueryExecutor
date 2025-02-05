@@ -182,10 +182,6 @@ public class Metadata {
         return pairs;
     }
 
-    public Long getSplit_every_days() {
-        return split_every_days;
-    }
-
     public Long getTraces() {
         return traces;
     }
@@ -205,10 +201,6 @@ public class Metadata {
     public void setLast_ts(String last_ts) {
         this.last_ts = last_ts;
     }
-
-    public String getKey() {return key;}
-
-    public String getValue() {return value;}
 
     @Override
     public String toString() {
