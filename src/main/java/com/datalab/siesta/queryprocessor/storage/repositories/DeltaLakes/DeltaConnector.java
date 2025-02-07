@@ -1,9 +1,7 @@
 package com.datalab.siesta.queryprocessor.storage.repositories.DeltaLakes;
 
-import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
-import com.datalab.siesta.queryprocessor.declare.model.OccurrencesPerTrace;
-import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
-import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
+import com.datalab.siesta.queryprocessor.declare.model.*;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.*;
 import com.datalab.siesta.queryprocessor.model.DBModel.Count;
 import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
@@ -324,6 +322,24 @@ public class DeltaConnector extends SparkDatabaseRepository {
     }
 
     @Override
+    public JavaRDD<EventSupport> querySingleTable(String logname){
+        String path = String.format("%s%s%s", bucket, logname, "/single/");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .select("event_type","trace")
+                .groupBy("event_type")
+                .agg(functions.size(functions.collect_list("event_type")).alias("unique"))
+                .toJavaRDD()
+                .map((Function<Row, EventSupport>) row -> {
+                    String event = row.getAs("event_type");
+                    int s = row.getAs("unique");
+                    return new EventSupport(event,s);
+                });
+    }
+
+    @Override
     public JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname) {
         String path = String.format("%s%s%s", bucket, logname, "/single");
 
@@ -417,5 +433,75 @@ public class DeltaConnector extends SparkDatabaseRepository {
                     int positionB = row.getAs("positionB");
                     return new IndexPair(trace_id,eventA,eventB,positionA,positionB);
                 });
+    }
+
+    @Override
+    public JavaRDD<PositionState> queryPositionState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/position/");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .as(Encoders.bean(PositionState.class))
+                .toJavaRDD();
+    }
+
+    @Override
+    public JavaRDD<ExistenceState> queryExistenceState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/existence/");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .as(Encoders.bean(ExistenceState.class))
+                .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<UnorderStateI> queryUnorderStateI(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/unorder/i/");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .as(Encoders.bean(UnorderStateI.class))
+                .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<UnorderStateU> queryUnorderStateU(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/unorder/u/");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .as(Encoders.bean(UnorderStateU.class))
+                .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<OrderState> queryOrderState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/order");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .as(Encoders.bean(OrderState.class))
+                .toJavaRDD();
+    }
+
+
+    @Override
+    public JavaRDD<NegativeState> queryNegativeState(String logname) {
+        String path = String.format("%s%s%s", bucket, logname, "/declare/negatives");
+
+        return sparkSession.read()
+                .format("delta")
+                .load(path)
+                .as(Encoders.bean(NegativeState.class))
+                .toJavaRDD();
     }
 }

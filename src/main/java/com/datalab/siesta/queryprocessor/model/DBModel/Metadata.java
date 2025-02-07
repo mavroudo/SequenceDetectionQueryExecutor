@@ -117,6 +117,9 @@ public class Metadata {
         this.lookback = Long.valueOf(attributes.get("lookback"));
         this.mode = attributes.get("mode");
         this.pairs = Long.valueOf(attributes.get("pairs"));
+        this.start_ts = attributes.get("start_ts");
+        this.last_ts = attributes.get("last_ts");
+        this.last_declare_mined = attributes.get("last_declare_mined");
 //        this.split_every_days = Long.valueOf(attributes.get("split_every_days"));
         this.traces = Long.valueOf(attributes.get("traces"));
     }
@@ -206,6 +209,10 @@ public class Metadata {
         this.last_ts = last_ts;
     }
 
+    public String getLast_declare_mined() {
+        return last_declare_mined;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -220,6 +227,7 @@ public class Metadata {
                 .append(",\n  pairs = ").append(pairs)
                 .append(",\n  traces = ").append(traces)
                 .append(",\n  lookback = ").append(lookback)
+                .append(",\n last_declare_mined = ").append(last_declare_mined)
                 .append("\n}");
         return sb.toString();
     }

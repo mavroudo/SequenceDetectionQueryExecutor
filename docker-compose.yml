@@ -11,7 +11,7 @@ services:
     environment:
       master.uri: local[*]
       database: s3 # cassandra-rdd or s3
-      delta: true # True for streaming, False for batching
+      delta: false # True for streaming, False for batching
       #for s3 (minio)
       s3.endpoint: http://minio:9000
       s3.user: minioadmin
