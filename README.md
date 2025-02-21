@@ -58,6 +58,11 @@ of operation are:
     * fast 
     * Hybrid (also define k parameter)
     * Accurate
+* /declare
+    * /positions
+    * /existences
+    * /ordered-relations
+  
 
 ### Additional detection options
 You can access the detection mechanisms that utilize the Set-Containment and Signatures
