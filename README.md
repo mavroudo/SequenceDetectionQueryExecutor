@@ -14,7 +14,9 @@ Additionally, on top of the basic SIESTA infrastructure, 2 others methods have b
 ### Setting properties
 Before building the jar, you should modify the application/database properties located in
 **resources/application.properties**. These properties include, the choice of the database
-(**cassandra-rdd** for Cassandra and **s3** for S3), contact points, authentication information
+(**cassandra-rdd** for Cassandra and **s3** for S3), the choice for delta or not, depending
+on if the file was indexed using streaming (**delta:true**) or batching (**delta:false**),
+contact points, authentication information
 etc. 
 
 ### Build
