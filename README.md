@@ -14,7 +14,7 @@ Additionally, on top of the basic SIESTA infrastructure, 2 others methods have b
 ### Setting properties
 Before building the jar, you should modify the application/database properties located in
 **resources/application.properties**. These properties include, the choice of the database
-(**cassandra-rdd** for Cassandra and **s3** for S3), the choice for delta or not, depending
+(Currently just **s3** for S3), the choice for delta or not, depending
 on if the file was indexed using streaming (**delta:true**) or batching (**delta:false**),
 contact points, authentication information
 etc. 
@@ -36,15 +36,32 @@ For local deployment, with
 java -jar target/siesta-query-processor-2.0.jar
 ```
 
+### Running in IntelliJ
+To run it locally specify the properties in the application.properties file in the resources folder
+and then run the project after adding in the ``Add VM options`` under ``Run/Edit configurations`` the following line \
+``--add-opens=java.base/sun.nio.ch=ALL-UNNAMED ``
+
 ### Running in docker
-An easier way to execute the query processor is by using Docker. To run it locally
-open a terminal inside SequenceDetectionQueryExecutor file and run:
+To run it locally open a terminal inside SequenceDetectionQueryExecutor file and run:
 ```bash
 docker-compose build
 docker-compose up -d
 ```
 Ensure that this docker and the database can communicate, either run database on a public ip
-or connect these two on the same network.
+or connect these two on the same network. You need to specify these environment variables 
+(you can keep the default ones if you want) in
+the docker-compose file before running the QueryExecutor.
+```
+      master.uri: local[*]
+      database: s3
+      delta: false # True for streaming, False for batching
+      #for s3 (minio)
+      s3.endpoint: http://minio:9000
+      s3.user: minioadmin
+      s3.key: minioadmin
+      s3.timeout: 600000
+      server.port: 8090 
+```
 ### SIESTA Query type list
 * /health (Checks if the application is up and running)
 * /lognames (Returns the names of the different log databases)
@@ -62,6 +79,8 @@ of operation are:
     * /positions
     * /existences
     * /ordered-relations
+* /patterns
+  * /violations
   
 
 ### Additional detection options
@@ -75,7 +94,9 @@ also that the query json is the same for all the detection endpoints.
 
 ### Queries and Responses
 In order to better document the endpoints we integrate Swagger with the query processor.
-This module can be accessed from the **/swagger-ui/** endpoint and provides a complete 
+This module can be accessed from the **/swagger-ui.html** endpoint (so for example if you are 
+running locally on port 8090 then you could access the Swagger documentation in 
+```localhost:8090/swagger-ui.html```) and provides a complete 
 list of the available endpoints, along with the required json format. Additionally, it allows
 users to easily test the various endpoints and get results back. 
 
