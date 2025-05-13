@@ -4,11 +4,13 @@ import com.datalab.siesta.queryprocessor.declare.DeclareDBConnector;
 import com.datalab.siesta.queryprocessor.declare.DeclareUtilities;
 import com.datalab.siesta.queryprocessor.declare.model.*;
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
-import com.datalab.siesta.queryprocessor.model.DBModel.IndexPair;
+import com.datalab.siesta.queryprocessor.declare.queryWrappers.QueryOrderRelationWrapper;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
-import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventPair;
+import com.datalab.siesta.queryprocessor.model.Queries.QueryPlans.QueryPlan;
 import com.datalab.siesta.queryprocessor.model.Queries.QueryResponses.QueryResponse;
+import com.datalab.siesta.queryprocessor.model.Queries.Wrapper.QueryWrapper;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -17,21 +19,17 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.storage.StorageLevel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple2;
 import scala.Tuple3;
-import scala.Tuple4;
-import scala.Tuple5;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @RequestScope
-public class QueryPlanOrderedRelations {
+public class QueryPlanOrderedRelations implements QueryPlan{
 
     @Setter
     protected Metadata metadata;
@@ -56,22 +54,24 @@ public class QueryPlanOrderedRelations {
     }
 
 
-    public QueryResponse execute(String logname, String constraint, double support) {
-        //query IndexTable
-        JavaRDD<EventPairToTrace> indexRDD = declareDBConnector.queryIndexOriginalDeclare(logname)
-                .filter(x -> !x.getEventA().equals(x.getEventB()));
+    @Override
+    public QueryResponse execute(QueryWrapper qw) {
+        QueryOrderRelationWrapper qpw = (QueryOrderRelationWrapper) qw;
+         //query IndexTable
+         JavaRDD<EventPairToTrace> indexRDD = declareDBConnector.queryIndexOriginalDeclare(this.metadata.getLogname())
+         .filter(x -> !x.getEventA().equals(x.getEventB()));
         //query SingleTable
-        JavaPairRDD<Tuple2<String, Long>, List<Integer>> singleRDD = declareDBConnector
-                .querySingleTableAllDeclare(logname);
+        JavaPairRDD<Tuple2<String, String>, List<Integer>> singleRDD = declareDBConnector
+                .querySingleTableAllDeclare(this.metadata.getLogname());
 
         //join tables using joinTables and flat map to get the single events
         JavaRDD<EventPairTraceOccurrences> joined = joinTables(indexRDD, singleRDD);
         joined.persist(StorageLevel.MEMORY_AND_DISK());
 
         //count the occurrences using the evaluate constraints
-        JavaRDD<Abstract2OrderConstraint> c = evaluateConstraint(joined, constraint);
+        JavaRDD<Abstract2OrderConstraint> c = evaluateConstraint(joined, qpw.getConstraint());
         //filter based on the values of the SingleTable and the provided support and write to the response
-        Map<String, Long> uEventType = declareDBConnector.querySingleTableDeclare(logname)
+        Map<String, Long> uEventType = declareDBConnector.querySingleTableDeclare(this.metadata.getLogname())
                 .map(x -> {
                     long all = x.getOccurrences().stream().mapToLong(OccurrencesPerTrace::getOccurrences).sum();
                     return new Tuple2<>(x.getEventType(), all);
@@ -79,9 +79,9 @@ public class QueryPlanOrderedRelations {
         Broadcast<Map<String, Long>> bUEventTypes = javaSparkContext.broadcast(uEventType);
 
         //add the not-succession constraints detected from the event pairs that did not occur in the database log
-        extendNotSuccession(bUEventTypes.getValue(), logname, c);
+        extendNotSuccession(bUEventTypes.getValue(), this.metadata.getLogname(), c);
         //filter based on the user defined support
-        filterBasedOnSupport(c, bUEventTypes, support);
+        filterBasedOnSupport(c, bUEventTypes, qpw.getSupport());
         joined.unpersist();
         return this.queryResponseOrderedRelations;
     }
@@ -95,22 +95,22 @@ public class QueryPlanOrderedRelations {
      * @ a rdd of {@link EventPairTraceOccurrences}
      */
     public JavaRDD<EventPairTraceOccurrences> joinTables(JavaRDD<EventPairToTrace> indexRDD,
-                                                         JavaPairRDD<Tuple2<String, Long>, List<Integer>> singleRDD) {
+                                                         JavaPairRDD<Tuple2<String, String>, List<Integer>> singleRDD) {
         //for the traces that contain an occurrence of the event pair (a,b), joins their occurrences of these
         //event types (extracted from the Single Table)
         return indexRDD
-                .keyBy(r -> new Tuple2<>(r.getEventA(), r.getTraceId()))
+                .keyBy(r -> new Tuple2<>(r.getEventA(), r.getTrace_id()))
                 .join(singleRDD)
                 .map(x -> x._2)
                 //join based on the second event
-                .keyBy(x -> new Tuple2<>(x._1.getEventB(), x._1.getTraceId()))
+                .keyBy(x -> new Tuple2<>(x._1.getEventB(), x._1.getTrace_id()))
                 .join(singleRDD)
                 .map(x -> {
                     String eventA = x._2._1._1.getEventA();//event a
                     String eventB = x._2._1._1.getEventB();//event b
                     List<Integer> f = x._2._1._2; // occurrences of the first event
                     List<Integer> s = x._2._2;//occurrences of the second event
-                    long tid = x._1._2; //trace id
+                    String tid = x._1._2; //trace id
                     return new EventPairTraceOccurrences(eventA, eventB, tid, f, s);
                 });
     }
@@ -278,5 +278,7 @@ public class QueryPlanOrderedRelations {
                 x.getEventB().getName(), 1)).collect(Collectors.toList());
         this.queryResponseOrderedRelations.setNotSuccession(result);
     }
+
+
 
 }

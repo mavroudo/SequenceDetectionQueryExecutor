@@ -1,6 +1,7 @@
 package com.datalab.siesta.queryprocessor.model.Queries.Wrapper;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * An abstract class that describes the query patterns. It has only one field and that is the name of the log database,

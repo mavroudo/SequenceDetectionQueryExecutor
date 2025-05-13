@@ -55,7 +55,6 @@ public class EventPair implements Serializable {
         this.constraint = constraint;
     }
 
-
     /**
      * Since this is an et-pair we are only interested in the name of the events and not in their positions
      * or timestamps

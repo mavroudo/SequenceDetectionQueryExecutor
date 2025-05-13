@@ -1,6 +1,6 @@
 package com.datalab.siesta.queryprocessor.model;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -12,11 +12,11 @@ import java.util.List;
  */
 public class Occurrences {
 
-    protected long traceID;
+    protected String traceID;
 
     protected List<Occurrence> occurrences;
 
-    public Occurrences(long traceID, List<Occurrence> occurrences) {
+    public Occurrences(String traceID, List<Occurrence> occurrences) {
         this.traceID = traceID;
         this.occurrences = occurrences;
     }
@@ -30,11 +30,11 @@ public class Occurrences {
         this.occurrences = new ArrayList<>();
     }
 
-    public long getTraceID() {
+    public String getTraceID() {
         return traceID;
     }
 
-    public void setTraceID(long traceID) {
+    public void setTraceID(String traceID) {
         this.traceID = traceID;
     }
 

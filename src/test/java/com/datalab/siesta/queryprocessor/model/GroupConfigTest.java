@@ -12,10 +12,10 @@ class GroupConfigTest {
 
     @Test
     void setGroups() {
-        GroupConfig groupConfig = new GroupConfig("[(1-3),(4)]");
-        List<Set<Long>> groups = groupConfig.getGroups();
+        GroupConfig groupConfig = new GroupConfig("[(1,3),(4)]");
+        List<Set<String>> groups = groupConfig.getGroups();
         Assertions.assertEquals(2,groups.size());
-        Assertions.assertEquals(3,groups.get(0).size());
+        Assertions.assertEquals(2,groups.get(0).size());
         Assertions.assertEquals(1,groups.get(1).size());
 
     }

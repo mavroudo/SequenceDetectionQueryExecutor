@@ -14,5 +14,5 @@ import java.io.Serializable;
 public class EventPairToTrace implements Serializable {
     private String eventA;
     private String eventB;
-    private long traceId;
+    private String trace_id;
 }

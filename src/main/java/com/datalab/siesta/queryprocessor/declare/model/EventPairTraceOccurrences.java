@@ -14,7 +14,7 @@ import java.util.List;
 public class EventPairTraceOccurrences {
     private String eventA;
     private String eventB;
-    private long traceId;
+    private String traceId;
     private List<Integer> occurrencesA;
     private List<Integer> occurrencesB;
 }

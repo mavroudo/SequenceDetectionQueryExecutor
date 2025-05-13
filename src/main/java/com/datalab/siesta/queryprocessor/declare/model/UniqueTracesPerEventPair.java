@@ -10,9 +10,9 @@ public class UniqueTracesPerEventPair implements Serializable {
 
     private String eventA;
     private String eventB;
-    private List<Long> uniqueTraces;
+    private List<String> uniqueTraces;
 
-    public UniqueTracesPerEventPair(String eventA, String eventB, List<Long> uniqueTraces) {
+    public UniqueTracesPerEventPair(String eventA, String eventB, List<String> uniqueTraces) {
         this.eventA = eventA;
         this.eventB = eventB;
         this.uniqueTraces = uniqueTraces;
@@ -34,11 +34,11 @@ public class UniqueTracesPerEventPair implements Serializable {
         this.eventB = eventB;
     }
 
-    public List<Long> getUniqueTraces() {
+    public List<String> getUniqueTraces() {
         return uniqueTraces;
     }
 
-    public void setUniqueTraces(List<Long> uniqueTraces) {
+    public void setUniqueTraces(List<String> uniqueTraces) {
         this.uniqueTraces = uniqueTraces;
     }
 

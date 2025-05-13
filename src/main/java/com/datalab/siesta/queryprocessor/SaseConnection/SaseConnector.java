@@ -45,10 +45,10 @@ public class SaseConnector {
      * @param onlyAppearances set to false if the pattern contains no constraints
      * @return where the pattern occur
      */
-    public List<Occurrences> evaluate(SIESTAPattern pattern, Map<Long, List<Event>> events, boolean onlyAppearances) {
+    public List<Occurrences> evaluate(SIESTAPattern pattern, Map<String, List<Event>> events, boolean onlyAppearances) {
         EngineController ec = this.getEngineController(pattern, onlyAppearances);
         List<Occurrences> occurrences = new ArrayList<>();
-        for (Map.Entry<Long, List<Event>> e : events.entrySet()) {
+        for (Map.Entry<String, List<Event>> e : events.entrySet()) {
             ec.initializeEngine();
             if(e.getValue().isEmpty()){ // in case that events have been removed due to filters
                 continue;
@@ -116,10 +116,10 @@ public class SaseConnector {
      * @param events the required events for each trace in order to determine if pattern occurs
      * @return where the pattern occur
      */
-    public List<Occurrences> evaluateSmallPatterns(SIESTAPattern pattern, Map<Long, List<EventBoth>> events){
+    public List<Occurrences> evaluateSmallPatterns(SIESTAPattern pattern, Map<String, List<EventBoth>> events){
         EngineController ec = this.getEngineController(pattern,false);
         List<Occurrences> occurrences = new ArrayList<>();
-        for (Map.Entry<Long, List<EventBoth>> e : events.entrySet()) {
+        for (Map.Entry<String, List<EventBoth>> e : events.entrySet()) {
             ec.initializeEngine();
             Stream s = this.getStream(new ArrayList<>(e.getValue()));
             ec.setInput(s);

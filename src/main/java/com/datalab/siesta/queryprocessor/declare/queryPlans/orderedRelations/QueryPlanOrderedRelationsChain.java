@@ -7,16 +7,10 @@ import com.datalab.siesta.queryprocessor.declare.model.EventPairTraceOccurrences
 import com.datalab.siesta.queryprocessor.declare.queryResponses.QueryResponseOrderedRelations;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 import scala.Tuple3;
-import scala.Tuple4;
-import scala.Tuple5;
 
-import java.util.List;
-import java.util.Set;
 
 @Component
 @RequestScope

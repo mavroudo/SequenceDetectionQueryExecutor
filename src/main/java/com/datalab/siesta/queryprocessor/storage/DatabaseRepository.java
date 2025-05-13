@@ -1,8 +1,15 @@
 package com.datalab.siesta.queryprocessor.storage;
 
 import com.datalab.siesta.queryprocessor.declare.model.EventPairToTrace;
+import com.datalab.siesta.queryprocessor.declare.model.EventSupport;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventPair;
 import com.datalab.siesta.queryprocessor.declare.model.UniqueTracesPerEventType;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.ExistenceState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.NegativeState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.OrderState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.PositionState;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateI;
+import com.datalab.siesta.queryprocessor.declare.model.declareState.UnorderStateU;
 import com.datalab.siesta.queryprocessor.model.DBModel.*;
 import com.datalab.siesta.queryprocessor.model.Events.Event;
 import com.datalab.siesta.queryprocessor.model.Events.EventBoth;
@@ -48,6 +55,13 @@ public interface DatabaseRepository {
     List<Count> getCounts(String logname, Set<EventPair> pairs);
 
     /**
+     * Retrieves the event pairs tha appear as keys in the CountTable
+     * @param logname the log database
+     * @return a list of event pairs
+     */
+    List<Count> getEventPairs(String logname);
+
+    /**
      *
      * @param logname the log database
      * @return a list with all the event types stored in it
@@ -64,7 +78,7 @@ public interface DatabaseRepository {
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      * timestamps)
      */
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds, Set<String> eventTypes,Timestamp from, Timestamp till);
+    Map<String,List<EventBoth>> querySeqTable(String logname, List<String> traceIds, Set<String> eventTypes,Timestamp from, Timestamp till);
 
     /**
      * Retrieves the appropriate events from the SequenceTable, which contains the original traces
@@ -73,7 +87,7 @@ public interface DatabaseRepository {
      * @return a map where the key is the trace id and the value is a list of the retrieved events (with their
      *      * timestamps)
      */
-    Map<Long,List<EventBoth>> querySeqTable(String logname, List<Long> traceIds);
+    Map<String,List<EventBoth>> querySeqTable(String logname, List<String> traceIds);
 
     /**
      * Detects the traces that contain all the given event pairs
@@ -92,12 +106,11 @@ public interface DatabaseRepository {
      * Retrieves data from the primary inverted index
      * @param pairs a set of the pairs that we need to retrieve information for
      * @param logname the log database
-     * @param metadata the metadata for this log database
      * @return the corresponding records from the index
      */
-    IndexRecords queryIndexTable(Set<EventPair> pairs, String logname, Metadata metadata);
+    IndexRecords queryIndexTable(Set<EventPair> pairs, String logname);
 
-    /**
+   /**
      * Retrieves data from the primary inverted index
      * @param pairs a set of the pairs that we need to retrieve information for
      * @param logname the log database
@@ -115,7 +128,7 @@ public interface DatabaseRepository {
      * @param eventTypes the events that will we retrieved
      * @return a list of all the retrieved events (with their timestamps)
      */
-    List<EventBoth> querySingleTable(String logname, Set<Long> traceIds, Set<String> eventTypes);
+    List<EventBoth> querySingleTable(String logname, Set<String> traceIds, Set<String> eventTypes);
 
     /**
      * Retrieves the appropriate events from the SingleTable, which contains the single inverted index
@@ -134,7 +147,7 @@ public interface DatabaseRepository {
      * @return a map where the key is the group id and the value is a list of the retrieved events (with their t
      * imestamps)
      */
-    Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<Long>> groups, Set<String> eventTypes);
+    Map<Integer,List<EventBoth>> querySingleTableGroups(String logname, List<Set<String>> groups, Set<String> eventTypes);
 
     /**
      * For a given event type inside a log database, returns all the possible next events. That is, since Count
@@ -145,18 +158,29 @@ public interface DatabaseRepository {
      */
     List<Count> getCountForExploration(String logname, String event);
 
+
     // Below are for Declare //
     JavaRDD<Trace> querySequenceTableDeclare(String logname);
 
     JavaRDD<UniqueTracesPerEventType> querySingleTableDeclare(String logname);
 
+    JavaRDD<EventSupport> querySingleTable(String logname);
+
     JavaRDD<UniqueTracesPerEventPair> queryIndexTableDeclare(String logname);
 
     JavaRDD<IndexPair> queryIndexTableAllDeclare(String logname);
 
-    JavaPairRDD<Tuple2<String,Long>, List<Integer>> querySingleTableAllDeclare(String logname);
+    JavaPairRDD<Tuple2<String,String>, List<Integer>> querySingleTableAllDeclare(String logname);
 
     JavaRDD<EventPairToTrace> queryIndexOriginalDeclare(String logname);
+
+    //Below are for the states of Declare
+    JavaRDD<PositionState> queryPositionState(String logname);
+    JavaRDD<ExistenceState> queryExistenceState(String logname);
+    JavaRDD<UnorderStateI> queryUnorderStateI(String logname);
+    JavaRDD<UnorderStateU> queryUnorderStateU(String logname);
+    JavaRDD<OrderState> queryOrderState(String logname);
+    JavaRDD<NegativeState> queryNegativeState(String logname);
 
 
 }

@@ -60,12 +60,12 @@ class SaseConnectorTest {
     private Stream getStreamTimestamp(){
         Stream s = new Stream(6);
         List<UncertainTimeEvent> l = new ArrayList<>(){{
-            add(new UncertainTimeEvent(1,1,"A",1,true,0));
-            add(new UncertainTimeEvent(1,2,"A",4,true,3));
-            add(new UncertainTimeEvent(1,3,"B",7,true,5));
-            add(new UncertainTimeEvent(1,4,"B",12,true,0));
-            add(new UncertainTimeEvent(1,5,"B",13,true,1));
-            add(new UncertainTimeEvent(1,6,"C",18,true,0));
+            add(new UncertainTimeEvent("1",1,"A",1,true,0));
+            add(new UncertainTimeEvent("1",2,"A",4,true,3));
+            add(new UncertainTimeEvent("1",3,"B",7,true,5));
+            add(new UncertainTimeEvent("1",4,"B",12,true,0));
+            add(new UncertainTimeEvent("1",5,"B",13,true,1));
+            add(new UncertainTimeEvent("1",6,"C",18,true,0));
         }};
         s.setEvents(l.toArray(new UncertainTimeEvent[6]));
         return s;

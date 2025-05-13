@@ -51,12 +51,12 @@ class S3ConnectorTest {
         pairs.add(new EventPair(new Event("C"),new Event("A")));
         pairs.add(new EventPair(new Event("C"),new Event("B")));
         pairs.add(new EventPair(new Event("C"),new Event("C")));
-        IndexRecords  ir = s3Connector.queryIndexTable(pairs,m.getLogname(),m);
+        IndexRecords  ir = s3Connector.queryIndexTable(pairs,m.getLogname(),m, null, null);
 
         Map<EventTypes,List<IndexPair>> r =  ir.getRecords();
         // <B,A>
         Assertions.assertEquals(2,r.get(new EventTypes("B","A")).size());
-        List<Long> contained =  r.get(new EventTypes("C","B")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
+        List<String> contained =  r.get(new EventTypes("C","B")).stream().map(IndexPair::getTraceId).collect(Collectors.toList());
         Assertions.assertTrue(contained.contains(2L));
         // <C,B>
         Assertions.assertEquals(2,r.get(new EventTypes("C","B")).size());
@@ -133,11 +133,11 @@ class S3ConnectorTest {
         ComplexPattern p = new ComplexPattern(events);
         p.setConstraints(lc);
         p.setEventsWithSymbols(events);
-        List<Long> l1= new ArrayList<>();
-        l1.add(1L);
-        l1.add(2L);
-        Map<Long,List<EventBoth>> traces = s3Connector.querySeqTable("bpi_2017",l1);
-        Map<Long,List<EventBoth>> traces2 = s3Connector.querySeqTable("bpi_2017",l1,p.getEventTypes(),null,null);
+        List<String> l1= new ArrayList<>();
+        l1.add("1");
+        l1.add("2");
+        Map<String,List<EventBoth>> traces = s3Connector.querySeqTable("bpi_2017",l1);
+        Map<String,List<EventBoth>> traces2 = s3Connector.querySeqTable("bpi_2017",l1,p.getEventTypes(),null,null);
         System.out.println("hey");
 
 
@@ -145,34 +145,34 @@ class S3ConnectorTest {
 
     @Test
     void querySingleTable(){
-        Set<Long> traces = new HashSet<>();
-        traces.add(1L);
-        traces.add(2L);
+        Set<String> traces = new HashSet<>();
+        traces.add("1");
+        traces.add("2");
         Set<String> eventTypes = new HashSet<>();
         eventTypes.add("A");
         eventTypes.add("B");
         List<EventBoth> events = s3Connector.querySingleTable("test",traces,eventTypes);
         Assertions.assertTrue(events.size()>0);
-        List<Long> traceIds = events.stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        List<String> traceIds = events.stream().map(EventBoth::getTraceID).collect(Collectors.toList());
         Assertions.assertTrue(traceIds.containsAll(traces));
         Assertions.assertTrue(events.stream().map(EventBoth::getName).collect(Collectors.toList()).containsAll(eventTypes));
     }
 
     @Test
     void querySingleTableGroups(){
-        GroupConfig groupConfig = new GroupConfig("[(1-3),(4)]");
+        GroupConfig groupConfig = new GroupConfig("[(1,3),(4)]");
         Set<String> eventTypes = new HashSet<>();
         eventTypes.add("A");
         eventTypes.add("B");
         Map<Integer,List<EventBoth>> events = s3Connector.querySingleTableGroups("test",groupConfig.getGroups(),eventTypes);
         assertEquals(1, events.size());
-        List<Long> traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(traceIds1.contains(1L));
-        Assertions.assertTrue(traceIds1.contains(2L));
-        Assertions.assertTrue(traceIds1.contains(3L));
-        Assertions.assertFalse(traceIds1.contains(4L));
+        List<String> traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(traceIds1.contains("1"));
+        Assertions.assertTrue(traceIds1.contains("2"));
+        Assertions.assertTrue(traceIds1.contains("3"));
+        Assertions.assertFalse(traceIds1.contains("4"));
 
-        groupConfig = new GroupConfig("[(1-2),(3)]");
+        groupConfig = new GroupConfig("[(1,2),(3)]");
         eventTypes.clear();
         eventTypes.add("A");
         eventTypes.add("B");
@@ -180,12 +180,12 @@ class S3ConnectorTest {
 
         assertEquals(2, events.size());
         traceIds1 = events.get(1).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
-        List<Long> traceIds2 = events.get(2).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
-        Assertions.assertTrue(traceIds1.contains(1L));
-        Assertions.assertTrue(traceIds1.contains(2L));
-        Assertions.assertFalse(traceIds1.contains(3L));
-        Assertions.assertFalse(traceIds1.contains(4L));
-        Assertions.assertTrue(traceIds2.contains(3L));
+        List<String> traceIds2 = events.get(2).stream().map(EventBoth::getTraceID).collect(Collectors.toList());
+        Assertions.assertTrue(traceIds1.contains("1"));
+        Assertions.assertTrue(traceIds1.contains("2"));
+        Assertions.assertFalse(traceIds1.contains("3"));
+        Assertions.assertFalse(traceIds1.contains("4"));
+        Assertions.assertTrue(traceIds2.contains("3"));
 
 
     }

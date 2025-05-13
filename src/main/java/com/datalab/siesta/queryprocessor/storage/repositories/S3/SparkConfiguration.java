@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,15 +12,17 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 /**
- * Contains the configuration of spark in order to connect to s3 database
+ * Contains the configuration of spark in he.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project siesta-query-processor: Fatal error compiling: error: release version 17 not supported -> [Help 1]
+order to connect to s3 database
  */
 @Configuration
 @PropertySource("classpath:application.properties")
-@ConditionalOnProperty(
-        value = "database",
-        havingValue = "s3",
-        matchIfMissing = true
-)
+//@ConditionalOnProperty(
+//        value = "database",
+//        havingValue = "s3",
+//        matchIfMissing = true
+//)
+@ConditionalOnExpression("'${database}' == 's3' and '${delta}' == 'false'")
 public class SparkConfiguration {
 
     @Value("${app.name:siesta2}")
@@ -45,7 +48,9 @@ public class SparkConfiguration {
         return new SparkConf()
                 .setAppName(appName)
                 .setMaster(masterUri)
-                .set("spark.driver.memory","25g")
+                .set("spark.driver.extraJavaOptions", "--add-opens java.base/sun.security.action=ALL-UNNAMED")
+                .set("spark.executor.extraJavaOptions", "--add-opens java.base/sun.security.action=ALL-UNNAMED")
+//                .set("spark.driver.memory","25g")
 //                .set("spark.driver.memoryOverhead","2g")
 //                .set("spark.memory.fraction","0.8")
 //                .set("spark.memory.storageFraction","0.5")

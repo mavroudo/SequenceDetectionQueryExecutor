@@ -1,7 +1,7 @@
 package com.datalab.siesta.queryprocessor;
 
-import com.amazonaws.thirdparty.jackson.databind.ObjectMapper;
 import com.datalab.siesta.queryprocessor.model.DBModel.Metadata;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,9 +29,9 @@ public class MetadataQueryTest {
         ResultActions trial = mockMvc.perform(get(url).content(q1).contentType(MediaType.APPLICATION_JSON));
         MvcResult results = trial.andExpect(status().isOk()).andReturn();
         Metadata m = new ObjectMapper().readValue(results.getResponse().getContentAsString(), Metadata.class);
-        Assert.isTrue(m.getCompression() != null);
-        Assert.isTrue(m.getEvents() > 0);
-        Assert.isTrue(m.getPairs() > 0);
+        Assert.isTrue(m.getCompression() != null,"");
+        Assert.isTrue(m.getEvents() > 0,"");
+        Assert.isTrue(m.getPairs() > 0,"");
 
     }
 
